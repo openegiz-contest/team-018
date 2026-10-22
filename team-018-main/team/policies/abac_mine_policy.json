@@ -1,0 +1,141 @@
+{
+  "policyId": "org.openegiz.mine:abac_mine_policy",
+  "entries": {
+    "ADMIN_SYSTEM": {
+      "subjects": {
+        "nginx:ditto": {
+          "type": "pre-authenticated"
+        },
+        "ditto:ditto": {
+          "type": "pre-authenticated"
+        }
+      },
+      "resources": {
+        "thing:/": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "policy:/": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "message:/": {
+          "grant": ["READ", "WRITE", "EXECUTE"],
+          "revoke": []
+        }
+      }
+    },
+    "ROLE_FMS_DISPATCHER": {
+      "subjects": {
+        "role:fms_dispatcher": {
+          "type": "authenticated"
+        }
+      },
+      "resources": {
+        "thing:/attributes": {
+          "grant": ["READ"],
+          "revoke": []
+        },
+        "thing:/features/dispatch": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/shovel_assignment": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/route_geometry": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/electrical_grid": {
+          "grant": ["READ"],
+          "revoke": ["WRITE"]
+        },
+        "message:/inbox/messages/dispatch": {
+          "grant": ["READ", "WRITE", "EXECUTE"],
+          "revoke": []
+        }
+      }
+    },
+    "ROLE_GEOTECH_SAFETY_OFFICER": {
+      "subjects": {
+        "role:geotech_safety_officer": {
+          "type": "authenticated"
+        }
+      },
+      "resources": {
+        "thing:/features/slope_stability": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/piezometer_pressure": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/dewatering_sump": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/contingency_status": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "message:/inbox/messages/evacuate_bench": {
+          "grant": ["READ", "WRITE", "EXECUTE"],
+          "revoke": []
+        }
+      }
+    },
+    "ROLE_PLANT_METALLURGIST": {
+      "subjects": {
+        "role:plant_metallurgist": {
+          "type": "authenticated"
+        }
+      },
+      "resources": {
+        "thing:/features/crusher_circuit": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/stockpile_inventory": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/sag_mill_comminution": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/blending_controller_setpoints": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "message:/inbox/messages/adjust_feed_rate": {
+          "grant": ["READ", "WRITE", "EXECUTE"],
+          "revoke": []
+        }
+      }
+    },
+    "ROLE_AUTONOMOUS_PID_AGENT": {
+      "subjects": {
+        "role:autonomous_pid_agent": {
+          "type": "authenticated"
+        }
+      },
+      "resources": {
+        "thing:/features/control_setpoints/properties/*": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/features/kalman_adaptation": {
+          "grant": ["READ", "WRITE"],
+          "revoke": []
+        },
+        "thing:/attributes": {
+          "grant": ["READ"],
+          "revoke": ["WRITE"]
+        }
+      }
+    }
+  }
+}

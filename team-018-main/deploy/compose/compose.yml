@@ -1,0 +1,6 @@
+# Smart-Kenish 4.0 (Team-018) :: Compose Overlay
+include:
+  - path: docker-compose.yml
+    env_file: .env
+  - path: ../../team/compose.yml
+    env_file: .env

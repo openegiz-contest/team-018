@@ -1,0 +1,1899 @@
+{
+  "uid": "smart-kenish-aktau",
+  "title": "Smart-Kenish 4.0: Autonomous Green Mine (Team-018)",
+  "tags": [
+    "openegiz",
+    "contest",
+    "smart-kenish",
+    "team-018",
+    "digital-twin"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "description": "Smart-Kenish 4.0: Polymetallic digital mine on OpenEgiz with trolley-assist decarbonization, AI grade blending, TKPH predictive tire thermal monitoring, and 2-generation What-If contingency response.",
+  "panels": [
+    {
+      "id": 100,
+      "type": "row",
+      "title": "EXECUTIVE P&L & ESG METRICS (ECONOMIC VIABILITY)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Ore Mined",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "masst",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#3274D9",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_tonnes_mined_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Feed Grade at Crusher (Target 0.85% Cu)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 4,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "decimals": 3,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E02F44",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 0.7
+              },
+              {
+                "color": "#56A64B",
+                "value": 0.82
+              },
+              {
+                "color": "#56A64B",
+                "value": 0.88
+              },
+              {
+                "color": "#FF780A",
+                "value": 0.95
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_avg_grade_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Current OPEX / Tonne ($/t) [Baseline $1.42]",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 1.2
+              },
+              {
+                "color": "#E02F44",
+                "value": 1.4
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_opex_per_tonne_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Daily Net Savings (Trolley & AI)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_daily_savings_usd_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "CO2 Emissions Avoided",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "masskg",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#73BF69",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_co2_avoided_kg_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "What-If Contingency Cockpit",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 20,
+        "y": 1,
+        "w": 4,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 1
+              },
+              {
+                "color": "#E02F44",
+                "value": 2
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_emergency_level_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "type": "stat",
+      "title": "Net Present Value (NPV 10y) [DCF @ 10%]",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_npv_usd_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "type": "stat",
+      "title": "Internal Rate of Return (IRR) [Payback 1.4y]",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 5,
+        "w": 6,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#388BFD",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_irr_pct_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "type": "timeseries",
+      "title": "Ore Grade Error vs Target: Smart-Kenish Closed-Loop vs Baseline Open-Loop",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 4
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "none",
+          "decimals": 3
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Smart-Kenish Closed-Loop Error (% Cu)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#56A64B",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Baseline Open-Loop Drift (% Cu)"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#E02F44",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_smart_grade_error_properties_value\")\n  |> set(key: \"_field\", value: \"Smart-Kenish Closed-Loop Error (% Cu)\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_baseline_grade_error_properties_value\")\n  |> set(key: \"_field\", value: \"Baseline Open-Loop Drift (% Cu)\")\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])"
+        }
+      ]
+    },
+    {
+      "id": 101,
+      "type": "row",
+      "title": "SPATIAL MINE TOPOLOGY & FLEET POSITIONS (KENISHTI VIZUALIZATSIYA)",
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 7,
+      "type": "bargauge",
+      "title": "Haul Route Positions (0.0 km = Face, 0.6-2.4 km = Trolley Ramp, 3.6 km = Crusher)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 14,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 3.6,
+          "unit": "lengthkm",
+          "decimals": 2,
+          "color": {
+            "mode": "palette-classic"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#3274D9",
+                "value": null
+              },
+              {
+                "color": "#FADE2A",
+                "value": 0.6
+              },
+              {
+                "color": "#56A64B",
+                "value": 2.4
+              },
+              {
+                "color": "#A352CC",
+                "value": 3.4
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "displayMode": "gradient",
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId =~ /^org.openegiz.mine:truck-/ and r._field == \"value_route_position_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\", \"thingId\"])"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "stat",
+      "title": "Trolley Catenary Line (1.8 km Ramp)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 14,
+        "y": 10,
+        "w": 5,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E02F44",
+                "value": null
+              },
+              {
+                "color": "#56A64B",
+                "value": 1100
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:trolley-line-01\" and r._field == \"value_line_voltage_v_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Trolley Power Delivered, kW",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 19,
+        "y": 10,
+        "w": 5,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "kwatt",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#FADE2A",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:trolley-line-01\" and r._field == \"value_power_delivered_kw_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "text",
+      "title": "Smart-Kenish Mine Flow Topology & Energy Decarbonization Architecture",
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 24,
+        "h": 5
+      },
+      "options": {
+        "mode": "markdown",
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "### \u26f0\ufe0f Aktau Polymetallic Open-Pit Digital Mine (12 Mt/a) :: Unified Process Flow\n\n| Process Zone | Elevation & Asset | Target Parameter | Status & Telemetry |\n| :--- | :--- | :--- | :--- |\n| **North Bench** | Horizon **+60m** \\| Shovel **EX-01** (\u042d\u041a\u0413-15 30t) | **1.35% Cu** (High-Grade Chalcopyrite) | P&L feed blending control |\n| **South Bench** | Horizon **-60m** \\| Shovel **EX-02** (CAT 6020B 22t) | **0.45% Cu** (Low-Grade Ore) | Sump Dewatering (**WP-01/02**) |\n| **Haul Ramp** | Continuous **8.5% Incline** (1.8 km Catenary) | **1200V DC** Overhead Trolley-Assist | Speed **24.5 km/h** (vs 12.2 km/h Diesel) |\n| **Primary Crusher** | **\u041a\u041a\u0414-1500/180** (2400 t/h) + Standby **Metso LT140** | Concentrator Target **0.850% Cu \u00b10.03%** | Tramp Metal Protection & Auto Relief |\n| **Microgrid Substation** | **6 MW** Traction Substation + **2 MWh BESS** | **Peak Shaving & Regen Energy Capture** | Industrial Tariff **$0.062/kWh** |\n\n> \ud83d\udef0\ufe0f **Live Spatial GIS Topology & TUI:** Консольный монитор: `make monitor` | Геометрия: `team/data/mine_spatial_topology.geojson` (7 геодезических слоев, датум WGS84)\n"
+      }
+    },
+    {
+      "id": 102,
+      "type": "row",
+      "title": "FLEET TELEMATICS & PREDICTIVE TKPH TIRE WEAR",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Truck Speeds, km/h (24.5 km/h on Trolley vs 12.2 km/h Diesel)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "velocitykmh",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId =~ /^org.openegiz.mine:truck-/ and r._field == \"value_speed_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\", \"thingId\"])"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Tire Thermal Index & TKPH (Ton-Km/h)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "celsius",
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 75
+              },
+              {
+                "color": "#E02F44",
+                "value": 90
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId =~ /^org.openegiz.mine:truck-/ and r._field == \"value_tire_temp_c_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\", \"thingId\"])"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "type": "table",
+      "title": "Live FMS Fleet Telematics Matrix (BelAZ-75131 Fleet)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 24,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto"
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 75.0
+              },
+              {
+                "color": "red",
+                "value": 90.0
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "thingId"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 220
+              },
+              {
+                "id": "displayName",
+                "value": "Asset (Twin ID)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value_speed_properties_value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Speed (km/h)"
+              },
+              {
+                "id": "unit",
+                "value": "velocitykmh"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value_route_position_properties_value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Position (km)"
+              },
+              {
+                "id": "unit",
+                "value": "lengthkm"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value_payload_properties_value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Payload (t)"
+              },
+              {
+                "id": "unit",
+                "value": "masst"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value_tkph_properties_value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "TKPH"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value_tire_temp_c_properties_value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Tire Temp (\u00b0C)"
+              },
+              {
+                "id": "unit",
+                "value": "celsius"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: -2m)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field =~ /_properties_value$/)\n  |> filter(fn: (r) => r.thingId =~ /^org.openegiz.mine:truck-/)\n  |> group(columns: [\"thingId\", \"_field\"])\n  |> last()\n  |> group(columns: [\"thingId\"])\n  |> pivot(rowKey: [\"thingId\"], columnKey: [\"_field\"], valueColumn: \"_value\")"
+        }
+      ],
+      "description": "Real-time FMS telemetry tracking all 8 BelAZ-75131 hauler twins: org.openegiz.mine:truck-01, org.openegiz.mine:truck-02, org.openegiz.mine:truck-03, org.openegiz.mine:truck-04, org.openegiz.mine:truck-05, org.openegiz.mine:truck-06, org.openegiz.mine:truck-07, org.openegiz.mine:truck-08"
+    },
+    {
+      "id": 22,
+      "type": "state-timeline",
+      "title": "Fleet Operational State Timeline (Dispatched Cycle Tracking)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 36,
+        "w": 24,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          },
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "loading": {
+                  "text": "Loading (\u041f\u043e\u0433\u0440\u0443\u0437\u043a\u0430)",
+                  "color": "#FF9900"
+                },
+                "hauling": {
+                  "text": "Hauling Diesel (\u0412\u044b\u0432\u043e\u0437\u043a\u0430)",
+                  "color": "#5794F2"
+                },
+                "hauling_trolley": {
+                  "text": "Trolley Climb 1200V (\u042d\u043b\u0435\u043a\u0442\u0440\u043e\u0442\u044f\u0433\u0430)",
+                  "color": "#73BF69"
+                },
+                "dumping": {
+                  "text": "Dumping (\u0420\u0430\u0437\u0433\u0440\u0443\u0437\u043a\u0430)",
+                  "color": "#B877D9"
+                },
+                "empty_return": {
+                  "text": "Empty Return (\u0421\u043f\u0443\u0441\u043a/\u0420\u0435\u0433\u0435\u043d)",
+                  "color": "#37872D"
+                },
+                "queued_at_excavator": {
+                  "text": "Queued (\u041e\u0447\u0435\u0440\u0435\u0434\u044c)",
+                  "color": "#FADE2A"
+                },
+                "breakdown_blocking_ramp": {
+                  "text": "EMERGENCY BREAKDOWN",
+                  "color": "#F2495C"
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "mergeValues": true,
+        "showValue": "auto",
+        "alignValue": "left",
+        "rowHeight": 0.85,
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\" and r._field == \"value_state_properties_value\")\n  |> filter(fn: (r) => r.thingId =~ /^org.openegiz.mine:truck-/)\n  |> keep(columns: [\"_time\", \"_value\", \"thingId\"])"
+        }
+      ]
+    },
+    {
+      "id": 103,
+      "type": "row",
+      "title": "PRIMARY CRUSHER, DEWATERING & BESS MICROGRID",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Primary Gyratory Crusher KKD-1500 Throughput, t/h",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "none",
+          "decimals": 0
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:crusher-01\" and r._field == \"value_throughput_tph_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Pit Sump Water Level, m (Safe Threshold < 2.5m)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 43,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "lengthm",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 2.0
+              },
+              {
+                "color": "#E02F44",
+                "value": 2.5
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:pump-station-01\" and r._field == \"value_sump_water_level_m_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Substation BESS Battery Storage SOC, %",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 43,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "percent",
+          "decimals": 1
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:substation-01\" and r._field == \"value_bess_soc_pct_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 104,
+      "type": "row",
+      "title": "REAL-WORLD INCIDENT HAZARDS & AVERTED LOSSES ($)",
+      "gridPos": {
+        "x": 0,
+        "y": 50,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "Averted Catastrophic Losses (Prevented Downtime & Shovel/Shaft Damage)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 51,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_prevented_loss_usd_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "Current Risk Exposure Rate ($/h during Active Incident)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 51,
+        "w": 12,
+        "h": 5
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 10000
+              },
+              {
+                "color": "#E02F44",
+                "value": 50000
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_hourly_risk_exposure_usd_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 105,
+      "type": "row",
+      "title": "BENEFICIATION CONCENTRATOR, GEOTECHNICS & ADAPTIVE KALMAN CONTROL",
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false
+    },
+    {
+      "id": 26,
+      "type": "timeseries",
+      "title": "Concentrator SAG Mill (14 MW) Power & Copper Recovery (Bond Comminution)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 12,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "kw"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Recovery"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:sag-mill-01\" and r._field == \"value_power_kw_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:sag-mill-01\" and r._field == \"value_flotation_recovery_cu_pct_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "type": "stat",
+      "title": "Stockpile Dome Surge Autonomy Hours (Crusher Jam Decoupling)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 57,
+        "w": 12,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E02F44",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 6.0
+              },
+              {
+                "color": "#56A64B",
+                "value": 12.0
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "background",
+        "graphMode": "area",
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:stockpile-coarse-01\" and r._field == \"value_surge_reserve_hours_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "Geomechanical Slope Stability: Mohr-Coulomb FoS & South Wall Pore Pressure",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 64,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#E02F44",
+                "value": null
+              },
+              {
+                "color": "#56A64B",
+                "value": 1.15
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:slope-radar-01\" and r._field == \"value_factor_of_safety_fos_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "type": "timeseries",
+      "title": "Adaptive EKF Sensor Filter: Kalman Gain & Innovation Error Residual",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 64,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_kalman_gain_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_kalman_innovation_error_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "ISO 3450:2011 Haul Fleet Wet Braking Distance & Dynamic Speed Derating",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 64,
+        "w": 8,
+        "h": 7
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#E02F44",
+                "value": 45.0
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:truck-01\" and r._field == \"value_braking_distance_m_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 31,
+      "type": "stat",
+      "title": "Autonomous Drill Rig PV-271 MWD Rock Hardness (f) & Bond Wi",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 71,
+        "w": 8,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#56A64B",
+                "value": null
+              },
+              {
+                "color": "#FF780A",
+                "value": 12.0
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value_and_name"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:drill-rig-01\" and r._field == \"value_protodyakonov_hardness_f_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 32,
+      "type": "stat",
+      "title": "IFRS 6 / IAS 16 Unit-of-Production (UoP) Depletion & Tax Shield ($)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 71,
+        "w": 8,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 0,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#3274D9",
+                "value": null
+              }
+            ]
+          }
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "area",
+        "textMode": "value"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:mine-01\" and r._field == \"value_uop_tax_shield_usd_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "BelAZ-76135 Dust Bowser Spraying & Haul Road Moisture Regulation (%)",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "opentwins-influxdb"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 71,
+        "w": 8,
+        "h": 6
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          }
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "opentwins-influxdb"
+          },
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \\\"mqtt_consumer\\\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:water-bowser-01\" and r._field == \"value_road_surface_moisture_pct_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "title": "Overland Conveyor \u041a\u041d\u041a-270 (1.42 km) Mass Flow & Drive Power",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 80
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:conveyor-main-01\" and r._field == \"value_mass_flow_tph_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "t/h",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    },
+    {
+      "id": 35,
+      "title": "Mobile Standby Crusher Metso LT140 (crusher-standby-02) Throughput & Readiness",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 80
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:crusher-standby-02\" and r._field == \"value_readiness_pct_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    },
+    {
+      "id": 36,
+      "title": "North Bench (+60m Face) & Shovel EX-01 (\u042d\u041a\u0413-15 30t) Payload",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 88
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:bench-north\" and r._field == \"value_face_grade_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:excavator-01\" and r._field == \"value_payload_loaded_t_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    },
+    {
+      "id": 37,
+      "title": "South Bench (-60m Face) & Shovel EX-02 (CAT 6020B) Elevation",
+      "type": "timeseries",
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 88
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:bench-south\" and r._field == \"value_face_grade_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        },
+        {
+          "query": "from(bucket: \"default\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"mqtt_consumer\")\n  |> filter(fn: (r) => r.thingId == \"org.openegiz.mine:excavator-02\" and r._field == \"value_elevation_m_properties_value\")\n  |> keep(columns: [\"_time\", \"_value\"])"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        }
+      }
+    }
+  ]
+}

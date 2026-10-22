@@ -1,0 +1,193 @@
+{
+  "type": "FeatureCollection",
+  "name": "Aktau_Polymetallic_Mine_Spatial_Topology",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:mine-01",
+        "name": "Aktau Polymetallic Open-Pit Perimeter",
+        "kind": "pit_boundary",
+        "elevation_surface_m": 120.0,
+        "elevation_bottom_m": -60.0,
+        "total_depth_m": 180.0,
+        "annual_capacity_mt": 12.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [71.4250, 51.1550, 120.0],
+            [71.4420, 51.1580, 120.0],
+            [71.4550, 51.1490, 120.0],
+            [71.4480, 51.1350, 120.0],
+            [71.4310, 51.1320, 120.0],
+            [71.4250, 51.1550, 120.0]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:bench-north",
+        "name": "North Working Bench (+60m Horizon)",
+        "kind": "mining_face",
+        "elevation_m": 60.0,
+        "copper_grade_pct": 1.35,
+        "primary_shovel": "org.openegiz.mine:excavator-01"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.4320, 51.1510, 60.0],
+          [71.4380, 51.1530, 60.0],
+          [71.4450, 51.1520, 60.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:bench-south",
+        "name": "South Deep Bench (-60m Horizon)",
+        "kind": "mining_face",
+        "elevation_m": -60.0,
+        "copper_grade_pct": 0.45,
+        "primary_shovel": "org.openegiz.mine:excavator-02"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.4340, 51.1380, -60.0],
+          [71.4400, 51.1370, -60.0],
+          [71.4440, 51.1390, -60.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:trolley-line-01",
+        "name": "Electrified Trolley-Assist Haul Ramp (1200V DC)",
+        "kind": "catenary_corridor",
+        "length_km": 1.8,
+        "gradient_pct": 8.5,
+        "picket_start": "PK06+00",
+        "picket_end": "PK24+00",
+        "nominal_voltage_v": 1200.0
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.4350, 51.1400, -30.0],
+          [71.4370, 51.1430, -5.0],
+          [71.4400, 51.1460, 25.0],
+          [71.4420, 51.1480, 60.0],
+          [71.4450, 51.1500, 95.0],
+          [71.4470, 51.1520, 115.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:crusher-01",
+        "name": "Primary Gyratory Crusher KKD-1500/180",
+        "kind": "processing_plant",
+        "elevation_m": 122.0,
+        "rated_capacity_th": 2400.0,
+        "target_feed_grade_pct": 0.85
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [71.4490, 51.1535, 122.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:substation-01",
+        "name": "6 MW Traction Substation & 2 MWh BESS",
+        "kind": "power_infrastructure",
+        "elevation_m": 120.0,
+        "bess_capacity_kwh": 2000.0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [71.4465, 51.1515, 120.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:pump-station-01",
+        "name": "Pit Bottom Drainage Sump & Pumping Station",
+        "kind": "dewatering_sump",
+        "elevation_m": -62.0,
+        "safe_datum_m": 1.15,
+        "alarm_level_m": 2.50,
+        "wp01_capacity_m3h": 240.0,
+        "wp02_capacity_m3h": 320.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [71.4330, 51.1365, -62.0],
+            [71.4360, 51.1365, -62.0],
+            [71.4360, 51.1380, -62.0],
+            [71.4330, 51.1380, -62.0],
+            [71.4330, 51.1365, -62.0]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:route-stockpile-detour",
+        "name": "Auxiliary Stockpile Detour Switchback (PK28+50)",
+        "kind": "contingency_haul_road",
+        "length_km": 4.4,
+        "ramp_grade_pct": 7.5,
+        "target_destination": "org.openegiz.mine:crusher-standby-02"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.4440, 51.1480, 80.0],
+          [71.4480, 51.1460, 95.0],
+          [71.4520, 51.1440, 110.0],
+          [71.4490, 51.1410, 118.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "asset_id": "org.openegiz.mine:evacuation-ramp-south",
+        "name": "South Deep Bench Shovel Evacuation Ramp (-60m to +0m)",
+        "kind": "emergency_evacuation_ramp",
+        "length_km": 0.45,
+        "elevation_start_m": -60.0,
+        "elevation_end_m": 0.0,
+        "crawl_speed_kmh": 0.8
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [71.4360, 51.1370, -60.0],
+          [71.4390, 51.1390, -30.0],
+          [71.4420, 51.1410, 0.0]
+        ]
+      }
+    }
+  ]
+}

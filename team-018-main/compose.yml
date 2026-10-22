@@ -1,0 +1,9 @@
+# Smart-Kenish 4.0 (Team-018) :: Root Docker Compose Entrypoint
+# Unified Stand runtime specification for OpenEgiz Digital Mine
+# Conforms to Section 3.2 and Section 5.1 of OpenEgiz Technical Specification
+
+include:
+  - path: deploy/compose/docker-compose.yml
+    env_file: deploy/compose/.env
+  - path: team/compose.yml
+    env_file: deploy/compose/.env

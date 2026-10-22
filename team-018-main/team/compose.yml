@@ -1,0 +1,49 @@
+# Smart-Kenish 4.0 (Team-018): overlay on deploy/compose/docker-compose.yml.
+# Started by `make team-mine` from the repository root.
+
+services:
+  team-setup:
+    build:
+      context: ../../team
+      dockerfile: Dockerfile
+    image: openegiz/team-mine:local
+    restart: "no"
+    command: ["python", "setup_twins.py"]
+    environment:
+      DITTO_URL: http://ditto-nginx:80
+      DITTO_PASSWORD: ${DITTO_PASSWORD:?run make up to generate .env}
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      ditto-nginx:
+        condition: service_healthy
+
+  # Same image as team-setup, which builds it (only one service may build a
+  # given tag); pull_policy: never stops Compose from looking on Docker Hub.
+  team-simulator:
+    image: openegiz/team-mine:local
+    pull_policy: never
+    restart: unless-stopped
+    mem_limit: 256m
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: "1883"
+      SIM_SPEEDUP: ${SIM_SPEEDUP:-10}
+      SIM_INTERVAL: "2.0"
+    depends_on:
+      team-setup:
+        condition: service_completed_successfully
+      mosquitto:
+        condition: service_healthy
+    # Healthy only while the main loop runs AND MQTT is connected
+    # (simulator.py rewrites /tmp/sim_heartbeat every step in that case).
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,sys,time; sys.exit(0 if time.time()-os.path.getmtime('/tmp/sim_heartbeat')<30 else 1)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 20s
+
+  grafana:
+    volumes:
+      - ../../team/dashboard.json:/var/lib/grafana/example-dashboards/smart-kenish.json:ro
