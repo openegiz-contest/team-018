@@ -1,0 +1,1423 @@
+{
+  "org.openegiz.mine:mine-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:EnterpriseModel:1.0.0",
+    "attributes": {
+      "name": "Smart-Kenish Aktau Polymetallic Open-Pit Mine",
+      "_isType": false,
+      "kind": "mine",
+      "parent_twin_id": null,
+      "child_twin_ids": [
+        "org.openegiz.mine:bench-north",
+        "org.openegiz.mine:bench-south",
+        "org.openegiz.mine:excavator-01",
+        "org.openegiz.mine:excavator-02",
+        "org.openegiz.mine:trolley-line-01",
+        "org.openegiz.mine:substation-01",
+        "org.openegiz.mine:crusher-01",
+        "org.openegiz.mine:crusher-standby-02",
+        "org.openegiz.mine:pump-station-01",
+        "org.openegiz.mine:truck-01",
+        "org.openegiz.mine:drill-rig-01",
+        "org.openegiz.mine:water-bowser-01",
+        "org.openegiz.mine:conveyor-main-01",
+        "org.openegiz.mine:stockpile-coarse-01",
+        "org.openegiz.mine:sag-mill-01",
+        "org.openegiz.mine:slope-radar-01"
+      ],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "annual_capacity_mt": 12.0,
+      "deposit_type": "Copper-Porphyry",
+      "target_grade_pct": 0.85,
+      "downtime_cost_per_hour_usd": 111000.0,
+      "industry_safety_standard": "ICMM & RoK Mining Safety Regulations",
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "tonnes_mined": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "avg_grade": {
+        "properties": {
+          "value": 0.85,
+          "unit": "% Cu"
+        }
+      },
+      "trucks_active": {
+        "properties": {
+          "value": 8,
+          "unit": "units"
+        }
+      },
+      "opex_per_tonne": {
+        "properties": {
+          "value": 0.98,
+          "unit": "$/t"
+        }
+      },
+      "opex_baseline": {
+        "properties": {
+          "value": 1.42,
+          "unit": "$/t"
+        }
+      },
+      "daily_savings_usd": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$"
+        }
+      },
+      "co2_avoided_kg": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kg CO2"
+        }
+      },
+      "diesel_saved_liters": {
+        "properties": {
+          "value": 0.0,
+          "unit": "liters"
+        }
+      },
+      "emergency_level": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "contingency_active": {
+        "properties": {
+          "value": "NONE"
+        }
+      },
+      "prevented_loss_usd": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$"
+        }
+      },
+      "hourly_risk_exposure_usd": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$/h"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "control_inbox": {
+        "properties": {
+          "command": "AUTO",
+          "target_value": 0.85,
+          "manual_override": false
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "npv_usd": {
+        "properties": {
+          "value": 18422727.0,
+          "unit": "$"
+        }
+      },
+      "irr_pct": {
+        "properties": {
+          "value": 68.0,
+          "unit": "%"
+        }
+      },
+      "smart_grade_error": {
+        "properties": {
+          "value": 0.002,
+          "unit": "% Cu"
+        }
+      },
+      "baseline_grade_error": {
+        "properties": {
+          "value": -0.4,
+          "unit": "% Cu"
+        }
+      },
+      "uop_depletion_usd_t": {
+        "properties": {
+          "value": 0.123,
+          "unit": "$/t"
+        }
+      },
+      "uop_cumulative_depletion_usd": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$"
+        }
+      },
+      "uop_tax_shield_usd": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$"
+        }
+      },
+      "kalman_gain": {
+        "properties": {
+          "value": 0.5,
+          "unit": "ratio"
+        }
+      },
+      "kalman_innovation_error": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:bench-north": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:BenchModel:1.0.0",
+    "attributes": {
+      "name": "Horizon +60m (North High-Grade Face)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [
+        "org.openegiz.mine:excavator-01"
+      ],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "bench",
+      "elevation_m": 60,
+      "ore_type": "High-Grade Chalcopyrite",
+      "reserve_mt": 4.5,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "face_grade": {
+        "properties": {
+          "value": 1.35,
+          "unit": "% Cu"
+        }
+      },
+      "active_shovels": {
+        "properties": {
+          "value": 1,
+          "unit": "units"
+        }
+      },
+      "dust_level": {
+        "properties": {
+          "value": 12.5,
+          "unit": "mg/m3"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:bench-south": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:BenchModel:1.0.0",
+    "attributes": {
+      "name": "Horizon -60m (South Deep Face & Sump)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [
+        "org.openegiz.mine:excavator-02",
+        "org.openegiz.mine:pump-station-01"
+      ],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "bench",
+      "elevation_m": -60,
+      "ore_type": "Low-Grade Disseminated Ore",
+      "reserve_mt": 7.5,
+      "hydrogeological_risk": "Sub-artesian Fault Inrush (historical 2.1% blast risk)",
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "face_grade": {
+        "properties": {
+          "value": 0.45,
+          "unit": "% Cu"
+        }
+      },
+      "active_shovels": {
+        "properties": {
+          "value": 1,
+          "unit": "units"
+        }
+      },
+      "water_influx": {
+        "properties": {
+          "value": 45.0,
+          "unit": "m3/h"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:excavator-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:ShovelModel:1.0.0",
+    "attributes": {
+      "name": "Shovel EX-01 (EKG-15 Rope Shovel)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:bench-north",
+      "parent_twin_id": "org.openegiz.mine:bench-north",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "excavator",
+      "bucket_capacity_t": 30.0,
+      "cycle_time_s": 28.0,
+      "power_kw": 1200,
+      "capital_cost_usd": 8500000.0,
+      "tooth_detachment_risk_annual_pct": 1.2,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "idle"
+        }
+      },
+      "face_grade": {
+        "properties": {
+          "value": 1.35,
+          "unit": "% Cu"
+        }
+      },
+      "passes_total": {
+        "properties": {
+          "value": 0,
+          "unit": "passes"
+        }
+      },
+      "payload_loaded_t": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "hoist_cable_wear_pct": {
+        "properties": {
+          "value": 14.2,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.3,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:excavator-02": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:ShovelModel:1.0.0",
+    "attributes": {
+      "name": "Shovel EX-02 (CAT 6020B Hydraulic Shovel)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:bench-south",
+      "parent_twin_id": "org.openegiz.mine:bench-south",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "excavator",
+      "bucket_capacity_t": 22.0,
+      "cycle_time_s": 25.0,
+      "power_kw": 800,
+      "capital_cost_usd": 6200000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "idle"
+        }
+      },
+      "face_grade": {
+        "properties": {
+          "value": 0.45,
+          "unit": "% Cu"
+        }
+      },
+      "passes_total": {
+        "properties": {
+          "value": 0,
+          "unit": "passes"
+        }
+      },
+      "payload_loaded_t": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "hydraulic_temp_c": {
+        "properties": {
+          "value": 68.4,
+          "unit": "degC"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.3,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "elevation_m": {
+        "properties": {
+          "value": -60.0,
+          "unit": "m"
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Flagship Haul Truck HT-01 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "north_chalcopyrite"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "queued_at_excavator"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-01"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "north_chalcopyrite"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:trolley-line-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:CatenaryModel:1.0.0",
+    "attributes": {
+      "name": "Main Ramp Catenary Trolley Line (1.8 km)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "catenary-line",
+      "length_km": 1.8,
+      "ramp_grade_pct": 8.5,
+      "rated_voltage_v": 1200,
+      "rated_power_mw": 6.0,
+      "catenary_fault_risk_annual_pct": 14.2,
+      "unmitigated_delay_loss_usd": 1850000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "energized"
+        }
+      },
+      "line_voltage_v": {
+        "properties": {
+          "value": 1185.0,
+          "unit": "V"
+        }
+      },
+      "total_current_a": {
+        "properties": {
+          "value": 1280.0,
+          "unit": "A"
+        }
+      },
+      "power_delivered_kw": {
+        "properties": {
+          "value": 1516.8,
+          "unit": "kW"
+        }
+      },
+      "connected_trucks": {
+        "properties": {
+          "value": 1,
+          "unit": "trucks"
+        }
+      },
+      "contingency_status": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "loss_rate_usd_hour": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$/h"
+        }
+      },
+      "snag_chainage_m": {
+        "properties": {
+          "value": 0.0,
+          "unit": "m"
+        }
+      },
+      "snag_x": {
+        "properties": {
+          "value": 0.0,
+          "unit": "m"
+        }
+      },
+      "snag_y": {
+        "properties": {
+          "value": 0.0,
+          "unit": "m"
+        }
+      },
+      "snag_z": {
+        "properties": {
+          "value": 0.0,
+          "unit": "m"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:crusher-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:CrusherModel:1.0.0",
+    "attributes": {
+      "name": "Primary Gyratory Crusher CR-01 (KKD-1500/180)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [
+        "org.openegiz.mine:crusher-standby-02"
+      ],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "crusher",
+      "rated_tph": 2400.0,
+      "motor_power_kw": 400.0,
+      "target_css_mm": 160.0,
+      "tramp_metal_risk_pct": 1.2,
+      "catastrophic_shaft_damage_usd": 5400000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "crushing"
+        }
+      },
+      "throughput_tph": {
+        "properties": {
+          "value": 1850.0,
+          "unit": "t/h"
+        }
+      },
+      "feed_grade": {
+        "properties": {
+          "value": 0.852,
+          "unit": "% Cu"
+        }
+      },
+      "target_grade": {
+        "properties": {
+          "value": 0.85,
+          "unit": "% Cu"
+        }
+      },
+      "tonnes_total": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "hopper_level_pct": {
+        "properties": {
+          "value": 45.0,
+          "unit": "%"
+        }
+      },
+      "vibration_rms": {
+        "properties": {
+          "value": 2.4,
+          "unit": "mm/s"
+        }
+      },
+      "bearing_temp_c": {
+        "properties": {
+          "value": 54.0,
+          "unit": "degC"
+        }
+      },
+      "contingency_status": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "loss_rate_usd_hour": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$/h"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:crusher-standby-02": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:CrusherModel:1.0.0",
+    "attributes": {
+      "name": "Mobile Standby Jaw Crusher CR-02 (Metso Lokotrack LT140)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:crusher-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "standby-crusher",
+      "rated_tph": 650.0,
+      "diesel_power_kw": 310.0,
+      "deployment_time_minutes": 25.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "standby_ready"
+        }
+      },
+      "throughput_tph": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t/h"
+        }
+      },
+      "feed_grade": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "tonnes_total": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "readiness_pct": {
+        "properties": {
+          "value": 100.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:pump-station-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:DewateringModel:1.0.0",
+    "attributes": {
+      "name": "Pit Dewatering Sump Pump Complex WP-01/02",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:bench-south",
+      "parent_twin_id": "org.openegiz.mine:bench-south",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "dewatering-station",
+      "sump_capacity_m3": 12000.0,
+      "safe_water_level_m": 2.5,
+      "flooding_damage_risk_usd": 2272000.0,
+      "annual_inrush_risk_pct": 2.1,
+      "sump_surface_area_m2": 4500.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "auto_regulation"
+        }
+      },
+      "sump_water_level_m": {
+        "properties": {
+          "value": 1.15,
+          "unit": "m"
+        }
+      },
+      "water_influx_m3h": {
+        "properties": {
+          "value": 45.0,
+          "unit": "m3/h"
+        }
+      },
+      "pump_flow_m3h": {
+        "properties": {
+          "value": 50.0,
+          "unit": "m3/h"
+        }
+      },
+      "pump_power_kw": {
+        "properties": {
+          "value": 45.0,
+          "unit": "kW"
+        }
+      },
+      "aux_pump_status": {
+        "properties": {
+          "value": "STANDBY_READY"
+        }
+      },
+      "contingency_status": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "loss_rate_usd_hour": {
+        "properties": {
+          "value": 0.0,
+          "unit": "$/h"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "sump_surface_area_m2": {
+        "properties": {
+          "value": 4500.0,
+          "unit": "m2"
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:substation-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:SubstationModel:1.0.0",
+    "attributes": {
+      "name": "Pit Traction Substation & BESS Microgrid",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [
+        "org.openegiz.mine:trolley-line-01"
+      ],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "electrical-substation",
+      "transformer_kva": 10000.0,
+      "bess_capacity_kwh": 3000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json"
+    },
+    "features": {
+      "grid_status": {
+        "properties": {
+          "value": "ONLINE"
+        }
+      },
+      "grid_load_mw": {
+        "properties": {
+          "value": 2.85,
+          "unit": "MW"
+        }
+      },
+      "bess_soc_pct": {
+        "properties": {
+          "value": 88.5,
+          "unit": "%"
+        }
+      },
+      "bess_power_kw": {
+        "properties": {
+          "value": -180.0,
+          "unit": "kW"
+        }
+      },
+      "tariff_usd_kwh": {
+        "properties": {
+          "value": 0.062,
+          "unit": "$/kWh"
+        }
+      },
+      "contingency_status": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:drill-rig-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:DrillRigModel:1.0.0",
+    "attributes": {
+      "name": "Blast-Hole Drill Rig DR-01 (Epiroc Pit Viper 271)",
+      "_isType": false,
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "kind": "drill-rig",
+      "location_bench": "Upper Horizon +90m",
+      "bit_diameter_mm": 270,
+      "pull_down_force_kn": 400.0,
+      "rotary_power_kw": 112.0
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "autonomous_drilling"
+        }
+      },
+      "rop_m_per_h": {
+        "properties": {
+          "value": 28.5,
+          "unit": "m/h"
+        }
+      },
+      "rotary_torque_knm": {
+        "properties": {
+          "value": 6.4,
+          "unit": "kN*m"
+        }
+      },
+      "sed_mj_m3": {
+        "properties": {
+          "value": 42.5,
+          "unit": "MJ/m3"
+        }
+      },
+      "protodyakonov_hardness_f": {
+        "properties": {
+          "value": 11.4,
+          "unit": "f"
+        }
+      },
+      "bond_work_index_kwh_t": {
+        "properties": {
+          "value": 14.9,
+          "unit": "kWh/t"
+        }
+      },
+      "holes_completed": {
+        "properties": {
+          "value": 18,
+          "unit": "holes"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:water-bowser-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:WaterBowserModel:1.0.0",
+    "attributes": {
+      "name": "Dust-Suppression Water Bowser WB-01 (BelAZ-76135)",
+      "_isType": false,
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "kind": "auxiliary-service",
+      "tank_capacity_l": 110000.0,
+      "pump_discharge_l_min": 2400.0,
+      "spray_width_m": 24.0
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "spraying_ramp"
+        }
+      },
+      "water_level_l": {
+        "properties": {
+          "value": 85000.0,
+          "unit": "L"
+        }
+      },
+      "spray_active": {
+        "properties": {
+          "value": true
+        }
+      },
+      "road_surface_moisture_pct": {
+        "properties": {
+          "value": 14.5,
+          "unit": "%"
+        }
+      },
+      "pm10_concentration_ug_m3": {
+        "properties": {
+          "value": 32.4,
+          "unit": "ug/m3"
+        }
+      },
+      "route_coverage_kmh": {
+        "properties": {
+          "value": 18.0,
+          "unit": "km/h"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:conveyor-main-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:ConveyorModel:1.0.0",
+    "attributes": {
+      "name": "Overland Coarse Ore Conveyor CV-01 (KNK-270)",
+      "_isType": false,
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "kind": "continuous-transport",
+      "length_m": 1420.0,
+      "lift_m": 85.0,
+      "belt_width_mm": 1600,
+      "speed_m_s": 3.15,
+      "rated_tph": 3000.0
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "conveying"
+        }
+      },
+      "mass_flow_tph": {
+        "properties": {
+          "value": 2400.0,
+          "unit": "t/h"
+        }
+      },
+      "belt_tension_kn": {
+        "properties": {
+          "value": 281.0,
+          "unit": "kN"
+        }
+      },
+      "drive_power_kw": {
+        "properties": {
+          "value": 1122.0,
+          "unit": "kW"
+        }
+      },
+      "idler_bearing_temp_c": {
+        "properties": {
+          "value": 54.2,
+          "unit": "degC"
+        }
+      },
+      "rip_detection_status": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "tonnes_conveyed_total": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:stockpile-coarse-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:StockpileModel:1.0.0",
+    "attributes": {
+      "name": "Coarse Ore Surge Stockpile SP-01 (Covered Dome)",
+      "_isType": false,
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "kind": "buffer-stockpile",
+      "design_capacity_t": 45000.0,
+      "feeder_count": 4
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "operating_buffer"
+        }
+      },
+      "live_tonnage_t": {
+        "properties": {
+          "value": 28500.0,
+          "unit": "t"
+        }
+      },
+      "surge_reserve_hours": {
+        "properties": {
+          "value": 19.0,
+          "unit": "h"
+        }
+      },
+      "homogenized_cu_grade_pct": {
+        "properties": {
+          "value": 0.85,
+          "unit": "% Cu"
+        }
+      },
+      "feeder_1_hz": {
+        "properties": {
+          "value": 42.0,
+          "unit": "Hz"
+        }
+      },
+      "feeder_2_hz": {
+        "properties": {
+          "value": 41.5,
+          "unit": "Hz"
+        }
+      },
+      "feeder_3_hz": {
+        "properties": {
+          "value": 42.0,
+          "unit": "Hz"
+        }
+      },
+      "feeder_4_hz": {
+        "properties": {
+          "value": 41.8,
+          "unit": "Hz"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:sag-mill-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:SagMillModel:1.0.0",
+    "attributes": {
+      "name": "Primary Concentrator SAG Mill SM-01 (MPSI-90x30 Gearless)",
+      "_isType": false,
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "kind": "grinding-circuit",
+      "motor_power_mw": 14.0,
+      "diameter_m": 9.0,
+      "length_m": 3.0
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "grinding_nominal"
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 5875.0,
+          "unit": "kW"
+        }
+      },
+      "feed_rate_tph": {
+        "properties": {
+          "value": 1500.0,
+          "unit": "t/h"
+        }
+      },
+      "mill_load_vol_pct": {
+        "properties": {
+          "value": 26.2,
+          "unit": "%"
+        }
+      },
+      "bearing_pressure_mpa": {
+        "properties": {
+          "value": 6.24,
+          "unit": "MPa"
+        }
+      },
+      "slurry_density_pct_solids": {
+        "properties": {
+          "value": 72.1,
+          "unit": "%"
+        }
+      },
+      "flotation_recovery_cu_pct": {
+        "properties": {
+          "value": 90.5,
+          "unit": "%"
+        }
+      },
+      "specific_energy_kwh_t": {
+        "properties": {
+          "value": 3.92,
+          "unit": "kWh/t"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:slope-radar-01": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:SlopeRadarModel:1.0.0",
+    "attributes": {
+      "name": "Geomechanical Slope Stability Radar SR-01 (IDS IBIS-FM)",
+      "_isType": false,
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "kind": "geotechnical-monitoring",
+      "monitored_wall": "South Deep Wall Horizon -60m",
+      "slope_angle_deg": 48.0,
+      "rock_cohesion_kpa": 620.0,
+      "friction_angle_deg": 34.0
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "continuous_interferometry"
+        }
+      },
+      "pore_pressure_kpa": {
+        "properties": {
+          "value": 56.3,
+          "unit": "kPa"
+        }
+      },
+      "deformation_velocity_mm_h": {
+        "properties": {
+          "value": 0.12,
+          "unit": "mm/h"
+        }
+      },
+      "inverse_velocity_h_mm": {
+        "properties": {
+          "value": 8.33,
+          "unit": "h/mm"
+        }
+      },
+      "factor_of_safety_fos": {
+        "properties": {
+          "value": 1.34,
+          "unit": "FoS"
+        }
+      },
+      "slope_alarm_status": {
+        "properties": {
+          "value": "NORMAL"
+        }
+      },
+      "evacuation_interlock": {
+        "properties": {
+          "value": false
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.1,
+          "crc_errors_total": 0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  }
+}

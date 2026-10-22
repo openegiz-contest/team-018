@@ -1,0 +1,17 @@
+{
+  "name": "smart-kenish-4.0-3d",
+  "version": "1.0.0",
+  "description": "Smart-Kenish 4.0 — 3D digital twin of the Aktau-Mys copper open pit (OpenEgiz / Eclipse Ditto v2)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["openegiz", "digital-twin", "three.js", "mining", "scada"],
+  "author": "Smart-Kenish 4.0",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.3.0",
+    "three": "^0.186.1"
+  }
+}
