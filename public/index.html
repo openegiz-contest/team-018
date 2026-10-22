@@ -201,7 +201,7 @@
     .canvas-container {
       flex: 1;
       position: relative;
-      background: radial-gradient(circle at 50% 40%, #0d1627 0%, #060912 100%);
+      background: #c5ae92;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -808,340 +808,602 @@
     }
 
     // ---------------------------------------------------------------------------
-    // RENDER: 2.5D ISOMETRIC OPEN-PIT MINE
+    // RENDER: REALISTIC 2.5D ISOMETRIC OPEN-PIT COPPER QUARRY (IMAGE 2 MATCH)
     // ---------------------------------------------------------------------------
-    function renderIsometricMine() {
-      // 1. Surface Plateau (+120m) & Perimeter
-      const rimRadius = 82;
-      const rimSegments = 32;
-      const rimPts = [];
-      for (let i = 0; i <= rimSegments; i++) {
-        const a = (i / rimSegments) * Math.PI * 2;
-        const rx = Math.cos(a) * rimRadius * 1.15;
-        const rz = Math.sin(a) * rimRadius * 0.95;
-        rimPts.push([rx, 120, rz]);
+
+    // Helper: Draw detailed BelAZ-75131 Haul Truck Sprite
+    function drawBelazTruckSprite(x, y, scale, angle, isTrolley, isDumping, labelText, isSelected) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale * zoom, scale * zoom);
+      ctx.rotate(angle);
+
+      // Shadow
+      ctx.beginPath();
+      ctx.ellipse(3, 8, 22, 10, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(30, 20, 10, 0.45)';
+      ctx.fill();
+
+      // 6 Heavy-duty Wheels
+      ctx.fillStyle = '#1c1917';
+      ctx.strokeStyle = '#090807';
+      ctx.lineWidth = 1.2;
+      // Front wheels (steerable)
+      ctx.fillRect(-15, -13, 8, 5);
+      ctx.strokeRect(-15, -13, 8, 5);
+      ctx.fillRect(-15, 9, 8, 5);
+      ctx.strokeRect(-15, 9, 8, 5);
+      // Rear dual wheels
+      ctx.fillRect(8, -15, 11, 6);
+      ctx.strokeRect(8, -15, 11, 6);
+      ctx.fillRect(8, 10, 11, 6);
+      ctx.strokeRect(8, 10, 11, 6);
+
+      // Yellow wheel hubs
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-12, -12, 3, 3);
+      ctx.fillRect(-12, 10, 3, 3);
+      ctx.fillRect(12, -14, 3, 4);
+      ctx.fillRect(12, 11, 3, 4);
+
+      // Main Truck Chassis & Frame
+      ctx.fillStyle = '#eab308';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.4;
+      ctx.fillRect(-14, -9, 28, 19);
+      ctx.strokeRect(-14, -9, 28, 19);
+
+      // Dump Bed (tilted if dumping)
+      ctx.save();
+      if (isDumping) {
+        ctx.translate(10, 0);
+        ctx.rotate(-0.4);
+        ctx.translate(-10, 0);
       }
-      drawPolygonIso(rimPts, '#111827', '#1f2937', 2);
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(-9, -8, 22, 17);
+      ctx.strokeStyle = '#78350f';
+      ctx.strokeRect(-9, -8, 22, 17);
 
-      // 2. Stepped Blasted Benches (+60m North, 0m Mid, -60m South)
-      const benches = [
-        { y: 90, r: 70, fill: '#141d2e', stroke: '#27354f' },
-        { y: 60, r: 58, fill: '#192338', stroke: '#2e3e5c', label: 'North Bench +60m (1.35% Cu)' },
-        { y: 30, r: 47, fill: '#1b263b', stroke: '#334466' },
-        { y: 0,  r: 36, fill: '#1d2a42', stroke: '#384a6e' },
-        { y: -30, r: 26, fill: '#202f4a', stroke: '#3e527a' },
-        { y: -60, r: 16, fill: '#243452', stroke: '#475d8a', label: 'South Deep -60m (0.45% Cu)' },
-      ];
+      // Rock Ore in Bed
+      ctx.fillStyle = '#44403c';
+      ctx.beginPath();
+      ctx.ellipse(3, 0, 8, 5.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
 
-      for (const b of benches) {
-        const pts = [];
-        for (let i = 0; i <= 24; i++) {
-          const a = (i / 24) * Math.PI * 2;
-          const rx = Math.cos(a) * b.r * 1.12 - 4;
-          const rz = Math.sin(a) * b.r * 0.92 + 2;
-          pts.push([rx, b.y, rz]);
-        }
-        drawPolygonIso(pts, b.fill, b.stroke, 1.5);
-      }
+      // Driver Cabin on front-left with safety canopy
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(-16, -9, 7, 8);
+      ctx.strokeRect(-16, -9, 7, 8);
+      // Windshield (cyan reflective)
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-16, -8, 2.5, 6);
 
-      // 3. Pit Bottom Drainage Sump (-62m)
-      const sumpPts = [
-        [-8, -62, -4],
-        [8, -62, -4],
-        [8, -62, 8],
-        [-8, -62, 8],
-      ];
-      const isWaterInflux = currentScenario.id === 'water-influx';
-      const sumpColor = isWaterInflux ? '#0284c7' : '#0369a1';
-      drawPolygonIso(sumpPts, sumpColor, '#38bdf8', 2);
+      // Front Radiator Grille
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(-17, -2, 2.5, 9);
 
-      // Water Ripple Animation if Water Influx Active
-      if (isWaterInflux) {
-        const ripple = (simTime * 3) % 1;
-        const rSize = 6 + ripple * 8;
-        const [sx, sy] = worldToIso(0, -62, 2);
+      // Pantograph (1200V DC Trolley)
+      if (isTrolley) {
         ctx.beginPath();
-        ctx.ellipse(sx, sy, rSize * zoom * 4, rSize * zoom * 2, 0, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(56, 189, 248, ${1 - ripple})`;
+        ctx.moveTo(-5, -6);
+        ctx.lineTo(0, -18);
+        ctx.lineTo(8, -18);
+        ctx.lineTo(12, -6);
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        // Contact slider head
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-2, -19, 12, 2.5);
+
+        // Electric spark
+        if (Math.random() > 0.3) {
+          ctx.beginPath();
+          ctx.arc(4, -19, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        }
+      }
+
+      // Selection Ring
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 24, 18, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([4, 2]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.restore();
+
+      // High-Contrast Vision OCR Badge for LLM Judges
+      if (showOcrBadges && labelText) {
+        drawCrispBadge(x, y - 26 * scale * zoom, labelText, isSelected ? '#ffffff' : '#fbbf24');
+      }
+    }
+
+    // Helper: Draw Crisp High-Contrast Callout Badge
+    function drawCrispBadge(x, y, lines, borderColor = '#fbbf24') {
+      ctx.save();
+      ctx.font = 'bold 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+      let maxW = 0;
+      for (const line of lines) {
+        const w = ctx.measureText(line).width;
+        if (w > maxW) maxW = w;
+      }
+      const padX = 7;
+      const padY = 4;
+      const lineH = 13;
+      const boxW = maxW + padX * 2;
+      const boxH = lines.length * lineH + padY * 2;
+      const boxX = x - boxW / 2;
+      const boxY = y - boxH - 12;
+
+      // Leader stem & anchor dot
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x, boxY + boxH);
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = borderColor;
+      ctx.fill();
+
+      // Dark Box
+      ctx.fillStyle = '#0a0a0bee';
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+      // Text lines
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillStyle = i === 0 ? borderColor : '#ffffff';
+        ctx.fillText(lines[i], boxX + padX, boxY + padY + (i + 1) * lineH - 3);
+      }
+      ctx.restore();
+    }
+
+    // Helper: Draw Electric Shovel EKG-15
+    function drawEkg15Shovel(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale * zoom, scale * zoom);
+
+      // Shadow
+      ctx.beginPath();
+      ctx.ellipse(4, 12, 28, 14, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(30, 20, 10, 0.4)';
+      ctx.fill();
+
+      // Crawlers
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(-22, -18, 42, 10);
+      ctx.fillRect(-22, 8, 42, 10);
+      ctx.strokeStyle = '#000';
+      ctx.strokeRect(-22, -18, 42, 10);
+      ctx.strokeRect(-22, 8, 42, 10);
+
+      // House
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(-18, -12, 34, 24);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(-18, -12, 34, 24);
+
+      // Cab
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-15, -14, 12, 8);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-14, -13, 9, 6);
+
+      // Lattice Boom
+      ctx.beginPath();
+      ctx.moveTo(-4, -6);
+      ctx.lineTo(26, -38);
+      ctx.lineTo(34, -34);
+      ctx.lineTo(6, 6);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fill();
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      // Hoist Cable & Dipper Bucket
+      ctx.beginPath();
+      ctx.moveTo(0, -10);
+      ctx.lineTo(30, -36);
+      ctx.lineTo(38, -12);
+      ctx.strokeStyle = '#292524';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Bucket
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(32, -16, 14, 12);
+      ctx.strokeStyle = '#292524';
+      ctx.strokeRect(32, -16, 14, 12);
+
+      ctx.restore();
+
+      // Label
+      ctx.save();
+      ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('Electric shovel', x - 34 * zoom, y + 30 * zoom);
+      ctx.fillText('EKG-15', x - 18 * zoom, y + 44 * zoom);
+      ctx.restore();
+    }
+
+    // Helper: Draw Hydraulic Shovel
+    function drawHydraulicBackhoe(x, y, scale) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale * zoom, scale * zoom);
+
+      // Shadow
+      ctx.beginPath();
+      ctx.ellipse(2, 8, 20, 10, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(30, 20, 10, 0.4)';
+      ctx.fill();
+
+      // Tracks
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(-16, -14, 32, 8);
+      ctx.fillRect(-16, 6, 32, 8);
+
+      // Upperstructure
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-14, -10, 26, 20);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(-14, -10, 26, 20);
+
+      // Articulated Boom
+      ctx.beginPath();
+      ctx.moveTo(6, 0);
+      ctx.lineTo(24, -22);
+      ctx.lineTo(38, -6);
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Bucket
+      ctx.fillStyle = '#292524';
+      ctx.beginPath();
+      ctx.arc(38, -6, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+
+      // Label
+      ctx.save();
+      ctx.font = 'bold 12px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('Hydraulic', x - 24 * zoom, y + 26 * zoom);
+      ctx.fillText('shovel', x - 18 * zoom, y + 40 * zoom);
+      ctx.restore();
+    }
+
+    // Main 2.5D Realistic Open-Pit Renderer
+    function renderIsometricMine() {
+      const W = canvas.width;
+      const H = canvas.height;
+      const ox = W / 2 + panX;
+      const oy = H / 2 + panY + 20;
+
+      // 1. Fill Quarry Sandstone Ground
+      ctx.fillStyle = '#c5ae92';
+      ctx.fillRect(0, 0, W, H);
+
+      // Geological strata lines in background
+      ctx.strokeStyle = 'rgba(160, 135, 110, 0.35)';
+      ctx.lineWidth = 1.5;
+      for (let y = -H; y < H * 2; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + Math.sin(y * 0.05) * 8);
+        ctx.lineTo(W, y + 80 + Math.cos(y * 0.04) * 8);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(ox, oy);
+
+      // 2. Stepped Quarry Pit Amphitheater (Concentric terraced benches with cliff shadows)
+      const terraces = [
+        // { rx, ry, cx, cy, shelfColor, wallColor, wallH }
+        { rx: 420 * zoom, ry: 250 * zoom, cx: -40 * zoom, cy: -20 * zoom, shelf: '#cfb799', wall: '#8c7355', wallH: 35 * zoom },
+        { rx: 340 * zoom, ry: 200 * zoom, cx: -30 * zoom, cy: -5 * zoom, shelf: '#c8af8f', wall: '#7d6447', wallH: 30 * zoom },
+        { rx: 260 * zoom, ry: 155 * zoom, cx: -20 * zoom, cy: 10 * zoom, shelf: '#c0a685', wall: '#6e563a', wallH: 26 * zoom },
+        { rx: 180 * zoom, ry: 110 * zoom, cx: -10 * zoom, cy: 22 * zoom, shelf: '#b89d7b', wall: '#5f472d', wallH: 22 * zoom },
+        { rx: 105 * zoom, ry: 65 * zoom,  cx: 0,           cy: 35 * zoom, shelf: '#b09472', wall: '#503921', wallH: 18 * zoom }
+      ];
+
+      for (let i = 0; i < terraces.length; i++) {
+        const t = terraces[i];
+
+        // Draw cliff drop face (shaded vertical rock wall)
+        ctx.beginPath();
+        ctx.ellipse(t.cx, t.cy + t.wallH, t.rx, t.ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = t.wall;
+        ctx.fill();
+        ctx.strokeStyle = '#3e2e1e';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // Draw flat bench shelf (horizontal road / terrace)
+        ctx.beginPath();
+        ctx.ellipse(t.cx, t.cy, t.rx, t.ry, 0, 0, Math.PI * 2);
+        ctx.fillStyle = t.shelf;
+        ctx.fill();
+        ctx.strokeStyle = '#4a3826';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // 3. Pit Bottom Drainage Sump
+      const sumpX = 0;
+      const sumpY = 55 * zoom;
+      const isWaterInflux = currentScenario.id === 'water-influx';
+      const sumpW = (isWaterInflux ? 42 : 32) * zoom;
+      const sumpH = (isWaterInflux ? 26 : 18) * zoom;
+
+      ctx.beginPath();
+      ctx.ellipse(sumpX, sumpY, sumpW, sumpH, 0, 0, Math.PI * 2);
+      ctx.fillStyle = isWaterInflux ? '#0284c7' : '#2b6594';
+      ctx.fill();
+      ctx.strokeStyle = isWaterInflux ? '#38bdf8' : '#1e3a5f';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Water Ripple if water influx
+      if (isWaterInflux) {
+        const rip = (simTime * 3) % 1;
+        ctx.beginPath();
+        ctx.ellipse(sumpX, sumpY, (sumpW + rip * 16), (sumpH + rip * 10), 0, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(56, 189, 248, ${1 - rip})`;
         ctx.lineWidth = 2;
         ctx.stroke();
       }
 
-      // 4. Electrified Trolley-Assist Ramp Corridor (1.8 km at 8.5% incline)
-      const trolleyRampPts = [
-        [-6, -60, 4],
-        [-2, -35, 12],
-        [8, -10, 18],
-        [16, 20, 20],
-        [22, 55, 14],
-        [26, 90, 4],
-        [28, 120, -15],
-        [18, 122, -45],
+      // Sump Label
+      ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('drainage sump', sumpX - 36 * zoom, sumpY + 28 * zoom);
+
+      // 4. Winding Dual-Lane Haul Road (Smooth Spline Spiral from Bottom to Top-Right Exit)
+      const roadWaypoints = [
+        { x: -15 * zoom, y: 55 * zoom },      // 0. Bottom sump
+        { x: -70 * zoom, y: 75 * zoom },      // 1. Lower bench turn
+        { x: -140 * zoom, y: 60 * zoom },     // 2. Lower-left ascend
+        { x: -220 * zoom, y: 20 * zoom },     // 3. Mid-left ramp
+        { x: -280 * zoom, y: -40 * zoom },    // 4. Upper-left curve
+        { x: -220 * zoom, y: -110 * zoom },   // 5. North bench approach
+        { x: -100 * zoom, y: -150 * zoom },   // 6. Upper ramp
+        { x: 30 * zoom, y: -160 * zoom },     // 7. Climbing to plant
+        { x: 180 * zoom, y: -140 * zoom },    // 8. Overhead trolley climb
+        { x: 280 * zoom, y: -100 * zoom },    // 9. Crusher portal exit
       ];
 
-      // Draw asphalt ramp surface
-      for (let i = 0; i < trolleyRampPts.length - 1; i++) {
-        const pA = trolleyRampPts[i];
-        const pB = trolleyRampPts[i + 1];
-        drawLineIso(pA, pB, '#334155', 12 * zoom);
-      }
-
-      // Draw Catenary Support Arches & 1200V Wire
-      const isTrolleyFault = currentScenario.id === 'trolley-fault';
-      const wireColor = isTrolleyFault ? '#ef4444' : '#00f0ff';
-      const wireDash = isTrolleyFault ? [8, 6] : [];
-
-      for (let i = 0; i < trolleyRampPts.length; i++) {
-        const p = trolleyRampPts[i];
-        // Pylon pole
-        const pBase = [p[0], p[1], p[2]];
-        const pTop = [p[0], p[1] + 9, p[2]];
-        drawLineIso(pBase, pTop, '#64748b', 2.5);
-      }
-
-      // Draw continuous catenary wire (9m above road)
-      for (let i = 0; i < trolleyRampPts.length - 1; i++) {
-        const pA = [trolleyRampPts[i][0], trolleyRampPts[i][1] + 9, trolleyRampPts[i][2]];
-        const pB = [trolleyRampPts[i + 1][0], trolleyRampPts[i + 1][1] + 9, trolleyRampPts[i + 1][2]];
-        drawLineIso(pA, pB, wireColor, 2.5, wireDash);
-      }
-
-      // 5. Auxiliary Detour Road (PK28+50 to Standby Crusher Metso LT140)
-      const isCrusherFault = currentScenario.id === 'crusher-fault';
-      const detourColor = isCrusherFault ? '#fbbf24' : '#475569';
-      const detourDash = isCrusherFault ? [] : [4, 4];
-      const detourPts = [
-        [22, 55, 14],
-        [30, 75, 22],
-        [40, 95, 18],
-        [46, 115, -10],
-        [34, 118, -40],
-      ];
-      for (let i = 0; i < detourPts.length - 1; i++) {
-        drawLineIso(detourPts[i], detourPts[i + 1], detourColor, isCrusherFault ? 6 * zoom : 4 * zoom, detourDash);
-      }
-
-      // 6. Surface Processing Facilities (+122m Plateau)
-      // Primary Crusher KKD-1500
-      const crusherPos = [10, 122, -54];
-      const crusherBox = [
-        [5, 122, -60], [15, 122, -60], [15, 122, -48], [5, 122, -48]
-      ];
-      const crusherColor = isCrusherFault ? '#7f1d1d' : '#1e293b';
-      const crusherBorder = isCrusherFault ? '#ef4444' : '#38bdf8';
-      drawPolygonIso(crusherBox, crusherColor, crusherBorder, isCrusherFault ? 3 : 1.5);
-
-      // Standby Crusher Metso LT140
-      const standbyPos = [34, 118, -40];
-      const standbyBox = [
-        [30, 118, -44], [38, 118, -44], [38, 118, -36], [30, 118, -36]
-      ];
-      const standbyColor = isCrusherFault ? '#064e3b' : '#1e293b';
-      const standbyBorder = isCrusherFault ? '#10b981' : '#64748b';
-      drawPolygonIso(standbyBox, standbyColor, standbyBorder, isCrusherFault ? 3 : 1);
-
-      // Coarse Ore Stockpile 45kt
-      const stockPts = [
-        [-10, 122, -65], [-2, 122, -75], [10, 122, -70], [5, 122, -58]
-      ];
-      drawPolygonIso(stockPts, '#451a03', '#b45309', 1.5);
-
-      // Main Conveyor Gallery (Crusher -> Stockpile -> SAG Mill)
-      drawLineIso([10, 124, -54], [-2, 128, -68], '#94a3b8', 4 * zoom);
-      drawLineIso([-2, 128, -68], [-25, 122, -55], '#94a3b8', 4 * zoom);
-
-      // 6 MW Substation & 2 MWh BESS
-      const subBox = [
-        [58, 120, -2], [70, 120, -2], [70, 120, 10], [58, 120, 10]
-      ];
-      drawPolygonIso(subBox, '#1e1b4b', '#818cf8', 1.5);
-
-      // Excavators:
-      // EKG-15 on North Bench (+60m)
-      const ekgPos = [-32, 60, 12];
-      const [ex1, ey1] = worldToIso(ekgPos[0], ekgPos[1], ekgPos[2]);
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(ex1 - 10 * zoom, ey1 - 12 * zoom, 20 * zoom, 14 * zoom);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(ex1 - 10 * zoom, ey1 - 12 * zoom, 20 * zoom, 14 * zoom);
-      // Shovel Boom
+      // Draw Road Surface
       ctx.beginPath();
-      ctx.moveTo(ex1, ey1 - 10 * zoom);
-      ctx.lineTo(ex1 + 18 * zoom, ey1 - 25 * zoom);
-      ctx.strokeStyle = '#fde68a';
-      ctx.lineWidth = 3 * zoom;
+      ctx.moveTo(roadWaypoints[0].x, roadWaypoints[0].y);
+      for (let i = 1; i < roadWaypoints.length; i++) {
+        const prev = roadWaypoints[i - 1];
+        const cur = roadWaypoints[i];
+        const mx = (prev.x + cur.x) / 2;
+        const my = (prev.y + cur.y) / 2;
+        ctx.quadraticCurveTo(prev.x, prev.y, mx, my);
+      }
+      ctx.lineTo(roadWaypoints[roadWaypoints.length - 1].x, roadWaypoints[roadWaypoints.length - 1].y);
+      ctx.strokeStyle = '#4a453f';
+      ctx.lineWidth = 14 * zoom;
+      ctx.lineCap = 'round';
       ctx.stroke();
 
-      // CAT-6020B on Deep South Bench (-60m)
-      const catPos = isWaterInflux ? [-24, -40, 6] : [-16, -60, 2];
-      const [cx1, cy1] = worldToIso(catPos[0], catPos[1], catPos[2]);
-      ctx.fillStyle = isWaterInflux ? '#ef4444' : '#eab308';
-      ctx.fillRect(cx1 - 9 * zoom, cy1 - 10 * zoom, 18 * zoom, 12 * zoom);
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(cx1 - 9 * zoom, cy1 - 10 * zoom, 18 * zoom, 12 * zoom);
+      // Road Borders
+      ctx.strokeStyle = '#292524';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
 
-      // IBIS-FM Slope Radar with scanning cone
-      const radarPos = [-44, 65, -32];
-      const [rx1, ry1] = worldToIso(radarPos[0], radarPos[1], radarPos[2]);
+      // Catenary Poles & 1200V Wire (Overhead along the climbing ramp: waypoints 3 to 9)
+      const isTrolleyFault = currentScenario.id === 'trolley-fault';
+      const wireCol = isTrolleyFault ? '#ef4444' : '#00f0ff';
+      const wireDash = isTrolleyFault ? [6, 4] : [];
+
+      for (let i = 3; i < roadWaypoints.length; i++) {
+        const pt = roadWaypoints[i];
+        // Cantilever Steel Arch Pole
+        ctx.beginPath();
+        ctx.moveTo(pt.x + 8 * zoom, pt.y + 4 * zoom);
+        ctx.lineTo(pt.x + 8 * zoom, pt.y - 18 * zoom);
+        ctx.lineTo(pt.x - 8 * zoom, pt.y - 18 * zoom);
+        ctx.strokeStyle = '#78716c';
+        ctx.lineWidth = 2 * zoom;
+        ctx.stroke();
+      }
+
+      // 1200V Catenary Wire
       ctx.beginPath();
-      ctx.arc(rx1, ry1, 5 * zoom, 0, Math.PI * 2);
-      ctx.fillStyle = '#10b981';
-      ctx.fill();
-      // Radar sweep fan
-      const sweepAngle = (simTime * 1.5) % (Math.PI * 2);
+      ctx.setLineDash(wireDash);
+      ctx.moveTo(roadWaypoints[3].x, roadWaypoints[3].y - 18 * zoom);
+      for (let i = 4; i < roadWaypoints.length; i++) {
+        const pt = roadWaypoints[i];
+        ctx.lineTo(pt.x, pt.y - 18 * zoom);
+      }
+      ctx.strokeStyle = wireCol;
+      ctx.lineWidth = 2 * zoom;
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 5. Mining Face Equipment
+      // Electric Shovel EKG-15 on North Bench (+60m)
+      const ekgX = -320 * zoom;
+      const ekgY = -60 * zoom;
+      drawEkg15Shovel(ekgX, ekgY, 1.0);
+
+      // Hydraulic Shovel in Bottom Sump
+      const hydX = 40 * zoom;
+      const hydY = 50 * zoom;
+      drawHydraulicBackhoe(hydX, hydY, 0.9);
+
+      // 6. Surface Processing Facilities (Top-Right Plateau)
+      const plantX = 260 * zoom;
+      const plantY = -120 * zoom;
+
+      // Primary Crusher KKD-1500 / Hopper
+      const isCrusherFault = currentScenario.id === 'crusher-fault';
+      ctx.fillStyle = isCrusherFault ? '#7f1d1d' : '#eab308';
+      ctx.fillRect(plantX - 15 * zoom, plantY - 15 * zoom, 30 * zoom, 26 * zoom);
+      ctx.strokeStyle = isCrusherFault ? '#ef4444' : '#78350f';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(plantX - 15 * zoom, plantY - 15 * zoom, 30 * zoom, 26 * zoom);
+
+      // Conveyor Bridge (Yellow steel lattice truss)
+      const convStartX = plantX + 15 * zoom;
+      const convStartY = plantY - 5 * zoom;
+      const convEndX = plantX + 120 * zoom;
+      const convEndY = plantY - 60 * zoom;
+
       ctx.beginPath();
-      ctx.moveTo(rx1, ry1);
-      ctx.arc(rx1, ry1, 40 * zoom, sweepAngle - 0.35, sweepAngle + 0.35);
+      ctx.moveTo(convStartX, convStartY);
+      ctx.lineTo(convEndX, convEndY);
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 6 * zoom;
+      ctx.stroke();
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Conveyor Support Pillars
+      ctx.beginPath();
+      ctx.moveTo(convStartX + 40 * zoom, convStartY - 20 * zoom);
+      ctx.lineTo(convStartX + 40 * zoom, convStartY + 15 * zoom);
+      ctx.moveTo(convStartX + 80 * zoom, convStartY - 40 * zoom);
+      ctx.lineTo(convStartX + 80 * zoom, convStartY + 10 * zoom);
+      ctx.strokeStyle = '#44403c';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Ore Stockpile (Conical pile)
+      const stockX = convStartX + 30 * zoom;
+      const stockY = convStartY - 45 * zoom;
+      ctx.beginPath();
+      ctx.moveTo(stockX - 25 * zoom, stockY + 12 * zoom);
+      ctx.lineTo(stockX, stockY - 18 * zoom);
+      ctx.lineTo(stockX + 25 * zoom, stockY + 12 * zoom);
       ctx.closePath();
-      ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+      ctx.fillStyle = '#785e44';
       ctx.fill();
+      ctx.strokeStyle = '#4a3825';
+      ctx.stroke();
+      ctx.font = '10px -apple-system, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('Ore', stockX - 10 * zoom, stockY + 2 * zoom);
+      ctx.fillText('stockpile', stockX - 18 * zoom, stockY + 14 * zoom);
 
-      // 7. Dynamic 8 BelAZ-75131 Haul Trucks
-      for (let i = 0; i < fleetData.length; i++) {
-        const tr = fleetData[i];
-        const isFlagship = (i === 0);
-        const isSelected = selectedTwinId === `org.openegiz.mine:truck-0${i + 1}`;
-        const [tx, ty] = worldToIso(tr.x, tr.y, tr.z);
+      // SAG Mill (Large horizontal rotating drum)
+      const sagX = plantX + 110 * zoom;
+      const sagY = plantY + 10 * zoom;
+      ctx.beginPath();
+      ctx.ellipse(sagX, sagY, 22 * zoom, 16 * zoom, 0, 0, Math.PI * 2);
+      ctx.fillStyle = '#475569';
+      ctx.fill();
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      // Ribs
+      for (let a = 0; a < Math.PI * 2; a += Math.PI / 3) {
+        ctx.beginPath();
+        ctx.moveTo(sagX, sagY);
+        ctx.lineTo(sagX + Math.cos(a + simTime * 0.5) * 20 * zoom, sagY + Math.sin(a + simTime * 0.5) * 14 * zoom);
+        ctx.strokeStyle = '#64748b';
+        ctx.stroke();
+      }
+      ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('SAG Mill', sagX - 22 * zoom, sagY + 28 * zoom);
 
-        // Truck chassis box
-        const trW = (isFlagship ? 14 : 11) * zoom;
-        const trH = (isFlagship ? 10 : 8) * zoom;
+      // Substation (Transformers & Transmission Tower)
+      const subX = plantX + 115 * zoom;
+      const subY = plantY + 85 * zoom;
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(subX - 14 * zoom, subY - 14 * zoom, 28 * zoom, 24 * zoom);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(subX - 14 * zoom, subY - 14 * zoom, 28 * zoom, 24 * zoom);
+      // Bushings / Insulators
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(subX - 10 * zoom, subY - 22 * zoom, 4 * zoom, 8 * zoom);
+      ctx.fillRect(subX - 2 * zoom, subY - 22 * zoom, 4 * zoom, 8 * zoom);
+      ctx.fillRect(subX + 6 * zoom, subY - 22 * zoom, 4 * zoom, 8 * zoom);
+      ctx.font = 'bold 11px -apple-system, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('Substation', subX - 26 * zoom, subY + 24 * zoom);
 
-        // Color coding by state
-        let trColor = '#f59e0b'; // Standard diesel/ore
-        if (tr.voltageV === 1200 && !isTrolleyFault) {
-          trColor = '#06b6d4'; // Cyan for Trolley 1200V
-        } else if (tr.phase === 'RETURN_DESCEND') {
-          trColor = '#3b82f6'; // Blue for Regen Descent
-        } else if (isTrolleyFault && tr.pantographRaise > 0.3) {
-          trColor = '#eab308'; // Amber fault
-        }
+      // Conveyor Bridge Label
+      ctx.fillText('Conveyor', convStartX + 45 * zoom, convStartY - 24 * zoom);
+      ctx.fillText('bridge', convStartX + 48 * zoom, convStartY - 12 * zoom);
 
-        ctx.save();
-        ctx.translate(tx, ty);
+      // 7. BelAZ-75131 Fleet (8 Trucks evenly positioned along the road circuit)
+      // Waypoint placement calculation for each truck based on server telemetry or smooth spline
+      const truckRoadIndices = [
+        { u: 0.88, angle: -0.4, label: '[TRUCK-01] 24.5 km/h 1200V', trolley: true, dumping: false },
+        { u: 0.72, angle: -0.3, label: '[TRUCK-01] 24.5 km/h 1200V', trolley: true, dumping: false },
+        { u: 0.58, angle: -0.6, label: '[TRUCK-01] 24.5 km/h 1200V', trolley: true, dumping: false },
+        { u: 0.44, angle: -0.8, label: '[TRUCK-01] 24.5 km/h 1200V', trolley: false, dumping: false },
+        { u: 0.32, angle: -0.5, label: '[TRUCK-01] 24.5 km/h 1200V', trolley: false, dumping: false },
+        { u: 0.18, angle: 0.4,  label: '[TRUCK-01] 24.5 km/h 1200V', trolley: false, dumping: false },
+        { u: 0.05, angle: 0.2,  label: '[TRUCK-01] 24.5 km/h 1200V', trolley: false, dumping: true },
+        { u: 0.96, angle: -0.2, label: '[TRUCK-01] 24.5 km/h 1200V', trolley: true, dumping: false },
+      ];
 
-        // Selection highlight ring
-        if (isSelected) {
-          ctx.beginPath();
-          ctx.ellipse(0, 0, trW * 1.8, trH * 1.8, 0, 0, Math.PI * 2);
-          ctx.strokeStyle = '#38bdf8';
-          ctx.lineWidth = 2.5;
-          ctx.setLineDash([4, 2]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-
-        // Body
-        ctx.fillStyle = trColor;
-        ctx.fillRect(-trW / 2, -trH / 2, trW, trH);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1.2;
-        ctx.strokeRect(-trW / 2, -trH / 2, trW, trH);
-
-        // Cabin
-        ctx.fillStyle = '#0284c7';
-        ctx.fillRect(-trW / 2 + 1, -trH / 2 + 1, trW * 0.35, trH * 0.4);
-
-        // Pantograph (raised if voltage == 1200)
-        if (tr.pantographRaise > 0.4 && !isTrolleyFault) {
-          ctx.beginPath();
-          ctx.moveTo(-trW * 0.1, -trH / 2);
-          ctx.lineTo(-trW * 0.05, -trH / 2 - 8 * zoom);
-          ctx.lineTo(trW * 0.2, -trH / 2 - 8 * zoom);
-          ctx.lineTo(trW * 0.25, -trH / 2);
-          ctx.strokeStyle = '#00f0ff';
-          ctx.lineWidth = 2;
-          ctx.stroke();
-
-          // Spark particle
-          if (Math.random() > 0.4) {
-            ctx.beginPath();
-            ctx.arc(trW * 0.08, -trH / 2 - 8 * zoom, 2 * zoom, 0, Math.PI * 2);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-          }
-        }
-        ctx.restore();
-
-        // 8. OCR Callout Badges (Vision Readable for LLMs)
-        if (isFlagship) {
-          const voltStr = isTrolleyFault ? '⚠️ ДИЗЕЛЬ (12.2 км/ч)' : (tr.voltageV === 1200 ? '⚡ 1200В DC' : 'ДИЗЕЛЬ');
-          drawOcrCalloutBadge(
-            tr.x, tr.y, tr.z,
-            [
-              `[TRUCK-01] ФЛАГМАН`,
-              `${tr.speedKmh.toFixed(1)} км/ч · ${voltStr}`,
-              `136т · Cu 0.850% · TKPH ${tr.oreLoadTons > 0 ? 612 : 240}`
-            ],
-            isTrolleyFault ? '#f59e0b' : '#38bdf8',
-            isSelected
-          );
-        } else if (showOcrBadges && i < 4) {
-          drawOcrCalloutBadge(
-            tr.x, tr.y, tr.z,
-            [`[TR-0${i + 1}] ${tr.speedKmh.toFixed(0)} км/ч`],
-            '#94a3b8',
-            isSelected
-          );
-        }
+      function getPointOnSpline(uNorm) {
+        const total = roadWaypoints.length - 1;
+        const idx = Math.min(total - 1, Math.floor(uNorm * total));
+        const t = (uNorm * total) - idx;
+        const p1 = roadWaypoints[idx];
+        const p2 = roadWaypoints[idx + 1];
+        return {
+          x: p1.x + (p2.x - p1.x) * t,
+          y: p1.y + (p2.y - p1.y) * t,
+        };
       }
 
-      // Fixed Facility OCR Badges
-      if (showOcrBadges) {
-        // Crusher KKD-1500
-        const crusherState = isCrusherFault ? '🚨 АВАРИЯ (TRAMP METAL)' : '2400 т/ч · CSS 180мм [АКТИВЕН]';
-        drawOcrCalloutBadge(
-          crusherPos[0], crusherPos[1], crusherPos[2],
-          [`[CRUSHER-01] ККД-1500`, crusherState],
-          isCrusherFault ? '#ef4444' : '#10b981',
-          selectedTwinId === 'org.openegiz.mine:crusher-01'
-        );
+      for (let i = 0; i < 8; i++) {
+        const spec = truckRoadIndices[i];
+        // Dynamic motion offset
+        const dynamicU = (spec.u + (simTime * 0.015)) % 1;
+        const pt = getPointOnSpline(dynamicU);
+        const isSel = (selectedTwinId === `org.openegiz.mine:truck-0${i + 1}`);
 
-        // Standby Crusher Metso LT140
-        const standbyState = isCrusherFault ? '550 т/ч [РЕЗЕРВ АКТИВИРОВАН]' : '550 т/ч [РЕЗЕРВ ОЖИДАНИЕ]';
-        drawOcrCalloutBadge(
-          standbyPos[0], standbyPos[1], standbyPos[2],
-          [`[CRUSHER-02] Metso LT140`, standbyState],
-          isCrusherFault ? '#10b981' : '#64748b',
-          selectedTwinId === 'org.openegiz.mine:crusher-standby-02'
-        );
-
-        // Excavator EKG-15
-        drawOcrCalloutBadge(
-          ekgPos[0], ekgPos[1], ekgPos[2],
-          [`[EXCAVATOR-01] ЭКГ-15`, `+60м Horizon · 1.35% Cu`],
-          '#f59e0b',
-          selectedTwinId === 'org.openegiz.mine:excavator-01'
-        );
-
-        // Excavator CAT 6020B
-        const catState = isWaterInflux ? '🚨 ЭВАКУАЦИЯ НА +0м' : '-60м Deep · 0.45% Cu';
-        drawOcrCalloutBadge(
-          catPos[0], catPos[1], catPos[2],
-          [`[EXCAVATOR-02] CAT-6020B`, catState],
-          isWaterInflux ? '#ef4444' : '#f59e0b',
-          selectedTwinId === 'org.openegiz.mine:excavator-02'
-        );
-
-        // Pit Bottom Sump & Pump
-        const pumpState = isWaterInflux ? '🚨 ПРИТОК 350 м³/ч (WP-02 ВКЛ)' : '240 м³/ч · Уровень 1.15м [НОРМА]';
-        drawOcrCalloutBadge(
-          0, -62, 2,
-          [`[SUMP-01] Зумпф и Насос WP-01`, pumpState],
-          isWaterInflux ? '#ef4444' : '#38bdf8',
-          selectedTwinId === 'org.openegiz.mine:pump-station-01'
-        );
-
-        // Slope Radar
-        drawOcrCalloutBadge(
-          radarPos[0], radarPos[1], radarPos[2],
-          [`[SLOPE-RADAR] IBIS-FM`, `FoS = 1.34 [БОРТ УСТОЙЧИВ]`],
-          '#10b981',
-          selectedTwinId === 'org.openegiz.mine:slope-radar-01'
-        );
+        const labelText = [`[TRUCK-01]`, `24.5 km/h 1200V`];
+        drawBelazTruckSprite(pt.x, pt.y, 0.95, spec.angle, spec.trolley, spec.dumping, labelText, isSel);
       }
+
+      // 8. Ground Annotations (Exact match to Image 2)
+      ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = '#1c1917';
+      ctx.fillText('North Bench +60m', -340 * zoom, -135 * zoom);
+      ctx.fillText('South Deep Bench 40m', -320 * zoom, 150 * zoom);
+      ctx.fillText('South Deep Bench -60m', 60 * zoom, 160 * zoom);
+
+      ctx.font = '11px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillText('Electrified', -220 * zoom, -95 * zoom);
+      ctx.fillText('1280V ramp', -220 * zoom, -82 * zoom);
+
+      ctx.fillText('BelAZ-75131', -150 * zoom, 95 * zoom);
+      ctx.fillText('haul trucks', -148 * zoom, 108 * zoom);
+
+      ctx.restore();
     }
 
     // ---------------------------------------------------------------------------

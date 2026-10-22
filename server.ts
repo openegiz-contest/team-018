@@ -715,7 +715,7 @@ async function startAllServers() {
       'БелАЗ-75131 #08',
     ];
     const fleet = truckNames.map((name, i) =>
-      computeSingleBelazState(i, name, t, 1.0, i * 0.125, activeScenario)
+      computeSingleBelazState(i, name, t, 1.0, i * 9.5, activeScenario)
     );
     const ekg15 = computeExcavatorKinematics('EKG-15', t, 1.0, fleet);
     const cat6020 = computeExcavatorKinematics('CAT-6020B', t, 1.0, fleet);
