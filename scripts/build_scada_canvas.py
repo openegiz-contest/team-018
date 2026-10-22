@@ -1,0 +1,1697 @@
+import re
+
+script_body = """
+    // ---------------------------------------------------------------------------
+    // SMART-KENISH 4.0 — INDUSTRIAL 2.5D ISOMETRIC SCADA ENGINE
+    // Pure Native HTML5 Canvas 2D, Zero CDN, Mesa LLVMpipe 60 FPS CPU-Optimized
+    // ---------------------------------------------------------------------------
+
+    const canvas = document.getElementById('scada-canvas');
+    const ctx = canvas.getContext('2d', { alpha: false });
+
+    // Constants & Isometric Math
+    const ISO_X = Math.cos(Math.PI / 6); // 0.866025
+    const ISO_Y = Math.sin(Math.PI / 6); // 0.500000
+    const DEG = Math.PI / 180;
+
+    function iso(x, y, z) {
+      return {
+        x: (x - y) * ISO_X,
+        y: (x + y) * ISO_Y - z
+      };
+    }
+
+    // Industrial Palette
+    const PAL = {
+      benchTop: ['#c99a6b', '#bd8e5f', '#af8153', '#9f7347', '#8e653b', '#7c552f', '#6b4724'],
+      cliffTop: '#5c391d',
+      cliffBot: '#2e1c0e',
+      cliffStroke: 'rgba(30, 18, 9, 0.7)',
+      road: '#2b2825',
+      roadStroke: '#1a1816',
+      roadEdge: '#48433d',
+      water: ['#0ea5e9', '#38bdf8', '#0284c7'],
+      catenary: '#00f0ff',
+      catenaryGlow: 'rgba(0, 240, 255, 0.4)',
+      steel: '#94a3b8',
+      steelDark: '#475569',
+      yellow: '#eab308',
+      yellowDark: '#ca8a04',
+      green: '#22c55e',
+      red: '#ef4444',
+      ore: '#785b3e',
+      copper: '#b87333',
+      bg: '#0a0e17'
+    };
+
+    // Camera & View Transform
+    let zoom = 1.0;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let showOcrBadges = true;
+    let viewMode = 'iso'; // 'iso', 'flow', 'twins'
+
+    // Selected Twin
+    let selectedTwinId = 'org.openegiz.mine:truck-01';
+
+    // Simulation Data & Scenario State
+    let simTime = 24.0;
+    let fleetData = [];
+    let currentScenario = { id: 'NORMAL', mode: 'NORMAL', title: 'Штатный режим', message: 'Номинал' };
+    let allTwinsList = [];
+
+    // Resize Canvas to Container
+    function resizeCanvas() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function resetCanvasView() {
+      zoom = 1.0;
+      panX = 0;
+      panY = 0;
+    }
+
+    function adjustCanvasZoom(factor) {
+      zoom = Math.max(0.4, Math.min(3.5, zoom * factor));
+    }
+
+    function toggleOcrBadges() {
+      showOcrBadges = !showOcrBadges;
+      const btn = document.getElementById('btn-toggle-labels');
+      if (btn) btn.innerText = showOcrBadges ? '🏷️ Бейджи: ВКЛ' : '🏷️ Бейджи: ВЫКЛ';
+    }
+
+    function switchViewMode(mode) {
+      viewMode = mode;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const btns = document.querySelectorAll('.tab-btn');
+      if (mode === 'iso' && btns[0]) btns[0].classList.add('active');
+      if (mode === 'flow' && btns[1]) btns[1].classList.add('active');
+      if (mode === 'twins' && btns[2]) btns[2].classList.add('active');
+    }
+
+    // Coordinate conversion
+    function getScreenPos(isoX, isoY) {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || canvas.width;
+      const h = rect.height || canvas.height;
+      return {
+        x: w * 0.5 + panX + isoX * zoom,
+        y: h * 0.5 + panY + isoY * zoom
+      };
+    }
+
+    function getIsoFromScreen(screenX, screenY) {
+      const rect = canvas.getBoundingClientRect();
+      const w = rect.width || canvas.width;
+      const h = rect.height || canvas.height;
+      return {
+        x: (screenX - (w * 0.5 + panX)) / zoom,
+        y: (screenY - (h * 0.5 + panY)) / zoom
+      };
+    }
+
+    // Mouse Interaction (Pan & Zoom)
+    canvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragStartX = e.clientX - panX;
+      dragStartY = e.clientY - panY;
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        panX = e.clientX - dragStartX;
+        panY = e.clientY - dragStartY;
+      }
+    });
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+      adjustCanvasZoom(zoomFactor);
+    }, { passive: false });
+
+    // ---------------------------------------------------------------------------
+    // 1. PIT GEOMETRY — STEPPED AMPHITHEATER (7 BENCHES: +120m to -60m)
+    // ---------------------------------------------------------------------------
+    const BENCHES = [
+      { z: 120, scale: 1.00, color: PAL.benchTop[0], label: '+120m' },
+      { z: 90,  scale: 0.86, color: PAL.benchTop[1], label: '+90m' },
+      { z: 60,  scale: 0.73, color: PAL.benchTop[2], label: '+60m' },
+      { z: 30,  scale: 0.60, color: PAL.benchTop[3], label: '+30m' },
+      { z: 0,   scale: 0.47, color: PAL.benchTop[4], label: '±0m' },
+      { z: -30, scale: 0.33, color: PAL.benchTop[5], label: '-30m' },
+      { z: -60, scale: 0.20, color: PAL.benchTop[6], label: '-60m' }
+    ];
+
+    const BASE_POINTS = (function () {
+      const pts = [];
+      const N = 24;
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2;
+        const rx = 520, ry = 340;
+        let r = 1 + 0.09 * Math.sin(a * 3 + 0.7) + 0.05 * Math.cos(a * 5 + 1.3) + 0.03 * Math.sin(a * 7);
+        const ex = Math.cos(a) * rx * r;
+        const ey = Math.sin(a) * ry * r;
+        const rot = 35 * DEG;
+        const x = ex * Math.cos(rot) - ey * Math.sin(rot);
+        const y = ex * Math.sin(rot) + ey * Math.cos(rot);
+        pts.push({ x, y });
+      }
+      return pts;
+    })();
+
+    function benchPolygon(bench) {
+      return BASE_POINTS.map(p => ({
+        x: p.x * bench.scale,
+        y: p.y * bench.scale,
+        z: bench.z
+      }));
+    }
+
+    const BENCH_POLYS = BENCHES.map(b => benchPolygon(b).map(p => iso(p.x, p.y, p.z)));
+
+    function shade(hex, amt) {
+      const c = hex.replace('#', '');
+      const num = parseInt(c, 16);
+      const r = Math.max(0, Math.min(255, (num >> 16) + Math.round(amt * 255)));
+      const g = Math.max(0, Math.min(255, ((num >> 8) & 0x00FF) + Math.round(amt * 255)));
+      const b = Math.max(0, Math.min(255, (num & 0x0000FF) + Math.round(amt * 255)));
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function poly(pts, fill, stroke, lw) {
+      if (pts.length < 3) return;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+      ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+    }
+
+    function isoBox(cx, cy, cz, w, d, h, topColor, leftColor, rightColor, stroke) {
+      const hw = w / 2, hd = d / 2;
+      const p = [
+        iso(cx - hw, cy - hd, cz),
+        iso(cx + hw, cy - hd, cz),
+        iso(cx + hw, cy + hd, cz),
+        iso(cx - hw, cy + hd, cz),
+        iso(cx - hw, cy - hd, cz + h),
+        iso(cx + hw, cy - hd, cz + h),
+        iso(cx + hw, cy + hd, cz + h),
+        iso(cx - hw, cy + hd, cz + h)
+      ];
+      poly([p[0], p[3], p[7], p[4]], leftColor, stroke, 1);
+      poly([p[1], p[2], p[6], p[5]], rightColor, stroke, 1);
+      poly([p[4], p[5], p[6], p[7]], topColor, stroke, 1);
+      return p;
+    }
+
+    function drawPit() {
+      for (let i = 0; i < BENCH_POLYS.length; i++) {
+        const top = BENCH_POLYS[i];
+        const bench = BENCHES[i];
+
+        if (i < BENCH_POLYS.length - 1) {
+          const next = BENCH_POLYS[i + 1];
+          for (let j = 0; j < top.length; j++) {
+            const k = (j + 1) % top.length;
+            const a = top[j], b = top[k];
+            const c = next[k], d = next[j];
+            const grad = ctx.createLinearGradient(a.x, a.y, d.x, d.y);
+            grad.addColorStop(0, PAL.cliffTop);
+            grad.addColorStop(1, PAL.cliffBot);
+            poly([a, b, c, d], grad, PAL.cliffStroke, 0.8);
+          }
+        }
+
+        const grad = ctx.createLinearGradient(
+          top[0].x, top[0].y,
+          top[Math.floor(top.length / 2)].x, top[Math.floor(top.length / 2)].y
+        );
+        grad.addColorStop(0, bench.color);
+        grad.addColorStop(1, shade(bench.color, -0.15));
+        poly(top, grad, 'rgba(0,0,0,0.25)', 1);
+
+        ctx.beginPath();
+        ctx.moveTo(top[0].x, top[0].y);
+        for (let j = 1; j < top.length; j++) ctx.lineTo(top[j].x, top[j].y);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(255,220,180,0.18)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+    }
+
+    // ---------------------------------------------------------------------------
+    // 2. HAUL ROAD SPLINE (CLOSED CIRCUIT)
+    // ---------------------------------------------------------------------------
+    const ROAD_CTRL = [
+      { x: -60,  y: -40,  z: -60 },   // 0: CAT 6020B (-60m)
+      { x: 40,   y: -120, z: -55 },   // 1: Sump
+      { x: 180,  y: -160, z: -30 },   // 2: Bottom ramp
+      { x: 300,  y: -120, z: 0 },     // 3: 0m ramp
+      { x: 360,  y: -20,  z: 30 },    // 4: +30m ramp (Catenary starts)
+      { x: 340,  y: 90,   z: 60 },    // 5: +60m ramp
+      { x: 260,  y: 180,  z: 90 },    // 6: +90m ramp
+      { x: 140,  y: 220,  z: 120 },   // 7: KKD-1500 Hopper (+120m)
+      { x: 20,   y: 200,  z: 120 },   // 8: Empty dump exit
+      { x: -100, y: 160,  z: 90 },    // 9: Descending ramp
+      { x: -200, y: 80,   z: 60 },    // 10: North Bench (+60m) near EKG-15
+      { x: -240, y: -20,  z: 30 },    // 11: Switchback
+      { x: -200, y: -100, z: 0 },     // 12: Descend
+      { x: -140, y: -140, z: -30 },   // 13: Descend
+      { x: -100, y: -100, z: -55 }    // 14: Floor return
+    ];
+
+    function catmullRom(p0, p1, p2, p3, t) {
+      const t2 = t * t, t3 = t2 * t;
+      return {
+        x: 0.5 * ((2 * p1.x) + (-p0.x + p2.x) * t + (2 * p0.x - 5 * p1.x + 4 * p2.x - p3.x) * t2 + (-p0.x + 3 * p1.x - 3 * p2.x + p3.x) * t3),
+        y: 0.5 * ((2 * p1.y) + (-p0.y + p2.y) * t + (2 * p0.y - 5 * p1.y + 4 * p2.y - p3.y) * t2 + (-p0.y + 3 * p1.y - 3 * p2.y + p3.y) * t3),
+        z: 0.5 * ((2 * p1.z) + (-p0.z + p2.z) * t + (2 * p0.z - 5 * p1.z + 4 * p2.z - p3.z) * t2 + (-p0.z + 3 * p1.z - 3 * p2.z + p3.z) * t3)
+      };
+    }
+
+    const ROAD_SAMPLES = (function () {
+      const pts = [];
+      const n = ROAD_CTRL.length;
+      const SEG = 16;
+      for (let i = 0; i < n; i++) {
+        const p0 = ROAD_CTRL[(i - 1 + n) % n];
+        const p1 = ROAD_CTRL[i];
+        const p2 = ROAD_CTRL[(i + 1) % n];
+        const p3 = ROAD_CTRL[(i + 2) % n];
+        for (let s = 0; s < SEG; s++) {
+          pts.push(catmullRom(p0, p1, p2, p3, s / SEG));
+        }
+      }
+      return pts;
+    })();
+
+    const ROAD_PROJ = ROAD_SAMPLES.map(p => iso(p.x, p.y, p.z));
+
+    const ROAD_LEN = (function () {
+      let L = 0;
+      const arr = [0];
+      for (let i = 1; i < ROAD_PROJ.length; i++) {
+        const dx = ROAD_PROJ[i].x - ROAD_PROJ[i - 1].x;
+        const dy = ROAD_PROJ[i].y - ROAD_PROJ[i - 1].y;
+        L += Math.hypot(dx, dy);
+        arr.push(L);
+      }
+      return { total: L, cum: arr };
+    })();
+
+    function roadPointAt(t) {
+      const target = ((t % 1) + 1) % 1 * ROAD_LEN.total;
+      let lo = 0, hi = ROAD_LEN.cum.length - 1;
+      while (lo < hi - 1) {
+        const mid = (lo + hi) >> 1;
+        if (ROAD_LEN.cum[mid] < target) lo = mid; else hi = mid;
+      }
+      const seg = ROAD_LEN.cum[hi] - ROAD_LEN.cum[lo] || 1;
+      const f = (target - ROAD_LEN.cum[lo]) / seg;
+      const a = ROAD_PROJ[lo], b = ROAD_PROJ[hi];
+      return {
+        x: a.x + (b.x - a.x) * f,
+        y: a.y + (b.y - a.y) * f,
+        angle: Math.atan2(b.y - a.y, b.x - a.x)
+      };
+    }
+
+    function drawRoad() {
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+
+      // Shoulder
+      ctx.beginPath();
+      ctx.moveTo(ROAD_PROJ[0].x, ROAD_PROJ[0].y);
+      for (let i = 1; i < ROAD_PROJ.length; i++) ctx.lineTo(ROAD_PROJ[i].x, ROAD_PROJ[i].y);
+      ctx.closePath();
+      ctx.strokeStyle = PAL.roadEdge;
+      ctx.lineWidth = 15;
+      ctx.stroke();
+
+      // Asphalt Surface
+      ctx.beginPath();
+      ctx.moveTo(ROAD_PROJ[0].x, ROAD_PROJ[0].y);
+      for (let i = 1; i < ROAD_PROJ.length; i++) ctx.lineTo(ROAD_PROJ[i].x, ROAD_PROJ[i].y);
+      ctx.closePath();
+      ctx.strokeStyle = PAL.road;
+      ctx.lineWidth = 11;
+      ctx.stroke();
+
+      // Dashed Centerline
+      ctx.setLineDash([5, 7]);
+      ctx.strokeStyle = 'rgba(255,200,100,0.38)';
+      ctx.lineWidth = 1.3;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // ---------------------------------------------------------------------------
+    // 3. 1200V DC CATENARY LINE & SPARKS
+    // ---------------------------------------------------------------------------
+    function drawCatenary() {
+      const isFault = (currentScenario.id === 'trolley-fault');
+      // The uphill ramp corresponds to t in [0.22, 0.50]
+      const catenaryPoints = [];
+      const steps = 14;
+      for (let i = 0; i <= steps; i++) {
+        const t = 0.22 + (i / steps) * 0.28;
+        const pt = roadPointAt(t);
+        catenaryPoints.push(pt);
+      }
+
+      // Draw Poles
+      for (let i = 0; i < catenaryPoints.length; i++) {
+        const pt = catenaryPoints[i];
+        const poleBase = { x: pt.x, y: pt.y };
+        const poleTop = { x: pt.x, y: pt.y - 32 };
+
+        ctx.beginPath();
+        ctx.moveTo(poleBase.x, poleBase.y);
+        ctx.lineTo(poleTop.x, poleTop.y);
+        ctx.strokeStyle = PAL.steelDark;
+        ctx.lineWidth = 2.4;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(poleTop.x - 7, poleTop.y + 3);
+        ctx.lineTo(poleTop.x + 7, poleTop.y + 3);
+        ctx.strokeStyle = PAL.steel;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
+
+      // Overhead Wire
+      ctx.beginPath();
+      ctx.moveTo(catenaryPoints[0].x, catenaryPoints[0].y - 29);
+      for (let i = 1; i < catenaryPoints.length; i++) {
+        const p1 = catenaryPoints[i - 1];
+        const p2 = catenaryPoints[i];
+        const mx = (p1.x + p2.x) / 2;
+        const my = (p1.y + p2.y) / 2 - 25; // slight sag
+        ctx.quadraticCurveTo(mx, my, p2.x, p2.y - 29);
+      }
+
+      if (isFault) {
+        ctx.setLineDash([8, 6]);
+        ctx.strokeStyle = PAL.red;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Spark fault arcing
+        const sparkT = (simTime * 3) % 1;
+        const sIdx = Math.floor(sparkT * (catenaryPoints.length - 1));
+        const sp1 = catenaryPoints[sIdx];
+        const sp2 = catenaryPoints[sIdx + 1];
+        const sx = sp1.x + (sp2.x - sp1.x) * (sparkT * (catenaryPoints.length - 1) - sIdx);
+        const sy = sp1.y + (sp2.y - sp1.y) * (sparkT * (catenaryPoints.length - 1) - sIdx) - 29;
+
+        ctx.beginPath();
+        ctx.arc(sx, sy, 4.5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffedd5';
+        ctx.fill();
+        ctx.strokeStyle = '#f97316';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      } else {
+        ctx.strokeStyle = PAL.catenary;
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = PAL.catenary;
+        ctx.shadowBlur = 5;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // ---------------------------------------------------------------------------
+    // 4. FACILITIES & EQUIPMENT SPECIFICATION
+    // ---------------------------------------------------------------------------
+    const FACILITIES = {
+      crusher:    { id: 'org.openegiz.mine:crusher-01',         name: 'ККД-1500',      x: 140,  y: 220,  z: 120, label: '[CRUSHER-01]' },
+      metso:      { id: 'org.openegiz.mine:crusher-standby-02', name: 'Metso LT140',   x: 210,  y: 240,  z: 120, label: '[CRUSHER-02]' },
+      sag:        { id: 'org.openegiz.mine:sag-mill-01',        name: 'SAG Мельница',  x: 60,   y: 260,  z: 120, label: '[SAG-MILL-01]' },
+      substation: { id: 'org.openegiz.mine:substation-01',      name: 'Подстанция 6МВт',x: 20,   y: 300,  z: 120, label: '[SUBSTATION-01]' },
+      conveyor:   { id: 'org.openegiz.mine:conveyor-main-01',   name: 'Конвейер',      x: 100,  y: 240,  z: 120, label: 'conveyor-main-01' },
+      stockpile:  { id: 'org.openegiz.mine:stockpile-coarse-01',name: 'Склад 45кт',    x: 40,   y: 280,  z: 120, label: '[STOCKPILE-01]' },
+      ekg:        { id: 'org.openegiz.mine:excavator-01',       name: 'ЭКГ-15 #01',    x: -180, y: 120,  z: 60,  label: '[EXCAVATOR-01]' },
+      cat:        { id: 'org.openegiz.mine:excavator-02',       name: 'CAT 6020B',     x: -60,  y: -40,  z: -60, label: '[EXCAVATOR-02]' },
+      sump:       { id: 'org.openegiz.mine:pump-station-01',    name: 'Зумпф (-60м)',  x: 40,   y: -120, z: -55, label: '[SUMP-01]' },
+      radar:      { id: 'org.openegiz.mine:slope-radar-01',     name: 'Радар IBIS-FM', x: -260, y: 40,   z: 90,  label: '[SLOPE-RADAR]' },
+      trolley:    { id: 'org.openegiz.mine:trolley-line-01',    name: 'Троллей 1.8км', x: 300,  y: -20,  z: 30,  label: '[TROLLEY-1200V]' }
+    };
+
+    function drawFacilities() {
+      // 1. Primary Crusher KKD-1500
+      const fc = FACILITIES.crusher;
+      const isCrushFault = (currentScenario.id === 'crusher-fault');
+      isoBox(fc.x, fc.y, fc.z, 38, 28, 26, isCrushFault ? '#ef4444' : PAL.yellow, PAL.yellowDark, shade(PAL.yellowDark, -0.1), '#3a2a00');
+      // Hopper
+      const hx = fc.x, hy = fc.y, hz = fc.z + 26;
+      const hTop = [
+        iso(hx - 16, hy - 13, hz + 18),
+        iso(hx + 16, hy - 13, hz + 18),
+        iso(hx + 16, hy + 13, hz + 18),
+        iso(hx - 16, hy + 13, hz + 18)
+      ];
+      const hBot = [
+        iso(hx - 6, hy - 5, hz),
+        iso(hx + 6, hy - 5, hz),
+        iso(hx + 6, hy + 5, hz),
+        iso(hx - 6, hy + 5, hz)
+      ];
+      for (let i = 0; i < 4; i++) {
+        const j = (i + 1) % 4;
+        poly([hTop[i], hTop[j], hBot[j], hBot[i]], shade(PAL.yellowDark, -0.05 * i), '#3a2a00', 1);
+      }
+      poly(hTop, isCrushFault ? '#f87171' : PAL.yellow, '#3a2a00', 1.2);
+
+      // 2. Metso LT140 Mobile Crusher
+      const fm = FACILITIES.metso;
+      isoBox(fm.x, fm.y, fm.z, 32, 18, 6, '#2a2a2a', '#1a1a1a', '#111', '#000');
+      isoBox(fm.x, fm.y, fm.z + 6, 26, 14, 13, isCrushFault ? PAL.green : '#64748b', '#475569', '#334155', '#1a1a1a');
+
+      // 3. SAG Mill (14 MW)
+      const fs = FACILITIES.sag;
+      isoBox(fs.x, fs.y, fs.z, 46, 22, 7, '#334155', '#1e293b', '#0f172a', '#000');
+      const drumP = iso(fs.x, fs.y, fs.z + 18);
+      ctx.beginPath();
+      ctx.ellipse(drumP.x, drumP.y, 20, 14, 0, 0, Math.PI * 2);
+      ctx.fillStyle = PAL.steelDark;
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // rotating ribs
+      const sagRot = simTime * 0.8;
+      for (let i = 0; i < 6; i++) {
+        const a = sagRot + i * Math.PI / 3;
+        const x1 = drumP.x + Math.cos(a) * 18;
+        const y1 = drumP.y + Math.sin(a) * 12;
+        const x2 = drumP.x + Math.cos(a) * 6;
+        const y2 = drumP.y + Math.sin(a) * 4;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(drumP.x, drumP.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fill();
+
+      // 4. Substation & BESS
+      const fsub = FACILITIES.substation;
+      isoBox(fsub.x, fsub.y, fsub.z, 28, 18, 15, '#cbd5e1', '#94a3b8', '#64748b', '#334155');
+      isoBox(fsub.x + 20, fsub.y + 3, fsub.z, 14, 10, 8, '#22c55e', '#16a34a', '#15803d', '#052e16');
+
+      // 5. Conveyor Gallery & Stockpile Cone
+      const fconv = FACILITIES.conveyor;
+      const fstock = FACILITIES.stockpile;
+      const convA = iso(fc.x + 18, fc.y, fc.z + 10);
+      const convB = iso(fstock.x, fstock.y, fstock.z + 24);
+
+      ctx.beginPath();
+      ctx.moveTo(convA.x, convA.y);
+      ctx.lineTo(convB.x, convB.y);
+      ctx.strokeStyle = PAL.yellow;
+      ctx.lineWidth = 3.5;
+      ctx.stroke();
+
+      // Stockpile Cone
+      const sp = iso(fstock.x, fstock.y, fstock.z);
+      const coneR = 24, coneH = 32;
+      ctx.fillStyle = '#8a7a5a';
+      ctx.beginPath();
+      ctx.moveTo(sp.x - coneR, sp.y);
+      ctx.lineTo(sp.x + coneR, sp.y);
+      ctx.lineTo(sp.x, sp.y - coneH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#6a5a3a';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 6. EKG-15 Electric Rope Shovel (+60m)
+      const fe = FACILITIES.ekg;
+      const ep = iso(fe.x, fe.y, fe.z);
+      const ekgSwing = Math.sin(simTime * 0.4) * 0.35;
+
+      ctx.save();
+      ctx.translate(ep.x, ep.y);
+      // tracks
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.ellipse(-14, 6, 18, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(14, 6, 18, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // revolving house
+      ctx.fillStyle = '#c8a020';
+      ctx.beginPath();
+      ctx.moveTo(-20, 0);
+      ctx.lineTo(20, 0);
+      ctx.lineTo(16, -18);
+      ctx.lineTo(-16, -18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#8a6a10';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      // cab glass
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-18, -16, 10, 8);
+      // boom
+      ctx.save();
+      ctx.translate(0, -18);
+      ctx.rotate(-0.85 + ekgSwing);
+      ctx.strokeStyle = '#c8a020';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(55, 0);
+      ctx.stroke();
+      // bucket
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(52, 10, 14, 12);
+      ctx.restore();
+      ctx.restore();
+
+      // 7. CAT 6020B Hydraulic Excavator (-60m)
+      const fcat = FACILITIES.cat;
+      const cp = iso(fcat.x, fcat.y, fcat.z);
+      const catSwing = Math.sin(simTime * 0.5) * 0.3;
+
+      ctx.save();
+      ctx.translate(cp.x, cp.y);
+      ctx.fillStyle = '#1a1a1a';
+      ctx.beginPath();
+      ctx.ellipse(-12, 5, 16, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(12, 5, 16, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // body
+      ctx.fillStyle = '#eab308';
+      ctx.fillRect(-18, -14, 36, 15);
+      ctx.strokeStyle = '#a16207';
+      ctx.lineWidth = 1.2;
+      ctx.strokeRect(-18, -14, 36, 15);
+      // cab
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-16, -12, 8, 7);
+      // articulated boom
+      ctx.save();
+      ctx.translate(4, -14);
+      ctx.rotate(-0.7 + catSwing);
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 4.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(34, 0);
+      ctx.stroke();
+      ctx.translate(34, 0);
+      ctx.rotate(1.1 - catSwing * 0.5);
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(24, 0);
+      ctx.stroke();
+      // bucket
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(22, -4, 10, 10);
+      ctx.restore();
+      ctx.restore();
+
+      // 8. Drainage Sump & Pontoon Pumps (-60m)
+      const fsump = FACILITIES.sump;
+      const sumpP = iso(fsump.x, fsump.y, fsump.z);
+      const isWaterInflux = (currentScenario.id === 'water-influx');
+      const baseRx = isWaterInflux ? 65 : 46;
+      const baseRy = isWaterInflux ? 34 : 24;
+
+      ctx.save();
+      ctx.translate(sumpP.x, sumpP.y);
+      const waterGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, baseRx);
+      waterGrad.addColorStop(0, isWaterInflux ? 'rgba(14, 165, 233, 0.9)' : 'rgba(56, 189, 248, 0.75)');
+      waterGrad.addColorStop(1, isWaterInflux ? 'rgba(2, 132, 199, 0.8)' : 'rgba(14, 116, 144, 0.65)');
+      ctx.fillStyle = waterGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, baseRx, baseRy, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // animated ripples
+      for (let i = 0; i < 3; i++) {
+        const phase = (simTime * (isWaterInflux ? 1.0 : 0.5) + i / 3) % 1;
+        const r = 8 + phase * (baseRx - 8);
+        ctx.strokeStyle = `rgba(186, 230, 253, ${(1 - phase) * 0.7})`;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r, r * (baseRy / baseRx), 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Pontoon WP-01/WP-02
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-12, -7, 24, 12);
+      ctx.strokeStyle = '#78350f';
+      ctx.strokeRect(-12, -7, 24, 12);
+      ctx.restore();
+
+      // 9. Slope Radar IBIS-FM
+      const fr = FACILITIES.radar;
+      const rp = iso(fr.x, fr.y, fr.z);
+      const radarAngle = simTime * 1.6;
+
+      ctx.save();
+      ctx.translate(rp.x, rp.y);
+      // trailer base & wheels
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(-14, 4, 28, 6);
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.arc(-8, 11, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(8, 11, 4, 0, Math.PI * 2);
+      ctx.fill();
+      // mast
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 4);
+      ctx.lineTo(0, -18);
+      ctx.stroke();
+      // dish
+      ctx.save();
+      ctx.translate(0, -20);
+      ctx.rotate(radarAngle);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 13, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      // scanning beam
+      const beamGrad = ctx.createLinearGradient(0, 0, 75, 0);
+      beamGrad.addColorStop(0, 'rgba(16, 185, 129, 0.45)');
+      beamGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(75, -20);
+      ctx.lineTo(75, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------------
+    // 5. DETAILED BELAZ-75131 TRUCK SPRITE (6 WHEELS, CAB, PANTOGRAPH, SPARKS)
+    // ---------------------------------------------------------------------------
+    function drawBelazTruck(sx, sy, scale, angle, isTrolley, isRegen, isDumping, isSelected, isDieselFallback) {
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.scale(scale, scale);
+      ctx.rotate(angle);
+
+      // Ground shadow
+      ctx.beginPath();
+      ctx.ellipse(2, 6, 20, 9, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(15, 10, 5, 0.45)';
+      ctx.fill();
+
+      // Regenerative energy aura
+      if (isRegen) {
+        ctx.beginPath();
+        ctx.ellipse(2, 6, 26, 13, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+        ctx.fill();
+      }
+
+      // 6 Heavy Mining Tires
+      ctx.fillStyle = '#1c1917';
+      ctx.strokeStyle = '#0a0a0a';
+      ctx.lineWidth = 1.1;
+
+      // Rear duals (left & right)
+      ctx.fillRect(-14, -12, 7, 4.5);
+      ctx.strokeRect(-14, -12, 7, 4.5);
+      ctx.fillRect(-14, 8, 7, 4.5);
+      ctx.strokeRect(-14, 8, 7, 4.5);
+
+      // Front steer wheels
+      ctx.fillRect(8, -14, 10, 5.5);
+      ctx.strokeRect(8, -14, 10, 5.5);
+      ctx.fillRect(8, 9, 10, 5.5);
+      ctx.strokeRect(8, 9, 10, 5.5);
+
+      // Yellow wheel hubs
+      ctx.fillStyle = isRegen ? '#34d399' : '#f59e0b';
+      ctx.fillRect(-11, -11, 3, 2.5);
+      ctx.fillRect(-11, 9, 3, 2.5);
+      ctx.fillRect(11, -13, 3, 3);
+      ctx.fillRect(11, 10, 3, 3);
+
+      // Truck Frame & Body
+      ctx.fillStyle = '#eab308';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.3;
+      ctx.fillRect(-13, -8, 26, 17);
+      ctx.strokeRect(-13, -8, 26, 17);
+
+      // Dump Bed (tilted if dumping)
+      ctx.save();
+      if (isDumping) {
+        ctx.translate(9, 0);
+        ctx.rotate(-0.35);
+        ctx.translate(-9, 0);
+      }
+      ctx.fillStyle = '#ca8a04';
+      ctx.fillRect(-8, -7, 20, 15);
+      ctx.strokeStyle = '#78350f';
+      ctx.strokeRect(-8, -7, 20, 15);
+
+      // Copper Ore Load
+      ctx.fillStyle = '#44403c';
+      ctx.beginPath();
+      ctx.ellipse(2, 0, 7.5, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Operator Cabin & Canopy
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(-15, -8, 6.5, 7.5);
+      ctx.strokeRect(-15, -8, 6.5, 7.5);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(-15, -7, 2.5, 5.5);
+
+      // Radiator Grille
+      ctx.fillStyle = '#292524';
+      ctx.fillRect(-16, -2, 2.5, 8);
+
+      // 1200V DC Pantograph & Sparks
+      if (isTrolley && !isDieselFallback) {
+        ctx.beginPath();
+        ctx.moveTo(-4, -5);
+        ctx.lineTo(0, -16);
+        ctx.lineTo(7, -16);
+        ctx.lineTo(11, -5);
+        ctx.strokeStyle = '#00f0ff';
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-2, -17, 11, 2.2);
+
+        // Electric sparks
+        if (Math.random() > 0.3) {
+          ctx.beginPath();
+          ctx.arc(3, -17, 2.8, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(3, -17, 5.5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
+          ctx.fill();
+        }
+      } else if (isTrolley && isDieselFallback) {
+        // Lowered pantograph (Diesel emergency mode)
+        ctx.beginPath();
+        ctx.moveTo(-4, -5);
+        ctx.lineTo(2, -7);
+        ctx.lineTo(9, -5);
+        ctx.strokeStyle = '#78716c';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        // Diesel exhaust puffs
+        ctx.fillStyle = 'rgba(100, 100, 100, 0.4)';
+        for (let i = 0; i < 2; i++) {
+          const ep = (simTime * 2 + i * 0.5) % 1;
+          ctx.beginPath();
+          ctx.arc(-14 - ep * 8, -10 - ep * 6, 2 + ep * 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Selection Halo
+      if (isSelected) {
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 24, 18, 0, 0, Math.PI * 2);
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.4;
+        ctx.setLineDash([4, 2]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------------
+    // 6. 8 BELAZ FLEET POSITIONS & ANTI-COLLISION CALLOUT BADGES
+    // ---------------------------------------------------------------------------
+    const FLEET_CONFIG = [
+      { id: 'org.openegiz.mine:truck-01', baseU: 0.35, role: 'TROLLEY', labelId: 'TR-01', isFlagship: true },
+      { id: 'org.openegiz.mine:truck-02', baseU: 0.27, role: 'TROLLEY', labelId: 'TR-02' },
+      { id: 'org.openegiz.mine:truck-03', baseU: 0.19, role: 'TROLLEY', labelId: 'TR-03' },
+      { id: 'org.openegiz.mine:truck-04', baseU: 0.62, role: 'REGEN',   labelId: 'TR-04' },
+      { id: 'org.openegiz.mine:truck-05', baseU: 0.72, role: 'REGEN',   labelId: 'TR-05' },
+      { id: 'org.openegiz.mine:truck-06', baseU: null, staticWorldPos: { x: -160, y: 110, z: 60, angle: 0.3 }, role: 'LOADING_NORTH', labelId: 'TR-06' },
+      { id: 'org.openegiz.mine:truck-07', baseU: 0.01, role: 'LOADING_SOUTH', labelId: 'TR-07' },
+      { id: 'org.openegiz.mine:truck-08', baseU: 0.49, role: 'DUMPING', labelId: 'TR-08' }
+    ];
+
+    function drawBadgeWithLeader(b) {
+      ctx.save();
+      ctx.font = 'bold 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+
+      let maxW = 0;
+      for (const line of b.lines) {
+        const w = ctx.measureText(line).width;
+        if (w > maxW) maxW = w;
+      }
+      const padX = 7;
+      const padY = 4;
+      const lineH = 13;
+      const boxW = Math.max(b.minWidth || 70, maxW + padX * 2);
+      const boxH = b.lines.length * lineH + padY * 2;
+      const boxX = b.boxX - boxW / 2;
+      const boxY = b.boxY - boxH / 2;
+
+      // Draw leader line if displaced from anchor
+      const dist = Math.hypot(b.anchorX - b.boxX, b.anchorY - b.boxY);
+      if (dist > 16) {
+        ctx.beginPath();
+        ctx.moveTo(b.anchorX, b.anchorY);
+        const targetX = Math.max(boxX, Math.min(boxX + boxW, b.anchorX));
+        const targetY = (b.anchorY > b.boxY) ? (boxY + boxH) : boxY;
+        ctx.lineTo(targetX, targetY);
+        ctx.strokeStyle = b.borderColor;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(b.anchorX, b.anchorY, 3, 0, Math.PI * 2);
+        ctx.fillStyle = b.borderColor;
+        ctx.fill();
+      }
+
+      // High-contrast translucent dark box
+      ctx.fillStyle = 'rgba(10, 14, 23, 0.94)';
+      ctx.fillRect(boxX, boxY, boxW, boxH);
+
+      // Border
+      ctx.strokeStyle = b.isSelected ? '#ffffff' : b.borderColor;
+      ctx.lineWidth = b.isSelected ? 2.5 : 1.3;
+      ctx.strokeRect(boxX, boxY, boxW, boxH);
+
+      // Text lines
+      for (let i = 0; i < b.lines.length; i++) {
+        ctx.fillStyle = (i === 0) ? b.borderColor : '#ffffff';
+        ctx.fillText(b.lines[i], boxX + padX, boxY + padY + (i + 1) * lineH - 3);
+      }
+
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------------
+    // 7. CLICK SELECTION (EQUIPMENTS & TRUCKS)
+    // ---------------------------------------------------------------------------
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+
+      let closestId = null;
+      let closestDist = 45;
+
+      // Check trucks
+      for (let i = 0; i < FLEET_CONFIG.length; i++) {
+        const tr = FLEET_CONFIG[i];
+        let isoPos;
+        if (tr.staticWorldPos) {
+          isoPos = iso(tr.staticWorldPos.x, tr.staticWorldPos.y, tr.staticWorldPos.z);
+        } else {
+          const u = (tr.baseU + (simTime * 0.008)) % 1;
+          isoPos = roadPointAt(u);
+        }
+        const s = getScreenPos(isoPos.x, isoPos.y);
+        const d = Math.hypot(mx - s.x, my - s.y);
+        if (d < closestDist) {
+          closestDist = d;
+          closestId = tr.id;
+        }
+      }
+
+      // Check facilities
+      for (const k in FACILITIES) {
+        const fac = FACILITIES[k];
+        const p = iso(fac.x, fac.y, fac.z);
+        const s = getScreenPos(p.x, p.y);
+        const d = Math.hypot(mx - s.x, my - s.y);
+        if (d < closestDist) {
+          closestDist = d;
+          closestId = fac.id;
+        }
+      }
+
+      if (closestId) {
+        selectTwin(closestId);
+      }
+    });
+
+    // ---------------------------------------------------------------------------
+    // 8. MAIN 2.5D ISOMETRIC MINE RENDER FUNCTION
+    // ---------------------------------------------------------------------------
+    function renderIsometricMine() {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width || canvas.width;
+      const H = rect.height || canvas.height;
+      const isTrolleyFault = (currentScenario.id === 'trolley-fault');
+      const isCrusherFault = (currentScenario.id === 'crusher-fault');
+      const isWaterInflux = (currentScenario.id === 'water-influx');
+
+      // 1. Sleek SCADA Background
+      ctx.fillStyle = PAL.bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Engineering Coordinate Grid
+      ctx.save();
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.06)';
+      ctx.lineWidth = 1;
+      const gridSize = 45 * zoom;
+      const ox = (W * 0.5 + panX) % gridSize;
+      const oy = (H * 0.5 + panY) % gridSize;
+      for (let x = ox; x < W; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
+      }
+      for (let y = oy; y < H; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(W, y);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 2. Draw World Objects (In Isometric 2.5D Space)
+      ctx.save();
+      ctx.translate(W * 0.5 + panX, H * 0.5 + panY);
+      ctx.scale(zoom, zoom);
+
+      // Draw Pit Stepped Amphitheater
+      drawPit();
+
+      // Draw Haul Road
+      drawRoad();
+
+      // Draw Catenary 1200V DC Line
+      drawCatenary();
+
+      // Draw Facilities & Equipment
+      drawFacilities();
+
+      // Draw 8 BelAZ-75131 Mining Trucks
+      const truckBadges = [];
+
+      for (let i = 0; i < FLEET_CONFIG.length; i++) {
+        const spec = FLEET_CONFIG[i];
+        let isoPos, truckAngle;
+
+        if (spec.staticWorldPos) {
+          isoPos = iso(spec.staticWorldPos.x, spec.staticWorldPos.y, spec.staticWorldPos.z);
+          truckAngle = spec.staticWorldPos.angle;
+        } else {
+          let u = (spec.baseU + (simTime * 0.008)) % 1;
+          if (isCrusherFault && spec.role === 'DUMPING') {
+            const metsoIso = iso(FACILITIES.metso.x, FACILITIES.metso.y, FACILITIES.metso.z);
+            isoPos = { x: metsoIso.x - 10, y: metsoIso.y + 10 };
+            truckAngle = 0.2;
+          } else {
+            const pt = roadPointAt(u);
+            isoPos = pt;
+            truckAngle = pt.angle;
+          }
+        }
+
+        const isSel = (selectedTwinId === spec.id);
+        const isTrolleyTruck = (spec.role === 'TROLLEY');
+        const isRegenTruck = (spec.role === 'REGEN');
+        const isDumpingTruck = (spec.role === 'DUMPING');
+
+        drawBelazTruck(isoPos.x, isoPos.y, 0.95, truckAngle, isTrolleyTruck, isRegenTruck, isDumpingTruck, isSel, isTrolleyFault);
+
+        // Screen position for badge
+        const s = getScreenPos(isoPos.x, isoPos.y);
+
+        let badgeLines = [];
+        let badgeColor = isSel ? '#ffffff' : '#fbbf24';
+
+        if (isTrolleyTruck) {
+          if (isTrolleyFault) {
+            badgeLines = [`[${spec.labelId}]`, `DIESEL | 12.2 км/ч`];
+            badgeColor = '#ef4444';
+          } else {
+            badgeLines = [`[${spec.labelId}]`, `24.5 км/ч ⚡1200V`];
+            badgeColor = '#00f0ff';
+          }
+        } else if (isRegenTruck) {
+          badgeLines = [`[${spec.labelId}]`, (i === 4 ? `38.0 км/ч ♻REGEN -210kW` : `38.0 км/ч ♻REGEN`)];
+          badgeColor = '#34d399';
+        } else if (spec.role === 'LOADING_NORTH') {
+          badgeLines = [`[${spec.labelId}]`, `ПОГРУЗКА 1.35% Cu`];
+          badgeColor = '#f59e0b';
+        } else if (spec.role === 'LOADING_SOUTH') {
+          badgeLines = [`[${spec.labelId}]`, `ПОГРУЗКА 0.45% Cu`];
+          badgeColor = '#f59e0b';
+        } else if (spec.role === 'DUMPING') {
+          if (isCrusherFault) {
+            badgeLines = [`[${spec.labelId}]`, `-> METSO LT140`];
+            badgeColor = '#10b981';
+          } else {
+            badgeLines = [`[${spec.labelId}]`, `РАЗГРУЗКА 136т`];
+            badgeColor = '#fbbf24';
+          }
+        }
+
+        truckBadges.push({
+          id: spec.id,
+          anchorX: s.x,
+          anchorY: s.y,
+          boxX: s.x,
+          boxY: s.y - 28 * zoom,
+          lines: badgeLines,
+          borderColor: badgeColor,
+          isSelected: isSel
+        });
+      }
+
+      ctx.restore();
+
+      // 3. Anti-Collision Pass for Truck Badges
+      for (let i = 0; i < truckBadges.length; i++) {
+        for (let j = i + 1; j < truckBadges.length; j++) {
+          const b1 = truckBadges[i];
+          const b2 = truckBadges[j];
+          const dx = Math.abs(b1.boxX - b2.boxX);
+          const dy = Math.abs(b1.boxY - b2.boxY);
+          if (dx < 70 && dy < 32) {
+            b2.boxY = b1.boxY - 34;
+          }
+        }
+      }
+
+      // 4. Fixed Technical Facility Badges
+      const landmarkBadges = [];
+
+      // KKD-1500
+      const cIso = iso(FACILITIES.crusher.x, FACILITIES.crusher.y, FACILITIES.crusher.z);
+      const cS = getScreenPos(cIso.x, cIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.crusher.id,
+        anchorX: cS.x,
+        anchorY: cS.y,
+        boxX: cS.x + 50 * zoom,
+        boxY: cS.y - 36 * zoom,
+        lines: isCrusherFault ? ['[CRUSHER-01]', 'JAMMED · 0 т/ч'] : ['[CRUSHER-01]', '2400 т/ч | CSS 180мм [АКТИВЕН]'],
+        borderColor: isCrusherFault ? '#ef4444' : '#10b981',
+        isSelected: (selectedTwinId === FACILITIES.crusher.id)
+      });
+
+      // Metso LT140
+      const mIso = iso(FACILITIES.metso.x, FACILITIES.metso.y, FACILITIES.metso.z);
+      const mS = getScreenPos(mIso.x, mIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.metso.id,
+        anchorX: mS.x,
+        anchorY: mS.y,
+        boxX: mS.x + 65 * zoom,
+        boxY: mS.y + 16 * zoom,
+        lines: isCrusherFault ? ['[CRUSHER-02]', 'Metso LT140 | 550 т/ч [ACTIVE]'] : ['[CRUSHER-02]', 'Metso LT140 | 550 т/ч [РЕЗЕРВ]'],
+        borderColor: isCrusherFault ? '#10b981' : '#06b6d4',
+        isSelected: (selectedTwinId === FACILITIES.metso.id)
+      });
+
+      // SAG Mill
+      const sagIso = iso(FACILITIES.sag.x, FACILITIES.sag.y, FACILITIES.sag.z);
+      const sagS = getScreenPos(sagIso.x, sagIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.sag.id,
+        anchorX: sagS.x,
+        anchorY: sagS.y,
+        boxX: sagS.x - 20 * zoom,
+        boxY: sagS.y - 50 * zoom,
+        lines: ['[SAG-MILL-01]', '14 MW | 5.87 МВт'],
+        borderColor: '#a855f7',
+        isSelected: (selectedTwinId === FACILITIES.sag.id)
+      });
+
+      // Substation
+      const subIso = iso(FACILITIES.substation.x, FACILITIES.substation.y, FACILITIES.substation.z);
+      const subS = getScreenPos(subIso.x, subIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.substation.id,
+        anchorX: subS.x,
+        anchorY: subS.y,
+        boxX: subS.x - 25 * zoom,
+        boxY: subS.y - 45 * zoom,
+        lines: ['[SUBSTATION-01]', '1200V DC | BESS OK'],
+        borderColor: '#06b6d4',
+        isSelected: (selectedTwinId === FACILITIES.substation.id)
+      });
+
+      // EKG-15 (+60m)
+      const ekgIso = iso(FACILITIES.ekg.x, FACILITIES.ekg.y, FACILITIES.ekg.z);
+      const ekgS = getScreenPos(ekgIso.x, ekgIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.ekg.id,
+        anchorX: ekgS.x,
+        anchorY: ekgS.y,
+        boxX: ekgS.x + 40 * zoom,
+        boxY: ekgS.y - 50 * zoom,
+        lines: ['[EXCAVATOR-01]', 'ЭКГ-15 | +60m | 1.35% Cu'],
+        borderColor: '#10b981',
+        isSelected: (selectedTwinId === FACILITIES.ekg.id)
+      });
+
+      // CAT 6020B (-60m)
+      const catIso = iso(FACILITIES.cat.x, FACILITIES.cat.y, FACILITIES.cat.z);
+      const catS = getScreenPos(catIso.x, catIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.cat.id,
+        anchorX: catS.x,
+        anchorY: catS.y,
+        boxX: catS.x - 35 * zoom,
+        boxY: catS.y + 40 * zoom,
+        lines: ['[EXCAVATOR-02]', 'CAT 6020B | -60m | 0.45% Cu'],
+        borderColor: '#10b981',
+        isSelected: (selectedTwinId === FACILITIES.cat.id)
+      });
+
+      // Sump (-60m)
+      const sumpIso = iso(FACILITIES.sump.x, FACILITIES.sump.y, FACILITIES.sump.z);
+      const sumpS = getScreenPos(sumpIso.x, sumpIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.sump.id,
+        anchorX: sumpS.x,
+        anchorY: sumpS.y,
+        boxX: sumpS.x,
+        boxY: sumpS.y + 45 * zoom,
+        lines: isWaterInflux ? ['[SUMP-01] Зумпф', 'Уровень 2.45м [АВАРИЙНЫЙ ПРИТОК]'] : ['[SUMP-01] Зумпф', 'Уровень 1.15м [НОРМА]'],
+        borderColor: isWaterInflux ? '#ef4444' : '#06b6d4',
+        isSelected: (selectedTwinId === FACILITIES.sump.id)
+      });
+
+      // Slope Radar IBIS-FM
+      const rIso = iso(FACILITIES.radar.x, FACILITIES.radar.y, FACILITIES.radar.z);
+      const rS = getScreenPos(rIso.x, rIso.y);
+      landmarkBadges.push({
+        id: FACILITIES.radar.id,
+        anchorX: rS.x,
+        anchorY: rS.y,
+        boxX: rS.x + 45 * zoom,
+        boxY: rS.y + 40 * zoom,
+        lines: ['[SLOPE-RADAR]', 'IBIS-FM | FoS = 1.34 [БОРТ УСТОЙЧИВ]'],
+        borderColor: '#f59e0b',
+        isSelected: (selectedTwinId === FACILITIES.radar.id)
+      });
+
+      // Draw Badges if enabled
+      if (showOcrBadges) {
+        for (const b of landmarkBadges) {
+          drawBadgeWithLeader(b);
+        }
+        for (const b of truckBadges) {
+          drawBadgeWithLeader(b);
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------------------
+    // RENDER: 2D PROCESS FLOWSHEET (ALTERNATIVE TAB)
+    // ---------------------------------------------------------------------------
+    function renderFlowsheet() {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width || canvas.width;
+      const H = rect.height || canvas.height;
+      ctx.fillStyle = '#090e1a';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.translate(W / 2 - 400 + panX, H / 2 - 200 + panY);
+      ctx.scale(zoom, zoom);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('ТЕХНОЛОГИЧЕСКАЯ СХЕМА ГОК «АҚТАУ-МЫС» (12 Mt/a)', 50, 40);
+
+      const nodes = [
+        { id: 'mining', title: '1. Добыча в карьере', sub: 'ЭКГ-15 (1.35%) + CAT (0.45%)', x: 50, y: 100, w: 220, h: 70, col: '#f59e0b' },
+        { id: 'trolley', title: '2. Троллейвозная откатка', sub: '1200В DC · 8.5% · 8 БелАЗ-75131', x: 320, y: 100, w: 240, h: 70, col: '#06b6d4' },
+        { id: 'crusher', title: '3. Крупное дробление', sub: 'ККД-1500 (2400 т/ч) + Metso LT140', x: 610, y: 100, w: 230, h: 70, col: '#10b981' },
+        { id: 'conveyor', title: '4. Конвейерная галерея', sub: '2400 т/ч · Натяжение 281 кН', x: 610, y: 220, w: 230, h: 70, col: '#818cf8' },
+        { id: 'stockpile', title: '5. Рудный склад 45кт', sub: 'Live: 28,515 т (11.8 ч буфер)', x: 320, y: 220, w: 240, h: 70, col: '#f59e0b' },
+        { id: 'sag', title: '6. МПСИ-90 / Флотация', sub: '5,520 кВт · Извлечение 91.4% Cu', x: 50, y: 220, w: 220, h: 70, col: '#ec4899' },
+      ];
+
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(n.x, n.y, n.w, n.h);
+        ctx.strokeStyle = n.col;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(n.x, n.y, n.w, n.h);
+
+        ctx.fillStyle = n.col;
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText(n.title, n.x + 12, n.y + 26);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '10px monospace';
+        ctx.fillText(n.sub, n.x + 12, n.y + 48);
+
+        if (i < 3) {
+          ctx.beginPath();
+          ctx.moveTo(n.x + n.w, n.y + 35);
+          ctx.lineTo(n.x + n.w + 50, n.y + 35);
+          ctx.strokeStyle = '#38bdf8';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------------
+    // RENDER: TWIN MATRIX (ALTERNATIVE TAB)
+    // ---------------------------------------------------------------------------
+    function renderTwinMatrix() {
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width || canvas.width;
+      const H = rect.height || canvas.height;
+      ctx.fillStyle = '#090e1a';
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.save();
+      ctx.translate(W / 2 - 450 + panX, H / 2 - 250 + panY);
+      ctx.scale(zoom, zoom);
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('РЕЕСТР 24 ЦИФРОВЫХ ДВОЙНИКОВ ECLIPSE DITTO (org.openegiz.mine:*)', 30, 30);
+
+      const items = allTwinsList.length > 0 ? allTwinsList : [
+        'org.openegiz.mine:mine-01', 'org.openegiz.mine:bench-north', 'org.openegiz.mine:bench-south',
+        'org.openegiz.mine:excavator-01', 'org.openegiz.mine:excavator-02', 'org.openegiz.mine:truck-01',
+        'org.openegiz.mine:drill-rig-01', 'org.openegiz.mine:water-bowser-01', 'org.openegiz.mine:trolley-line-01',
+        'org.openegiz.mine:conveyor-main-01', 'org.openegiz.mine:crusher-01', 'org.openegiz.mine:crusher-standby-02',
+        'org.openegiz.mine:stockpile-coarse-01', 'org.openegiz.mine:sag-mill-01', 'org.openegiz.mine:slope-radar-01',
+        'org.openegiz.mine:pump-station-01', 'org.openegiz.mine:substation-01'
+      ];
+
+      const cols = 3;
+      const cardW = 280;
+      const cardH = 65;
+
+      for (let i = 0; i < items.length; i++) {
+        const tid = (typeof items[i] === 'string') ? items[i] : (items[i].thingId || items[i].id || `org.openegiz.mine:twin-${i}`);
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = 30 + col * (cardW + 20);
+        const y = 60 + row * (cardH + 15);
+        const isSel = (tid === selectedTwinId);
+
+        ctx.fillStyle = isSel ? '#0c2842' : '#0f172a';
+        ctx.fillRect(x, y, cardW, cardH);
+        ctx.strokeStyle = isSel ? '#38bdf8' : '#1e293b';
+        ctx.lineWidth = isSel ? 2 : 1;
+        ctx.strokeRect(x, y, cardW, cardH);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px monospace';
+        ctx.fillText(tid.replace('org.openegiz.mine:', ''), x + 10, y + 22);
+
+        ctx.fillStyle = '#10b981';
+        ctx.font = '10px monospace';
+        ctx.fillText('● ONLINE (Ditto REST & MQTT)', x + 10, y + 42);
+      }
+      ctx.restore();
+    }
+
+    // ---------------------------------------------------------------------------
+    // MAIN ANIMATION LOOP (60 FPS CPU Friendly)
+    // ---------------------------------------------------------------------------
+    let lastTime = performance.now();
+
+    function animate(currentTime) {
+      const dt = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+      simTime += dt * 1.0;
+
+      const rect = canvas.getBoundingClientRect();
+      const W = rect.width || canvas.width;
+      const H = rect.height || canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      if (viewMode === 'iso') {
+        renderIsometricMine();
+      } else if (viewMode === 'flow') {
+        renderFlowsheet();
+      } else if (viewMode === 'twins') {
+        renderTwinMatrix();
+      }
+
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // ---------------------------------------------------------------------------
+    // TWIN INSPECTOR LOGIC & FORMULA BREAKDOWN
+    // ---------------------------------------------------------------------------
+    const TWIN_SPECS = {
+      'org.openegiz.mine:truck-01': {
+        name: 'БелАЗ-75131 #01 (Флагман)',
+        type: 'Карьерный самосвал (136 т · 1200В DC)',
+        policy: 'org.openegiz.policy:transport',
+        horizon: '+25.0 м (Руководящий уклон 8.5%)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/truck-01',
+        speed: '24.5 км/ч (⚡ 1200В DC)',
+        payload: '136.0 т (Шихта Cu 0.850%)',
+        braking: '13.4 м (ISO 3450:2011)',
+        tkph: '612.5 / 840 (норма)',
+        struts: '16.4 МПа (-13 см ход)',
+        fuel: '24.5 л/ч (-82.7% экономия)',
+        formula: `// 1. Термодинамика шин ISO 3450 / TKPH:
+TKPH = Q_mean * V_avg = (136t * 0.5) * 24.5 km/h = 612.5 <= 840 TKPH
+
+// 2. Тормозной путь по ISO 3450:2011 на уклоне 8.5%:
+S_stop = v^2 / (2*g*(mu - i)) + v * t_react = 13.4 м
+
+// 3. Экономия топлива на троллее 1200В:
+Delta_Fuel = 142 л/ч - 24.5 л/ч = 117.5 л/ч (-82.7%)`
+      },
+      'org.openegiz.mine:crusher-01': {
+        name: 'Дробилка ККД-1500/180',
+        type: 'Конусная дробилка крупного дробления',
+        policy: 'org.openegiz.policy:processing',
+        horizon: '+122.0 м (Портал корпуса ГОК)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/crusher-01',
+        speed: '2400 т/ч (Номинал)',
+        payload: 'CSS = 180 мм (Гидроразгрузка 150 мм)',
+        braking: '0.0 сек (Металлодетектор Tramp Metal)',
+        tkph: 'N/A',
+        struts: 'Гидроцилиндры вала: 28.5 МПа',
+        fuel: '1,850 кВт электропривод',
+        formula: `// 1. Формула Бонда для крупного дробления:
+W = 10 * W_i * (1/sqrt(P80) - 1/sqrt(F80)) = 1.34 кВт*ч/т
+
+// 2. Пропускная способность при CSS = 180 мм:
+Q = 2400 т/ч (Вал опускается на 150 мм при попадании металла)`
+      },
+      'org.openegiz.mine:crusher-standby-02': {
+        name: 'Резервная дробилка Metso LT140',
+        type: 'Мобильная щековая дробилка на гусеничном шасси',
+        policy: 'org.openegiz.policy:processing',
+        horizon: '+118.0 м (Аварийная площадка)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/crusher-standby-02',
+        speed: '550 т/ч (Готовность к пуску)',
+        payload: 'CSS = 160 мм',
+        braking: 'N/A',
+        tkph: 'N/A',
+        struts: 'N/A',
+        fuel: '350 кВт дизель-гидравлика',
+        formula: `// Авто-ввод резерва при аварии ККД-1500 (Gen-2):
+T_switch = 120 сек, Q_contingency = 550 т/ч
+Суммарно предотвращено потерь: $5,400,000`
+      },
+      'org.openegiz.mine:slope-radar-01': {
+        name: 'Радар устойчивости бортов IBIS-FM',
+        type: 'Интерферометрический георадар с синтезированной апертурой',
+        policy: 'org.openegiz.policy:geotech',
+        horizon: '+65.0 м (Западный наблюдательный пикет)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/slope-radar-01',
+        speed: 'FoS = 1.34 (Устойчив)',
+        payload: 'Скорость смещения: 0.12 мм/ч',
+        braking: 'Inverse Velocity: 8.33 h/mm',
+        tkph: 'N/A',
+        struts: 'Поровое давление u_w = 56.3 кПа',
+        fuel: '2.5 кВт (Солнце + АКБ)',
+        formula: `// Критерий Кулона-Мора (Factor of Safety):
+FoS = (c' + (sigma_n - u_w)*tan(phi')) / tau = 1.34 >= 1.30 (Норма)`
+      },
+      'org.openegiz.mine:pump-station-01': {
+        name: 'Зумпф и Водоотливной узел (-60м)',
+        type: 'Насосная станция WP-01 + шламовый понтон WP-02',
+        policy: 'org.openegiz.policy:dewatering',
+        horizon: '-62.0 м (Дно каньона)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/pump-station-01',
+        speed: '240 м³/ч (WP-01)',
+        payload: 'Уровень воды: 1.15 м (Безопасный: 1.50 м)',
+        braking: 'WP-02 Standby: 320 м³/ч',
+        tkph: 'N/A',
+        struts: 'Пьезометрический напор: 18.2 м',
+        fuel: '160 кВт насосный агрегат',
+        formula: `// Гидрогеологический приток горизонта -60м:
+Q_influx = 2 * pi * K * (H^2 - h0^2) / ln(R/r0) = 45 м³/ч (норма)
+При прорыве (Gen-2): Q_influx = 350 м³/ч -> авто-пуск WP-02 (320 м³/ч)`
+      },
+      'org.openegiz.mine:excavator-01': {
+        name: 'Экскаватор ЭКГ-15 #01',
+        type: 'Электрический канатный экскаватор (ковш 15 м³)',
+        policy: 'org.openegiz.policy:mining',
+        horizon: '+60.0 м (Северный забой)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/excavator-01',
+        speed: 'Погрузка в кузов 136т (148 сек цикл)',
+        payload: 'Шихта: 1.35% Cu (Богатая руда)',
+        braking: 'Ванты стрелы: 640 кН',
+        tkph: 'N/A',
+        struts: 'Износ зубьев 110Г13Л: 14.2%',
+        fuel: '6 кВ электросеть (850 кВт)',
+        formula: `// 1. Баланс шихтовки руды (EKF-PID):
+g_target = (w_north * 1.35% + w_south * 0.45%) / (w_north + w_south) = 0.850% Cu`
+      },
+      'org.openegiz.mine:excavator-02': {
+        name: 'Экскаватор CAT 6020B #02',
+        type: 'Гидравлический экскаватор (обратная лопата 12 м³)',
+        policy: 'org.openegiz.policy:mining',
+        horizon: '-60.0 м (Глубокий горизонт)',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: 'telemetry/excavator-02',
+        speed: 'Погрузка руды 0.45% Cu',
+        payload: 'Шихта: 0.45% Cu (Бедная руда)',
+        braking: 'Эвакуация при прорыве вод: 0.8 км/ч',
+        tkph: 'N/A',
+        struts: 'Давление гидросистемы: 35.0 МПа',
+        fuel: '778 кВт дизель',
+        formula: `// Эвакуационный подъем на +0м по рампе 12%:
+t_evac = 450м / (0.8 км/ч) = 33.7 мин (до затопления подошвы)`
+      }
+    };
+
+    function selectTwin(twinId) {
+      selectedTwinId = twinId;
+      const spec = TWIN_SPECS[twinId] || {
+        name: twinId.replace('org.openegiz.mine:', ''),
+        type: 'Цифровой двойник OpenEgiz',
+        policy: 'org.openegiz.policy:mine',
+        horizon: '0.0 м',
+        parent: 'org.openegiz.mine:mine-01',
+        mqtt: `telemetry/${twinId}`,
+        speed: 'НОМИНАЛ',
+        payload: '100% готовность',
+        braking: 'N/A',
+        tkph: 'N/A',
+        struts: 'N/A',
+        fuel: 'N/A',
+        formula: `// Eclipse Ditto v2 Protocol Feature Access:
+GET http://localhost:8080/api/2/things/${twinId}`
+      };
+
+      const setT = (id, txt) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = txt;
+      };
+
+      setT('inspector-twin-name', spec.name);
+      setT('inspector-twin-id-code', twinId);
+      setT('ins-type', spec.type);
+      setT('ins-policy', spec.policy);
+      setT('ins-horizon', spec.horizon);
+      setT('ins-parent', spec.parent);
+      setT('ins-mqtt', spec.mqtt);
+      setT('ins-speed', spec.speed);
+      setT('ins-payload', spec.payload);
+      setT('ins-braking', spec.braking);
+      setT('ins-tkph', spec.tkph);
+      setT('ins-struts', spec.struts);
+      setT('ins-fuel', spec.fuel);
+      setT('ins-formula-content', spec.formula);
+
+      document.querySelectorAll('.twin-chip').forEach(chip => {
+        if (chip.getAttribute('data-id') === twinId) {
+          chip.classList.add('selected');
+        } else {
+          chip.classList.remove('selected');
+        }
+      });
+    }
+
+    function buildTwinSelectorGrid() {
+      const grid = document.getElementById('twin-selector-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const list = [
+        { id: 'org.openegiz.mine:truck-01', title: 'БелАЗ-75131 #01' },
+        { id: 'org.openegiz.mine:crusher-01', title: 'ККД-1500/180' },
+        { id: 'org.openegiz.mine:crusher-standby-02', title: 'Metso LT140' },
+        { id: 'org.openegiz.mine:excavator-01', title: 'ЭКГ-15 #01 (+60м)' },
+        { id: 'org.openegiz.mine:excavator-02', title: 'CAT 6020B (-60м)' },
+        { id: 'org.openegiz.mine:slope-radar-01', title: 'Радар IBIS-FM' },
+        { id: 'org.openegiz.mine:pump-station-01', title: 'Зумпф (-60м)' },
+        { id: 'org.openegiz.mine:trolley-line-01', title: 'Троллей 1200В' },
+        { id: 'org.openegiz.mine:substation-01', title: 'Подстанция 6МВт' },
+        { id: 'org.openegiz.mine:stockpile-coarse-01', title: 'Склад руды 45кт' },
+        { id: 'org.openegiz.mine:sag-mill-01', title: 'Мельница SAG' },
+        { id: 'org.openegiz.mine:water-bowser-01', title: 'Ороситель 85м³' },
+      ];
+      for (const t of list) {
+        const chip = document.createElement('div');
+        chip.className = 'twin-chip' + (t.id === selectedTwinId ? ' selected' : '');
+        chip.setAttribute('data-id', t.id);
+        chip.innerHTML = `<div class="t-id">${t.title}</div><div class="t-stat">Ditto :8080</div>`;
+        chip.onclick = () => selectTwin(t.id);
+        grid.appendChild(chip);
+      }
+    }
+    buildTwinSelectorGrid();
+
+    // ---------------------------------------------------------------------------
+    // REST API INTEGRATION & SCENARIO CONTROLS
+    // ---------------------------------------------------------------------------
+    async function triggerScenario(id, mode) {
+      try {
+        const res = await fetch('/api/scenarios/trigger', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenario: id, mode })
+        });
+        const data = await res.json();
+        updateScenarioUI(data.current || data.scenario || { id, mode });
+      } catch (e) {
+        console.error('Trigger scenario error:', e);
+      }
+    }
+
+    async function revertAllScenarios() {
+      try {
+        const res = await fetch('/api/scenarios/revert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenario: 'all' })
+        });
+        const data = await res.json();
+        updateScenarioUI(data.current || data.scenario || { id: 'NORMAL', mode: 'NORMAL' });
+      } catch (e) {
+        console.error('Revert scenario error:', e);
+      }
+    }
+
+    function updateScenarioUI(s) {
+      currentScenario = s;
+      const pill = document.getElementById('incident-pill');
+      const desc = document.getElementById('incident-desc');
+      if (!pill || !desc) return;
+
+      pill.className = 'status-badge';
+      if (s.id === 'NORMAL') {
+        pill.classList.add('baseline');
+        pill.innerText = '● Штатный режим';
+        desc.innerText = 'Все системы рудника в номинале. Тяговая сеть 1200В и ККД-1500 работают на 100%.';
+      } else if (s.mode === 'gen1' || s.mode === 'GEN1') {
+        pill.classList.add('gen1');
+        pill.innerText = `● Gen-1 (${s.id})`;
+        desc.innerText = s.message || `${s.title}: Локальное парирование без остановки добычи.`;
+      } else {
+        pill.classList.add('gen2');
+        pill.innerText = `● Gen-2 АВАРИЯ (${s.id})`;
+        desc.innerText = s.message || `${s.title}: Активирован резервный контур защиты!`;
+      }
+    }
+
+    async function fetchFleetAndTelemetry() {
+      try {
+        const res = await fetch('/api/openegiz/fleet');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.fleet && data.fleet.length > 0) {
+          fleetData = data.fleet;
+        }
+        if (data.scenario) {
+          updateScenarioUI(data.scenario);
+        }
+      } catch (e) {}
+    }
+    setInterval(fetchFleetAndTelemetry, 1000);
+    fetchFleetAndTelemetry();
+
+    async function fetchAllTwins() {
+      try {
+        const res = await fetch('/api/openegiz/twins/all');
+        if (res.ok) {
+          const data = await res.json();
+          allTwinsList = Object.keys(data.twins).map(k => data.twins[k]);
+          const el = document.getElementById('footer-ditto-twins');
+          if (el) el.innerText = `${data.count || 24} Twins Online`;
+        }
+      } catch (e) {}
+    }
+    fetchAllTwins();
+"""
+
+with open('public/index.html', 'r', encoding='utf-8') as f:
+    html = f.read()
+
+# Replace script tag contents
+pattern = r'(<script>)(.*?)(</script>)'
+match = re.search(pattern, html, flags=re.DOTALL)
+if not match:
+    print("Could not find <script> in public/index.html")
+    exit(1)
+
+new_html = html[:match.start(1)] + "<script>" + script_body + "\n  </script>" + html[match.end(3):]
+
+with open('public/index.html', 'w', encoding='utf-8') as f:
+    f.write(new_html)
+
+print("Successfully replaced <script> with unified 2.5D Isometric Engine in public/index.html!")
