@@ -4,7 +4,7 @@
 [![OpenEgiz Compliant](https://img.shields.io/badge/OpenEgiz-v1.0.3-blue.svg)](https://openegiz-contest.github.io/kk/rules/)
 [![Architecture](https://img.shields.io/badge/Architecture-Eclipse_Ditto_+_MQTT-green.svg)](https://www.eclipse.dev/ditto/)
 [![Licence](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Verification Suite](https://img.shields.io/badge/Zhinaushy_Audit-39%2F39_Passed-success.svg)](team-018-main/scripts/zhinaushy-verify.sh)
+[![Verification Suite](https://img.shields.io/badge/Zhinaushy_Audit-46%2F46_Passed-success.svg)](team-018-main/scripts/zhinaushy-verify.sh)
 
 > **Цифровой двойник открытого полиметаллического карьера «Ақтау-Мыс» (12 Mt/a)** на открытой отраслевой платформе OpenEgiz: 24 цифровых двойника в Eclipse Ditto, декарбонизированная троллейвозная откатка 1200В, адаптивная EKF-PID шихтовка руды 0.850% Cu, термодинамика шин по ISO 3450:2011 / TKPH, гидрогеологический баланс горизонта -60м и двухуровневые вероятностные инциденты «What-If» (Gen-1 / Gen-2).
 
