@@ -343,7 +343,6 @@ function buildFopsCanopy(mats: BelazDetailMaterials): THREE.Group {
     const rib = new THREE.Mesh(ribGeo, mats.ribSteel);
     const xPos = -canopyW / 2 + 0.25 + (i * (canopyW - 0.5)) / (ribCount - 1);
     rib.position.set(xPos, canopyH / 2, -(canopyD - 0.1) / 2);
-    rib.castShadow = true;
     rib.receiveShadow = true;
     group.add(rib);
   }
@@ -518,27 +517,17 @@ function buildRadiatorAndFan(mats: BelazDetailMaterials): RadiatorBuild {
   const housing = makeBox(radW + 0.1, radH + 0.1, radD, mats.chassisSteel, 0, 0, 0);
   group.add(housing);
 
-  // Recessed radiator core matrix (grid of small fins)
-  const coreGroup = new THREE.Group();
-  const finRows = 12;
-  const finCols = 16;
-  const finW = (radW - 0.1) / finCols;
-  const finH = (radH - 0.1) / finRows;
-  for (let r = 0; r < finRows; r++) {
-    for (let c = 0; c < finCols; c++) {
-      const fin = makeBox(
-        finW * 0.85,
-        finH * 0.85,
-        radD * 0.6,
-        mats.radiatorCore,
-        -radW / 2 + 0.05 + c * finW + finW / 2,
-        -radH / 2 + 0.05 + r * finH + finH / 2,
-        -radD * 0.15
-      );
-      coreGroup.add(fin);
-    }
-  }
-  group.add(coreGroup);
+  // Recessed radiator core matrix (single consolidated mesh box)
+  const coreMesh = makeBox(
+    radW - 0.1,
+    radH - 0.1,
+    radD * 0.6,
+    mats.radiatorCore,
+    0,
+    0,
+    -radD * 0.15
+  );
+  group.add(coreMesh);
 
   // Frontal angled louvers / grille bars
   const louverCount = 7;

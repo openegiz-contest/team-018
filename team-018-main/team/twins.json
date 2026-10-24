@@ -10,20 +10,27 @@
       "child_twin_ids": [
         "org.openegiz.mine:bench-north",
         "org.openegiz.mine:bench-south",
-        "org.openegiz.mine:excavator-01",
-        "org.openegiz.mine:excavator-02",
-        "org.openegiz.mine:trolley-line-01",
-        "org.openegiz.mine:substation-01",
+        "org.openegiz.mine:conveyor-main-01",
         "org.openegiz.mine:crusher-01",
         "org.openegiz.mine:crusher-standby-02",
-        "org.openegiz.mine:pump-station-01",
-        "org.openegiz.mine:truck-01",
         "org.openegiz.mine:drill-rig-01",
-        "org.openegiz.mine:water-bowser-01",
-        "org.openegiz.mine:conveyor-main-01",
-        "org.openegiz.mine:stockpile-coarse-01",
+        "org.openegiz.mine:excavator-01",
+        "org.openegiz.mine:excavator-02",
+        "org.openegiz.mine:pump-station-01",
         "org.openegiz.mine:sag-mill-01",
-        "org.openegiz.mine:slope-radar-01"
+        "org.openegiz.mine:slope-radar-01",
+        "org.openegiz.mine:stockpile-coarse-01",
+        "org.openegiz.mine:substation-01",
+        "org.openegiz.mine:trolley-line-01",
+        "org.openegiz.mine:truck-01",
+        "org.openegiz.mine:truck-02",
+        "org.openegiz.mine:truck-03",
+        "org.openegiz.mine:truck-04",
+        "org.openegiz.mine:truck-05",
+        "org.openegiz.mine:truck-06",
+        "org.openegiz.mine:truck-07",
+        "org.openegiz.mine:truck-08",
+        "org.openegiz.mine:water-bowser-01"
       ],
       "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
       "annual_capacity_mt": 12.0,
@@ -431,7 +438,7 @@
     "policyId": "org.openegiz.mine:abac_mine_policy",
     "definition": "org.openegiz.mine:TruckModel:1.0.0",
     "attributes": {
-      "name": "Flagship Haul Truck HT-01 (BelAZ-75131 Trolley-Assist 136t)",
+      "name": "Haul Truck HT-01 (BelAZ-75131 Trolley-Assist 136t)",
       "_isType": false,
       "_parents": "org.openegiz.mine:mine-01",
       "parent_twin_id": "org.openegiz.mine:mine-01",
@@ -450,7 +457,7 @@
     "features": {
       "state": {
         "properties": {
-          "value": "queued_at_excavator"
+          "value": "hauling_trolley"
         }
       },
       "assigned_shovel": {
@@ -478,7 +485,7 @@
       },
       "route_position": {
         "properties": {
-          "value": 0.0,
+          "value": 0.8,
           "unit": "km"
         }
       },
@@ -1416,6 +1423,1070 @@
           "status": "ONLINE",
           "last_heartbeat_epoch": 0,
           "watchdog_timeout_s": 15.0
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-02": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-02 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "south_sulfide"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "hauling_trolley"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-02"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 1.4,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "south_sulfide"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-03": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-03 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "north_chalcopyrite"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "hauling_trolley"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-01"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 2.2,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "north_chalcopyrite"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-04": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-04 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "south_sulfide"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "hauling_diesel"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-02"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 3.0,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "south_sulfide"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-05": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-05 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "north_chalcopyrite"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "dumping"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-01"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 3.5,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "north_chalcopyrite"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-06": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-06 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "south_sulfide"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "returning_empty"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-02"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 2.6,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "south_sulfide"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-07": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-07 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "north_chalcopyrite"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "returning_empty"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-01"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 1.2,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "north_chalcopyrite"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
+        }
+      }
+    }
+  },
+  "org.openegiz.mine:truck-08": {
+    "policyId": "org.openegiz.mine:abac_mine_policy",
+    "definition": "org.openegiz.mine:TruckModel:1.0.0",
+    "attributes": {
+      "name": "Haul Truck HT-08 (BelAZ-75131 Trolley-Assist 136t)",
+      "_isType": false,
+      "_parents": "org.openegiz.mine:mine-01",
+      "parent_twin_id": "org.openegiz.mine:mine-01",
+      "child_twin_ids": [],
+      "spatial_topology_ref": "team/data/mine_spatial_topology.geojson",
+      "kind": "haul-truck",
+      "payload_capacity_t": 130.0,
+      "empty_weight_t": 107.0,
+      "traction_type": "AC-AC Electric Drive + Trolley Pantograph",
+      "diesel_power_kw": 1194,
+      "trolley_power_kw": 1800,
+      "tire_set_cost_usd": 270000.0,
+      "abac_policy_ref": "team/policies/abac_mine_policy.json",
+      "dispatch_link": "south_sulfide"
+    },
+    "features": {
+      "state": {
+        "properties": {
+          "value": "loading"
+        }
+      },
+      "assigned_shovel": {
+        "properties": {
+          "value": "excavator-02"
+        }
+      },
+      "payload": {
+        "properties": {
+          "value": 0.0,
+          "unit": "t"
+        }
+      },
+      "grade_loaded": {
+        "properties": {
+          "value": 0.0,
+          "unit": "% Cu"
+        }
+      },
+      "speed": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km/h"
+        }
+      },
+      "route_position": {
+        "properties": {
+          "value": 0.0,
+          "unit": "km"
+        }
+      },
+      "propulsion_mode": {
+        "properties": {
+          "value": "diesel"
+        }
+      },
+      "trolley_mode": {
+        "properties": {
+          "value": 0
+        }
+      },
+      "power_kw": {
+        "properties": {
+          "value": 0.0,
+          "unit": "kW"
+        }
+      },
+      "fuel_rate_lh": {
+        "properties": {
+          "value": 5.0,
+          "unit": "l/h"
+        }
+      },
+      "tkph": {
+        "properties": {
+          "value": 145.0,
+          "unit": "t*km/h"
+        }
+      },
+      "tire_temp_c": {
+        "properties": {
+          "value": 62.0,
+          "unit": "degC"
+        }
+      },
+      "trips_total": {
+        "properties": {
+          "value": 0,
+          "unit": "trips"
+        }
+      },
+      "fuel_pct": {
+        "properties": {
+          "value": 95.0,
+          "unit": "%"
+        }
+      },
+      "sensor_diagnostics": {
+        "properties": {
+          "status": "HEALTHY",
+          "packet_loss_pct": 0.2,
+          "crc_errors_total": 0,
+          "calibration_drift_offset": 0.0
+        }
+      },
+      "lifecycle_state": {
+        "properties": {
+          "status": "ONLINE",
+          "last_heartbeat_epoch": 0,
+          "watchdog_timeout_s": 15.0
+        }
+      },
+      "dispatch_link": {
+        "properties": {
+          "value": "south_sulfide"
+        }
+      },
+      "queue_wait_sec": {
+        "properties": {
+          "value": 0.0,
+          "unit": "s"
+        }
+      },
+      "queue_position": {
+        "properties": {
+          "value": 0,
+          "unit": "pos"
+        }
+      },
+      "traction_mu_eff": {
+        "properties": {
+          "value": 0.65,
+          "unit": "ratio"
+        }
+      },
+      "braking_distance_m": {
+        "properties": {
+          "value": 24.2,
+          "unit": "m"
+        }
+      },
+      "wet_derate_active": {
+        "properties": {
+          "value": false
         }
       }
     }

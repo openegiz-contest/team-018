@@ -53,7 +53,7 @@ function addBox(
   const geo = new THREE.BoxGeometry(w, h, d);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(x, y, z);
-  mesh.castShadow = true;
+  mesh.castShadow = (w >= 0.5 && h >= 3.0);
   mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
@@ -73,7 +73,7 @@ function addCylinder(
   const geo = new THREE.CylinderGeometry(rTop, rBottom, h, radialSegments);
   const mesh = new THREE.Mesh(geo, mat);
   mesh.position.set(x, y, z);
-  mesh.castShadow = true;
+  mesh.castShadow = (rTop >= 0.25 && h >= 4.0);
   mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
@@ -94,7 +94,7 @@ function addBeamBetween(
   const mid = new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5);
   mesh.position.copy(mid);
   mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
-  mesh.castShadow = true;
+  mesh.castShadow = false;
   mesh.receiveShadow = true;
   parent.add(mesh);
   return mesh;
@@ -572,18 +572,49 @@ export function createRealisticInfrastructureMasts(
       // Линия контактного медного провода
       const contactGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(contactPoints), 28, 0.02, 6, false);
       const contactMesh = new THREE.Mesh(contactGeo, catenaryCopperMat);
-      contactMesh.castShadow = true;
+      contactMesh.receiveShadow = true;
       trolleyNetworkGroup.add(contactMesh);
 
       // Линия несущего стального троса
       const messengerGeo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(messengerPoints), 28, 0.016, 5, false);
       const messengerMesh = new THREE.Mesh(messengerGeo, catenaryCableMat);
-      messengerMesh.castShadow = true;
+      messengerMesh.receiveShadow = true;
       trolleyNetworkGroup.add(messengerMesh);
     }
   }
 
-  // --- Power grid pylons (only two, well spaced) ---
+  // --- Helper to build smooth catenary conductors ---
+  const addCatenaryConductor = (
+    group: THREE.Group,
+    pFrom: THREE.Vector3,
+    pTo: THREE.Vector3,
+    sag: number,
+    radius = 0.032,
+    mat: THREE.Material,
+    segs = 20
+  ): THREE.Mesh => {
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs;
+      const p = new THREE.Vector3().lerpVectors(pFrom, pTo, t);
+      p.y -= Math.sin(t * Math.PI) * sag;
+      pts.push(p);
+    }
+    const geo = new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(pts),
+      segs,
+      radius,
+      5,
+      false
+    );
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = false;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    return mesh;
+  };
+
+  // --- 110kV Double-Circuit High-Voltage Power Grid Transmission Line ---
   const t1x = 75, t1z = -35;
   const t2x = 62, t2z = -12;
   const tower1 = buildLatticeTower(t1x, getCanyonGroundHeight(t1x, t1z), t1z, 26, materialSet);
@@ -592,32 +623,160 @@ export function createRealisticInfrastructureMasts(
   const tower2 = buildLatticeTower(t2x, getCanyonGroundHeight(t2x, t2z), t2z, 22, materialSet);
   powerGridPylonsGroup.add(tower2);
 
-  // Conductor between towers (catenary)
   const conductorMat = pick(materialSet, 'cable', makeFallback(0x1a1a1a, 0.7, 0.2));
-  const t1Top = new THREE.Vector3(t1x, tower1.position.y + 26 * 0.86, t1z);
-  const t2Top = new THREE.Vector3(t2x, tower2.position.y + 22 * 0.86, t2z);
-  const conductorPts: THREE.Vector3[] = [];
-  const cSegs = 24;
-  for (let i = 0; i <= cSegs; i++) {
-    const t = i / cSegs;
-    const p = new THREE.Vector3().lerpVectors(t1Top, t2Top, t);
-    p.y -= Math.sin(t * Math.PI) * 2.2;
-    conductorPts.push(p);
-  }
-  const conductorGeo = new THREE.TubeGeometry(
-    new THREE.CatmullRomCurve3(conductorPts),
-    48,
-    0.05,
-    5,
-    false
-  );
-  const conductorMesh = new THREE.Mesh(conductorGeo, conductorMat);
-  conductorMesh.castShadow = true;
-  powerGridPylonsGroup.add(conductorMesh);
+  const groundWireMat = pick(materialSet, 'steel', makeFallback(0x71717a, 0.6, 0.5));
 
-  // --- KRUN-6kV field sled ---
-  const sled = buildFieldSled(-8, getCanyonGroundHeight(-8, -8), -8, materialSet);
-  excavatorFieldSubstationSled.add(sled);
+  const armLevels = [0.72, 0.86, 0.98];
+  const armLengths = [5.5, 4.5, 3.0];
+
+  const t1BaseY = tower1.position.y;
+  const t2BaseY = tower2.position.y;
+
+  // Tower 1 conductor attachment points (crossarm insulator bases)
+  const t1Left = armLevels.map((lvl, idx) =>
+    new THREE.Vector3(t1x - armLengths[idx], t1BaseY + 26 * lvl - 0.6, t1z)
+  );
+  const t1Right = armLevels.map((lvl, idx) =>
+    new THREE.Vector3(t1x + armLengths[idx], t1BaseY + 26 * lvl - 0.6, t1z)
+  );
+  const t1Apex = new THREE.Vector3(t1x, t1BaseY + 28.5, t1z);
+
+  // Tower 2 conductor attachment points
+  const t2Left = armLevels.map((lvl, idx) =>
+    new THREE.Vector3(t2x - armLengths[idx], t2BaseY + 22 * lvl - 0.6, t2z)
+  );
+  const t2Right = armLevels.map((lvl, idx) =>
+    new THREE.Vector3(t2x + armLengths[idx], t2BaseY + 22 * lvl - 0.6, t2z)
+  );
+  const t2Apex = new THREE.Vector3(t2x, t2BaseY + 24.5, t2z);
+
+  // External Grid Horizon Source (incoming feed from regional power system over the canyon rim)
+  const hX = 96, hZ = -66, hY = getCanyonGroundHeight(96, -66) + 16.0;
+  const hLeft = armLevels.map((lvl, idx) =>
+    new THREE.Vector3(hX - armLengths[idx] * 0.9, hY + 22 * lvl, hZ)
+  );
+  const hRight = armLevels.map((lvl, idx) =>
+    new THREE.Vector3(hX + armLengths[idx] * 0.9, hY + 22 * lvl, hZ)
+  );
+  const hApex = new THREE.Vector3(hX, hY + 25.0, hZ);
+
+  // Substation GPP-110 Incoming Portal Tower Attachment Points (World coordinates: 54 + local x, -2 + local z)
+  // Substation Portal 1 at (56, 6.5, 0)
+  const pSub1 = [
+    new THREE.Vector3(56 - 1.8, 6.5 + 22 * 0.72, 0),
+    new THREE.Vector3(56, 6.5 + 22 * 0.86, 0),
+    new THREE.Vector3(56 + 1.8, 6.5 + 22 * 0.98, 0),
+  ];
+  const pSub1Apex = new THREE.Vector3(56, 6.5 + 24.0, 0);
+
+  // Substation Portal 2 at (56, 6.5, 12)
+  const pSub2 = [
+    new THREE.Vector3(56 - 1.8, 6.5 + 22 * 0.72, 12),
+    new THREE.Vector3(56, 6.5 + 22 * 0.86, 12),
+    new THREE.Vector3(56 + 1.8, 6.5 + 22 * 0.98, 12),
+  ];
+  const pSub2Apex = new THREE.Vector3(56, 6.5 + 24.0, 12);
+
+  // SPAN 1: External Horizon -> Pylon Tower 1 (6 phases + 1 ground wire)
+  for (let a = 0; a < 3; a++) {
+    addCatenaryConductor(powerGridPylonsGroup, hLeft[a], t1Left[a], 2.2, 0.035, conductorMat);
+    addCatenaryConductor(powerGridPylonsGroup, hRight[a], t1Right[a], 2.2, 0.035, conductorMat);
+  }
+  addCatenaryConductor(powerGridPylonsGroup, hApex, t1Apex, 1.2, 0.024, groundWireMat);
+
+  // SPAN 2: Pylon Tower 1 -> Pylon Tower 2 (6 phases + 1 ground wire)
+  for (let a = 0; a < 3; a++) {
+    addCatenaryConductor(powerGridPylonsGroup, t1Left[a], t2Left[a], 1.8, 0.035, conductorMat);
+    addCatenaryConductor(powerGridPylonsGroup, t1Right[a], t2Right[a], 1.8, 0.035, conductorMat);
+  }
+  addCatenaryConductor(powerGridPylonsGroup, t1Apex, t2Apex, 1.0, 0.024, groundWireMat);
+
+  // SPAN 3: Pylon Tower 2 -> Substation GPP-110 Portals (6 phases + ground wire connecting into substation!)
+  for (let a = 0; a < 3; a++) {
+    addCatenaryConductor(powerGridPylonsGroup, t2Left[a], pSub1[a], 1.2, 0.035, conductorMat);
+    addCatenaryConductor(powerGridPylonsGroup, t2Right[a], pSub2[a], 1.2, 0.035, conductorMat);
+  }
+  addCatenaryConductor(powerGridPylonsGroup, t2Apex, pSub1Apex, 0.8, 0.024, groundWireMat);
+  addCatenaryConductor(powerGridPylonsGroup, t2Apex, pSub2Apex, 0.8, 0.024, groundWireMat);
+
+  // --- Mobile Quarry Substation Sleds (ЯКНО-6кВ) and Road Cable Overpass ---
+  // 1. Mobile Switchgear Sled ЯКНО-6кВ for EKG-15 Electric Shovel (Bench 1 flat terrace)
+  const ekgSledX = -11.5, ekgSledZ = -3.5;
+  const ekgSled = buildFieldSled(ekgSledX, getCanyonGroundHeight(ekgSledX, ekgSledZ), ekgSledZ, materialSet);
+  excavatorFieldSubstationSled.add(ekgSled);
+
+  // Flexible trailing cable from ЯКНО to EKG-15 shovel cable reel
+  const ekgCablePts: THREE.Vector3[] = [];
+  const ekgCableStart = new THREE.Vector3(ekgSledX + 1.6, getCanyonGroundHeight(ekgSledX, ekgSledZ) + 0.35, ekgSledZ);
+  const ekgCableEnd = new THREE.Vector3(-17.5, getCanyonGroundHeight(-17.5, -6.0) + 1.2, -6.0);
+  for (let i = 0; i <= 14; i++) {
+    const t = i / 14;
+    const cp = new THREE.Vector3().lerpVectors(ekgCableStart, ekgCableEnd, t);
+    const gy = getCanyonGroundHeight(cp.x, cp.z);
+    cp.y = gy + 0.08 + Math.sin(t * Math.PI) * 0.12;
+    ekgCablePts.push(cp);
+  }
+  const ekgCableMesh = new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ekgCablePts), 24, 0.055, 6, false),
+    conductorMat
+  );
+  excavatorFieldSubstationSled.add(ekgCableMesh);
+
+  // 2. Mobile Switchgear Sled ЯКНО-6кВ for Rotary Blast-Hole Drill Rig SBSH-250 (Pit bottom -15.5m)
+  const drillSledX = -7.5, drillSledZ = -6.5;
+  const drillSled = buildFieldSled(drillSledX, getCanyonGroundHeight(drillSledX, drillSledZ), drillSledZ, materialSet);
+  excavatorFieldSubstationSled.add(drillSled);
+
+  // Flexible trailing cable to SBSH-250 drill rig
+  const drillCablePts: THREE.Vector3[] = [];
+  const drillCableStart = new THREE.Vector3(drillSledX + 1.6, getCanyonGroundHeight(drillSledX, drillSledZ) + 0.35, drillSledZ);
+  const drillCableEnd = new THREE.Vector3(-4.0, getCanyonGroundHeight(-4.0, -6.0) + 0.8, -6.0);
+  for (let i = 0; i <= 10; i++) {
+    const t = i / 10;
+    const cp = new THREE.Vector3().lerpVectors(drillCableStart, drillCableEnd, t);
+    const gy = getCanyonGroundHeight(cp.x, cp.z);
+    cp.y = gy + 0.06;
+    drillCablePts.push(cp);
+  }
+  const drillCableMesh = new THREE.Mesh(
+    new THREE.TubeGeometry(new THREE.CatmullRomCurve3(drillCablePts), 16, 0.05, 5, false),
+    conductorMat
+  );
+  excavatorFieldSubstationSled.add(drillCableMesh);
+
+  // 3. Overhead High-Voltage Cable Crossing Portal over Haul Road
+  const overpassGroup = new THREE.Group();
+  overpassGroup.name = 'HighVoltageRoadCableOverpass';
+  const ovX = 18.0, ovZ = 9.0;
+  const ovGroundY = getCanyonGroundHeight(ovX, ovZ);
+  overpassGroup.position.set(ovX, ovGroundY, ovZ);
+
+  const steelMat = pick(materialSet, 'steel', makeFallback(0x6b7075, 0.55, 0.65));
+  const warningYellow = pick(materialSet, 'warning', makeFallback(0xf59e0b, 0.5, 0.1));
+  const archH = 9.2, archW = 12.5;
+
+  // Concrete footing blocks on road shoulders
+  addBox(overpassGroup, 1.4, 0.5, 1.4, -archW * 0.5, 0.25, 0, steelMat);
+  addBox(overpassGroup, 1.4, 0.5, 1.4, archW * 0.5, 0.25, 0, steelMat);
+
+  // Tubular steel columns
+  addCylinder(overpassGroup, 0.22, 0.25, archH, -archW * 0.5, archH * 0.5, 0, steelMat, 10);
+  addCylinder(overpassGroup, 0.22, 0.25, archH, archW * 0.5, archH * 0.5, 0, steelMat, 10);
+
+  // Horizontal cable gantry truss across the road (8.5m clearance)
+  addBox(overpassGroup, archW + 0.6, 0.45, 0.6, 0, archH, 0, steelMat);
+  addBox(overpassGroup, archW + 0.6, 0.2, 0.62, 0, archH - 0.28, 0, warningYellow);
+
+  // Cable tray across arch
+  const archCable = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.065, 0.065, archW + 3.0, 8),
+    conductorMat
+  );
+  archCable.position.set(0, archH + 0.35, 0);
+  archCable.rotation.z = Math.PI / 2;
+  overpassGroup.add(archCable);
+
+  excavatorFieldSubstationSled.add(overpassGroup);
 
   return {
     floodlightTowersGroup,

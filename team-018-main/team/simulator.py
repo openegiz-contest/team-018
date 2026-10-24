@@ -289,13 +289,30 @@ class SmartKenishModel:
         self.excavator_02_hyd_temp = 68.2
         self.last_control_cmd = "AUTO"
 
-        # Flagship Haulage Fleet (1 BelAZ-75131 truck)
+        # Full Autonomous Haulage Fleet (8 BelAZ-75131 trucks across North & South Links)
         self.trucks = [
             SmartTruck("truck-01", "excavator-01", "north_chalcopyrite", 0.8, "hauling_trolley"),
+            SmartTruck("truck-02", "excavator-02", "south_sulfide", 1.4, "hauling_trolley"),
+            SmartTruck("truck-03", "excavator-01", "north_chalcopyrite", 2.2, "hauling_trolley"),
+            SmartTruck("truck-04", "excavator-02", "south_sulfide", 3.0, "hauling_diesel"),
+            SmartTruck("truck-05", "excavator-01", "north_chalcopyrite", 3.5, "dumping"),
+            SmartTruck("truck-06", "excavator-02", "south_sulfide", 2.6, "returning_empty"),
+            SmartTruck("truck-07", "excavator-01", "north_chalcopyrite", 1.2, "returning_empty"),
+            SmartTruck("truck-08", "excavator-02", "south_sulfide", 0.0, "loading"),
         ]
-        self.trucks[0].payload_t = 130.0
-        self.trucks[0].grade_cu = self.grade_north
-        self.trucks[0].v_ms = 24.5 / 3.6
+        for t in self.trucks:
+            if t.state in ("hauling_trolley", "hauling_diesel", "dumping"):
+                t.payload_t = 130.0
+                t.grade_cu = self.grade_north if t.assigned_shovel == "excavator-01" else self.grade_south
+                t.v_ms = 24.5 / 3.6 if t.state == "hauling_trolley" else 15.0 / 3.6
+            elif t.state == "loading":
+                t.payload_t = 65.0
+                t.grade_cu = self.grade_south
+                t.v_ms = 0.0
+            else:
+                t.payload_t = 0.0
+                t.grade_cu = 0.0
+                t.v_ms = 28.0 / 3.6
 
     @staticmethod
     def _solve_irr(cash_flows, max_iter=80, tol=1e-7):

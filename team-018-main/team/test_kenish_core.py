@@ -32,7 +32,7 @@ class TestSmartKenishModel(unittest.TestCase):
 
     def test_model_initialization(self):
         self.assertIsNotNone(self.model)
-        self.assertEqual(len(self.model.trucks), 1)
+        self.assertEqual(len(self.model.trucks), 8)
         self.assertEqual(self.model.scenario_trolley, "NORMAL")
         self.assertEqual(self.model.scenario_crusher, "NORMAL")
         self.assertEqual(self.model.scenario_water, "NORMAL")
@@ -42,19 +42,30 @@ class TestSmartKenishModel(unittest.TestCase):
         snap = self.model.snapshot()
         self.assertIsInstance(snap, dict)
 
-        # Verify all mandatory digital twins exist in snapshot
+        # Verify all mandatory digital twins exist in snapshot (including all 8 haul trucks)
         mandatory_twins = [
             "mine-01",
             "truck-01",
+            "truck-02",
+            "truck-03",
+            "truck-04",
+            "truck-05",
+            "truck-06",
+            "truck-07",
+            "truck-08",
             "excavator-01",
+            "excavator-02",
             "crusher-01",
+            "crusher-standby-02",
             "trolley-line-01",
+            "substation-01",
             "slope-radar-01",
             "pump-station-01",
             "sag-mill-01",
             "conveyor-main-01",
             "stockpile-coarse-01",
             "water-bowser-01",
+            "drill-rig-01",
         ]
         for twin_id in mandatory_twins:
             self.assertIn(twin_id, snap, f"Missing digital twin: {twin_id}")

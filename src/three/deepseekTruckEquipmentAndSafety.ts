@@ -87,7 +87,6 @@ function buildWheelChock(
   );
 
   const chock = new THREE.Mesh(makeChockGeometry(), yellow);
-  chock.castShadow = true;
   chock.receiveShadow = true;
   g.add(chock);
 
@@ -174,7 +173,6 @@ function buildExtinguisher(
     red
   );
   body.position.y = 0.31;
-  body.castShadow = true;
   g.add(body);
 
   // Domed top
@@ -294,11 +292,6 @@ function buildAmberMarker(
   );
   lens.position.z = 0.018;
   g.add(lens);
-
-  // Small point light for glow (cheap, no shadows)
-  const glow = new THREE.PointLight(0xffaa00, 0.25, 0.6, 2);
-  glow.position.z = 0.05;
-  g.add(glow);
 
   return g;
 }

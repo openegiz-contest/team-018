@@ -290,7 +290,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     }
 
     renderer.setPixelRatio(
-      isHeadless ? 1 : Math.min(window.devicePixelRatio, 1.75)
+      isHeadless ? 1 : Math.min(window.devicePixelRatio, 1.25)
     );
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.shadowMap.enabled = !isHeadless;
@@ -409,8 +409,8 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     sunKeyLight.position.set(initSun.sunX, initSun.sunY, initSun.sunZ);
     if (!isHeadless) {
       sunKeyLight.castShadow = true;
-      sunKeyLight.shadow.mapSize.width = 4096;
-      sunKeyLight.shadow.mapSize.height = 4096;
+      sunKeyLight.shadow.mapSize.width = 2048;
+      sunKeyLight.shadow.mapSize.height = 2048;
       sunKeyLight.shadow.camera.near = 10;
       sunKeyLight.shadow.camera.far = 260;
       const d = 82;
@@ -423,7 +423,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     }
     scene.add(sunKeyLight);
 
-    // 5. Directional Focused SpotLights for Work Stations with Soft Penumbra (Issue #74)
+    // 5. Directional Focused SpotLights for Work Stations with Soft Penumbra
     const crusherFloodLight = new THREE.SpotLight(0xffeedb, 2.5, 85, Math.PI / 4, 0.75, 2);
     crusherFloodLight.position.set(10.0, 32.0, -32.0);
     crusherFloodLight.target.position.set(10.0, 6.0, -42.0);
@@ -436,38 +436,16 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     scene.add(ekgFaceLight);
     scene.add(ekgFaceLight.target);
 
-    const catFaceLight = new THREE.SpotLight(0xfef08a, 2.2, 70, Math.PI / 4, 0.72, 2);
-    catFaceLight.position.set(-28.0, 6.0, 10.0);
-    catFaceLight.target.position.set(-13.5, -15.5, 10.0);
-    scene.add(catFaceLight);
-    scene.add(catFaceLight.target);
-
-    const mpsiFloodLight = new THREE.SpotLight(0xe0f2fe, 2.4, 85, Math.PI / 4, 0.75, 2);
-    mpsiFloodLight.position.set(10.0, 30.0, -52.0);
-    mpsiFloodLight.target.position.set(16.0, 11.5, -66.0);
-    scene.add(mpsiFloodLight);
-    scene.add(mpsiFloodLight.target);
-
-    const substationGlowLight = new THREE.SpotLight(0x38bdf8, 2.0, 75, Math.PI / 3.5, 0.75, 2);
-    substationGlowLight.position.set(64.0, 24.0, 4.0);
-    substationGlowLight.target.position.set(64.0, 4.0, 4.0);
-    scene.add(substationGlowLight);
-    scene.add(substationGlowLight.target);
-
-    const trolleyRampLight = new THREE.SpotLight(0xfde047, 2.0, 75, Math.PI / 4, 0.72, 2);
-    trolleyRampLight.position.set(25.0, 22.0, 10.0);
-    trolleyRampLight.target.position.set(20.0, 0.0, 15.0);
-    scene.add(trolleyRampLight);
-    scene.add(trolleyRampLight.target);
-
     // Dynamic Focused Forward Headlight for Flagship BelAZ-75131 with smooth penumbra
     const belazHeadlight = new THREE.SpotLight(0xfff5cc, 3.2, 55, Math.PI / 5, 0.70, 2);
     scene.add(belazHeadlight);
     scene.add(belazHeadlight.target);
 
-    // Stepped Glowing Contour Rings & Animated Spline Path for Cyber-Physical Twin
+    // Stepped Glowing Contour Rings & Animated Spline Path for Cyber-Physical Twin (Hidden by default to eliminate visual noise)
     const cyberEffectsGroup = new THREE.Group();
     cyberEffectsGroup.name = 'CYBER_EFFECTS_GROUP';
+    cyberEffectsGroup.visible = false;
+    scene.add(cyberEffectsGroup);
     scene.add(cyberEffectsGroup);
 
     const contourLevels = [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12];
@@ -541,7 +519,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       if (mode === 'cyber_holographic') {
         stateRef.current.timeOfDayHours = 23.5;
         mats.setCyberMode(true);
-        cyberEffectsGroup.visible = true;
+        cyberEffectsGroup.visible = false;
       } else if (mode === 'golden_sunset') {
         stateRef.current.timeOfDayHours = 17.5;
         mats.setCyberMode(false);
@@ -558,7 +536,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       }
     };
     sceneRefs.current.applyLighting = applyLighting;
-    applyLighting(lightingMode || 'cyber_holographic');
+    applyLighting(lightingMode || 'realistic_day');
 
     const canyonEnvRig = createCanyonEnvironment(mats);
     scene.add(canyonEnvRig.root);
@@ -1508,10 +1486,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       const nightPower = 0.15 + celestial.nightFactor * 0.85;
       crusherFloodLight.intensity = 1.2 * nightPower + celestial.nightFactor * 2.8;
       ekgFaceLight.intensity = 1.0 * nightPower + celestial.nightFactor * 2.5;
-      catFaceLight.intensity = 1.0 * nightPower + celestial.nightFactor * 2.5;
-      mpsiFloodLight.intensity = 1.2 * nightPower + celestial.nightFactor * 2.6;
-      substationGlowLight.intensity = 0.8 * nightPower + celestial.nightFactor * 2.2;
-      trolleyRampLight.intensity = 0.9 * nightPower + celestial.nightFactor * 2.2;
       belazHeadlight.intensity = 1.2 * nightPower + celestial.nightFactor * 3.2;
 
 
@@ -1636,7 +1610,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
 
       try {
         const isPerf = Boolean(stateRef.current.performanceMode);
-        renderer.shadowMap.enabled = !isHeadless && !isPerf;
         if (isPerf || !composer) {
           renderer.render(scene, camera);
         } else {

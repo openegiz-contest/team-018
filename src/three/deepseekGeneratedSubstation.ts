@@ -49,7 +49,7 @@ function box(
 ): THREE.Mesh {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set(x, y, z);
-  m.castShadow = true;
+  m.castShadow = (w >= 3.0 && h >= 2.0);
   m.receiveShadow = true;
   parent.add(m);
   return m;
@@ -68,7 +68,7 @@ function cyl(
 ): THREE.Mesh {
   const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
   m.position.set(x, y, z);
-  m.castShadow = true;
+  m.castShadow = false;
   m.receiveShadow = true;
   parent.add(m);
   return m;
@@ -465,6 +465,256 @@ function buildScadaBoard(
   return g;
 }
 
+function buildSubstationSecurityFence(
+  mats: CadMaterialLibrary,
+  parent: THREE.Object3D
+): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'SubstationSecurityFence';
+  parent.add(g);
+
+  const steel = mats.wheelHubSteel;
+  const concrete = mats.belazChassisDark;
+
+  const xMin = -1.5, xMax = 19.5;
+  const zMin = -1.5, zMax = 17.5;
+  const fenceH = 2.7;
+
+  // Concrete perimeter curb
+  box(xMax - xMin, 0.35, 0.28, concrete, (xMin + xMax) / 2, GROUND_Y - 0.05, zMin, g);
+  box(xMax - xMin, 0.35, 0.28, concrete, (xMin + xMax) / 2, GROUND_Y - 0.05, zMax, g);
+  box(0.28, 0.35, zMax - zMin, concrete, xMin, GROUND_Y - 0.05, (zMin + zMax) / 2, g);
+  // East curb with gate opening
+  box(0.28, 0.35, 5.7 - zMin, concrete, xMax, GROUND_Y - 0.05, (zMin + 5.7) / 2, g);
+  box(0.28, 0.35, zMax - 10.3, concrete, xMax, GROUND_Y - 0.05, (10.3 + zMax) / 2, g);
+
+  // Fence posts
+  const makePost = (x: number, z: number, isCorner = false) => {
+    const postH = isCorner ? fenceH + 0.5 : fenceH;
+    box(0.12, postH, 0.12, steel, x, GROUND_Y + postH * 0.5, z, g);
+    // 45-degree top outrigger arm for barbed wire
+    const arm = box(0.06, 0.55, 0.06, steel, x - 0.14, GROUND_Y + postH + 0.16, z, g);
+    arm.rotation.z = -0.42;
+  };
+
+  for (let x = xMin; x <= xMax + 0.1; x += 3.0) {
+    makePost(x, zMin, x === xMin || x >= xMax - 0.1);
+    makePost(x, zMax, x === xMin || x >= xMax - 0.1);
+  }
+  for (let z = zMin + 3.0; z < zMax - 0.5; z += 3.0) {
+    makePost(xMin, z);
+  }
+  makePost(xMax, 2.1);
+  makePost(xMax, 5.7);
+  makePost(xMax, 10.3);
+  makePost(xMax, 13.9);
+
+  // 3D Metal Wire Mesh Panels
+  const panelMat = new THREE.MeshStandardMaterial({
+    color: 0x475569,
+    metalness: 0.85,
+    roughness: 0.4,
+    wireframe: true,
+  });
+
+  const addPanel = (x1: number, z1: number, x2: number, z2: number) => {
+    const dx = x2 - x1;
+    const dz = z2 - z1;
+    const len = Math.hypot(dx, dz);
+    const midX = (x1 + x2) / 2;
+    const midZ = (z1 + z2) / 2;
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(len, fenceH - 0.3), panelMat);
+    panel.position.set(midX, GROUND_Y + fenceH * 0.5, midZ);
+    panel.rotation.y = Math.atan2(dx, dz) + Math.PI / 2;
+    g.add(panel);
+  };
+
+  addPanel(xMin, zMin, xMax, zMin);
+  addPanel(xMin, zMax, xMax, zMax);
+  addPanel(xMin, zMin, xMin, zMax);
+  addPanel(xMax, zMin, xMax, 5.7);
+  addPanel(xMax, 10.3, xMax, zMax);
+
+  // Double vehicle swinging gate at xMax, z in [5.7, 10.3]
+  const gateGroup = new THREE.Group();
+  gateGroup.position.set(xMax, GROUND_Y, 8.0);
+  box(0.08, fenceH - 0.2, 2.2, steel, 0, (fenceH - 0.2) * 0.5 + 0.1, -1.15, gateGroup);
+  box(0.08, fenceH - 0.2, 2.2, steel, 0, (fenceH - 0.2) * 0.5 + 0.1, 1.15, gateGroup);
+
+  // High voltage warning plate on gate
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 512;
+  signCanvas.height = 256;
+  const sCtx = signCanvas.getContext('2d');
+  if (sCtx) {
+    sCtx.fillStyle = '#f59e0b';
+    sCtx.fillRect(0, 0, 512, 256);
+    sCtx.strokeStyle = '#0f172a';
+    sCtx.lineWidth = 14;
+    sCtx.strokeRect(8, 8, 496, 240);
+    sCtx.fillStyle = '#0f172a';
+    sCtx.font = 'bold 36px sans-serif';
+    sCtx.textAlign = 'center';
+    sCtx.fillText('СТОЙ! НАПРЯЖЕНИЕ', 256, 110);
+    sCtx.font = 'bold 28px sans-serif';
+    sCtx.fillText('110 000 В · ОПАСНО ДЛЯ ЖИЗНИ', 256, 175);
+  }
+  const signTex = new THREE.CanvasTexture(signCanvas);
+  const signMat = new THREE.MeshStandardMaterial({ map: signTex, roughness: 0.45 });
+  const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.2), signMat);
+  signMesh.position.set(0.06, 1.6, 0);
+  signMesh.rotation.y = Math.PI / 2;
+  gateGroup.add(signMesh);
+  g.add(gateGroup);
+
+  // 4 Corner floodlight poles
+  const corners = [
+    [xMin, zMin],
+    [xMax, zMin],
+    [xMin, zMax],
+    [xMax, zMax],
+  ];
+  for (const [cx, cz] of corners) {
+    const poleH = 7.5;
+    box(0.18, poleH, 0.18, steel, cx, GROUND_Y + poleH * 0.5, cz, g);
+    box(0.8, 0.15, 0.2, steel, cx, GROUND_Y + poleH, cz, g);
+    box(0.35, 0.25, 0.25, mats.belazYellow, cx + 0.25, GROUND_Y + poleH - 0.15, cz, g);
+    box(0.35, 0.25, 0.25, mats.belazYellow, cx - 0.25, GROUND_Y + poleH - 0.15, cz, g);
+  }
+
+  return g;
+}
+
+function buildFirewallAndOilBasins(
+  mats: CadMaterialLibrary,
+  parent: THREE.Object3D
+): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'SubstationFirewallAndBasins';
+  parent.add(g);
+
+  const concrete = mats.belazChassisDark;
+  const rock = mats.canyonBenchRock;
+  const yellow = mats.belazYellow;
+
+  const wallX = 13.0;
+  const wallZ = 8.0;
+  const wallH = 4.8;
+  const wallW = 7.2;
+
+  // Reinforced concrete blast firewall between Transformer 1 and Transformer 2
+  const wall = box(wallW, wallH, 0.42, concrete, wallX, GROUND_Y + wallH * 0.5, wallZ, g);
+  wall.castShadow = true;
+
+  box(0.7, wallH - 0.4, 1.4, concrete, wallX - 2.4, GROUND_Y + (wallH - 0.4) * 0.5, wallZ, g);
+  box(0.7, wallH - 0.4, 1.4, concrete, wallX + 2.4, GROUND_Y + (wallH - 0.4) * 0.5, wallZ, g);
+  box(wallW + 0.4, 0.18, 0.52, yellow, wallX, GROUND_Y + wallH + 0.09, wallZ, g);
+
+  // Gravel oil collection pits under Transformer 1 (z=4) and Transformer 2 (z=12)
+  for (const tz of [4.0, 12.0]) {
+    const basin = box(6.8, 0.25, 4.8, rock, wallX, GROUND_Y + 0.125, tz, g);
+    basin.receiveShadow = true;
+    box(7.0, 0.35, 0.15, concrete, wallX, GROUND_Y + 0.175, tz - 2.4, g);
+    box(7.0, 0.35, 0.15, concrete, wallX, GROUND_Y + 0.175, tz + 2.4, g);
+    box(0.15, 0.35, 4.8, concrete, wallX - 3.4, GROUND_Y + 0.175, tz, g);
+    box(0.15, 0.35, 4.8, concrete, wallX + 3.4, GROUND_Y + 0.175, tz, g);
+  }
+
+  return g;
+}
+
+function buildHighVoltageBusbars(
+  mats: CadMaterialLibrary,
+  parent: THREE.Object3D
+): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'HighVoltageBusbars110kV';
+  parent.add(g);
+
+  const alu = mats.chromeCylinder;
+  const insMat = mats.ceramicInsulator;
+  const steel = mats.wheelHubSteel;
+
+  const busY = GROUND_Y + 4.8;
+  const postH = 2.4;
+
+  const busZCoords = [3.0, 4.0, 5.0, 11.0, 12.0, 13.0];
+  for (const bz of busZCoords) {
+    for (const bx of [6.5, 9.0, 11.2]) {
+      box(0.25, postH * 0.5, 0.25, steel, bx, GROUND_Y + postH * 0.25, bz, g);
+      cyl(0.14, 0.14, postH * 0.5, insMat, bx, GROUND_Y + postH * 0.75, bz, g, 10);
+    }
+    const busGeo = new THREE.CylinderGeometry(0.045, 0.045, 5.2, 8);
+    const busMesh = new THREE.Mesh(busGeo, alu);
+    busMesh.position.set(8.85, busY, bz);
+    busMesh.rotation.z = Math.PI / 2;
+    g.add(busMesh);
+  }
+
+  // 110kV Surge Arresters (ОПН-110кВ) on steel stands next to transformers
+  for (const tz of [4.0, 12.0]) {
+    for (const phase of [-1, 0, 1]) {
+      const sx = 10.8;
+      const sz = tz + phase * 0.9;
+      box(0.25, 1.4, 0.25, steel, sx, GROUND_Y + 0.7, sz, g);
+      cyl(0.12, 0.18, 1.8, insMat, sx, GROUND_Y + 2.3, sz, g, 10);
+      cyl(0.22, 0.22, 0.06, alu, sx, GROUND_Y + 3.2, sz, g, 12);
+      const jStart = new THREE.Vector3(sx, GROUND_Y + 3.25, sz);
+      const jEnd = new THREE.Vector3(13.0 + phase * 1.4, GROUND_Y + 5.35, tz);
+      const jMid = jStart.clone().add(jEnd).multiplyScalar(0.5);
+      jMid.y += 0.4;
+      const jGeo = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(jStart, jMid, jEnd), 12, 0.025, 5, false);
+      g.add(new THREE.Mesh(jGeo, mats.copperPantograph));
+    }
+  }
+
+  return g;
+}
+
+function buildCableBridgeToTrolley(
+  mats: CadMaterialLibrary,
+  parent: THREE.Object3D
+): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'CableBridgeToTrolley';
+  parent.add(g);
+
+  const steel = mats.wheelHubSteel;
+  const cableMat = mats.belazChassisDark;
+
+  const p1 = new THREE.Vector3(16.5, GROUND_Y, 2.5);
+  const p2 = new THREE.Vector3(26.0, GROUND_Y, -4.0);
+
+  const gantryH = 4.4;
+  const dist = p1.distanceTo(p2);
+  const dir = p2.clone().sub(p1).normalize();
+  const yaw = Math.atan2(dir.x, dir.z);
+
+  const portalT = [0.2, 0.6, 1.0];
+  for (const t of portalT) {
+    const p = p1.clone().lerp(p2, t);
+    box(0.22, gantryH, 0.22, steel, p.x - 0.7, GROUND_Y + gantryH * 0.5, p.z, g);
+    box(0.22, gantryH, 0.22, steel, p.x + 0.7, GROUND_Y + gantryH * 0.5, p.z, g);
+    box(1.8, 0.22, 0.22, steel, p.x, GROUND_Y + gantryH, p.z, g);
+  }
+
+  const mid = p1.clone().lerp(p2, 0.5);
+  const tray = box(1.4, 0.25, dist, steel, mid.x, GROUND_Y + gantryH + 0.15, mid.z, g);
+  tray.rotation.y = yaw;
+
+  for (let c = -2; c <= 2; c++) {
+    const cMat = c === -2 ? mats.belazYellow : c === -1 ? mats.chromeCylinder : cableMat;
+    const cStart = p1.clone().add(new THREE.Vector3(c * 0.2, gantryH + 0.35, 0));
+    const cEnd = p2.clone().add(new THREE.Vector3(c * 0.2, gantryH + 0.35, 0));
+    const cMid = cStart.clone().lerp(cEnd, 0.5);
+    cMid.y -= 0.12;
+    const cGeo = new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(cStart, cMid, cEnd), 16, 0.045, 5, false);
+    g.add(new THREE.Mesh(cGeo, cMat));
+  }
+
+  return g;
+}
+
 export function createSubstationGPP110(mats: CadMaterialLibrary): THREE.Group {
   const root = new THREE.Group();
   root.name = 'SubstationGPP110';
@@ -473,26 +723,43 @@ export function createSubstationGPP110(mats: CadMaterialLibrary): THREE.Group {
   const pad = box(20, 0.4, 18, mats.belazChassisDark, 9, GROUND_Y - 0.2, 8, root);
   pad.receiveShadow = true;
 
+  // 1. High-Voltage 110kV Portal Towers
   const tower1 = buildLatticeTower(mats, 2, 2, 22, root);
   const tower2 = buildLatticeTower(mats, 2, 14, 22, root);
 
+  // 2. High-Voltage Distribution Gantry
   const gantry = buildGantry(mats, 9, 8, root);
 
+  // 3. Step-down Power Transformers TDN-16000/110kV
   const tr1 = buildTransformer(mats, 13, 4, root);
   const tr2 = buildTransformer(mats, 13, 12, root);
 
+  // 4. Blast Firewall and Oil Collection Basins
+  buildFirewallAndOilBasins(mats, root);
+
+  // 5. High-Voltage Busbars, SF6 Circuit Breakers & Disconnectors
   buildCircuitBreaker(mats, 8.5, 4, root);
   buildCircuitBreaker(mats, 8.5, 12, root);
   buildDisconnector(mats, 6.5, 4, root);
   buildDisconnector(mats, 6.5, 12, root);
+  buildHighVoltageBusbars(mats, root);
 
+  // 6. Traction Rectifier & Battery Energy Storage (BESS)
   const rectifier = buildRectifierContainer(mats, 16.5, 2.5, root);
   const bess = buildBESS(mats, 16.5, 13.5, root);
 
+  // 7. SCADA Dispatch Telemetry Display Board
   const scada = buildScadaBoard(mats, 9, 16.5, root);
 
+  // 8. Perimeter Security Fence & Vehicle Access Gate
+  buildSubstationSecurityFence(mats, root);
+
+  // 9. Elevated Heavy Power Cable Bridge to Haul Road & Trolley
+  buildCableBridgeToTrolley(mats, root);
+
+  // 10. Conductor spans from Portals to Gantry (Positioned correctly at local 0,0,0)
   const conductorRoot = new THREE.Group();
-  conductorRoot.position.set(ORIGIN_X, 0, ORIGIN_Z);
+  conductorRoot.position.set(0, 0, 0); // Correct local coordinates!
   root.add(conductorRoot);
 
   const towerTopY = GROUND_Y + 22 * 0.72;
@@ -517,8 +784,9 @@ export function createSubstationGPP110(mats: CadMaterialLibrary): THREE.Group {
     buildConductor(mats, a, b, 1.6, conductorRoot);
   }
 
+  // 11. Feeder Bus (Positioned correctly at local 0,0,0)
   const feederBus = new THREE.Group();
-  feederBus.position.set(ORIGIN_X, 0, ORIGIN_Z);
+  feederBus.position.set(0, 0, 0); // Correct local coordinates!
   root.add(feederBus);
 
   const busY = GROUND_Y + 3.2;
@@ -535,19 +803,13 @@ export function createSubstationGPP110(mats: CadMaterialLibrary): THREE.Group {
     feederBus.add(mesh);
   }
 
+  // 12. Catenary Transition Mast (Positioned correctly at local coords)
   const catenaryPole = new THREE.Group();
-  catenaryPole.position.set(ORIGIN_X + 16.5, GROUND_Y, ORIGIN_Z + 8.5);
+  catenaryPole.position.set(16.5, GROUND_Y, 8.5); // Correct local coordinates!
   root.add(catenaryPole);
   box(0.3, 8, 0.3, mats.wheelHubSteel, 0, 4, 0, catenaryPole);
   box(3.0, 0.2, 0.2, mats.wheelHubSteel, 1.2, 7.5, 0, catenaryPole);
   box(0.15, 0.15, 4.0, mats.copperPantograph, 2.4, 7.3, 0, catenaryPole);
-
-  root.traverse((obj) => {
-    if (obj instanceof THREE.Mesh) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
-    }
-  });
 
   const clock = { t: 0 };
   (root as any).__update = (dt: number, subTelemetry?: any) => {

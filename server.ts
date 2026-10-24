@@ -202,9 +202,9 @@ function startDittoServer(port = 8080) {
     res.json({ status: 'UP', platform: 'Eclipse Ditto Gateway (Smart-Kenish Standalone)' });
   });
 
-  // Things endpoint: full list or array of twins
+  // Things endpoint: full list or array of twins with thingId
   app.get('/api/2/things', (_req, res) => {
-    res.json(Object.values(dittoTwins));
+    res.json(Object.entries(dittoTwins).map(([thingId, twin]) => ({ thingId, ...twin })));
   });
 
   // Single thing endpoint
@@ -998,6 +998,29 @@ print(json.dumps(snap))
   // Start on Port 3001 (Headless REST API)
   app.listen(3001, '0.0.0.0', () => {
     console.log(`✓ Headless REST API online at http://localhost:3001 (/api/openegiz/twins)`);
+  });
+
+  // Start on Port 5173 (3D Digital Twin WebGL Cockpit)
+  const app5173 = express();
+  app5173.use((_req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', '*');
+    next();
+  });
+  const distDir = path.resolve(__dirname, 'dist');
+  if (fs.existsSync(distDir)) {
+    app5173.use(express.static(distDir));
+    app5173.get('*', (_req, res) => res.sendFile(path.resolve(distDir, 'index.html')));
+  }
+  const srv5173 = app5173.listen(5173, '0.0.0.0', () => {
+    console.log(`✓ 3D Digital Twin WebGL Cockpit online at http://localhost:5173`);
+  });
+  srv5173.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log('✓ Port 5173 already running (Vite / Static Server active).');
+    } else {
+      console.warn('Port 5173 warning:', err.message);
+    }
   });
 }
 

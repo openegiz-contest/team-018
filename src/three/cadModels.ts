@@ -190,8 +190,24 @@ function enableHierarchyShadows(
       ) {
         return;
       }
-      m.castShadow = cast;
       m.receiveShadow = receive;
+
+      if (cast && m.geometry) {
+        if (!m.geometry.boundingSphere) {
+          m.geometry.computeBoundingSphere();
+        }
+        const radius = m.geometry.boundingSphere?.radius ?? 1;
+        const maxScale = Math.max(
+          Math.abs(m.scale.x),
+          Math.abs(m.scale.y),
+          Math.abs(m.scale.z)
+        );
+        const effectiveRadius = radius * (maxScale || 1.0);
+        // Only structural components (chassis, body, wheels, boom, bucket) cast shadow
+        m.castShadow = effectiveRadius >= 0.45;
+      } else {
+        m.castShadow = false;
+      }
     }
   });
 }
@@ -460,7 +476,7 @@ export function createCanyonEnvironment(
   envGroup.name = 'CANYON_ENVIRONMENT';
 
   const terrainSize = 280;
-  const terrainSegments = 220;
+  const terrainSegments = 120;
   const terrainGeo = new THREE.PlaneGeometry(
     terrainSize,
     terrainSize,
@@ -543,7 +559,7 @@ export function createCanyonEnvironment(
   terrainGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
   const terrainMesh = new THREE.Mesh(terrainGeo, mats.canyonBenchRock);
-  terrainMesh.castShadow = true;
+  terrainMesh.castShadow = false; // Terrain only receives shadows; casting shadow on itself wasted 96k depth writes
   terrainMesh.receiveShadow = true;
   envGroup.add(terrainMesh);
 
@@ -746,7 +762,7 @@ export function createCanyonEnvironment(
   const dewateringPipeCurve = new THREE.CatmullRomCurve3(pipelinePoints, false, 'catmullrom', 0.25);
   const dewateringPipeGeo = new THREE.TubeGeometry(dewateringPipeCurve, 72, 0.28, 12, false);
   const dewateringPipeMesh = new THREE.Mesh(dewateringPipeGeo, mats.belazChassisDark);
-  dewateringPipeMesh.castShadow = true;
+  dewateringPipeMesh.castShadow = false;
   dewateringPipeMesh.receiveShadow = true;
   envGroup.add(dewateringPipeMesh);
 
@@ -756,7 +772,7 @@ export function createCanyonEnvironment(
   const saddleCount = Math.floor(totalPipeLen / saddleSpacing);
   const saddleGeo = new THREE.BoxGeometry(0.85, 0.45, 0.85);
   const saddleInstanced = new THREE.InstancedMesh(saddleGeo, mats.concreteMat, saddleCount);
-  saddleInstanced.castShadow = true;
+  saddleInstanced.castShadow = false;
   saddleInstanced.receiveShadow = true;
   for (let sIdx = 0; sIdx < saddleCount; sIdx++) {
     const st = (sIdx + 0.5) / saddleCount;
@@ -787,6 +803,7 @@ export function createCanyonEnvironment(
 
   // DeepSeek-Synthesized High-Voltage GPP 110/10kV Substation Complex
   const deepseekSubstation = createSubstationGPP110(mats);
+  enableHierarchyShadows(deepseekSubstation, true, true);
   envGroup.add(deepseekSubstation);
 
   // DeepSeek 1200V DC Traction Rectifier Substation & Trolley Infrastructure (D7.6..D7.10)
@@ -796,29 +813,27 @@ export function createCanyonEnvironment(
   // DeepSeek Road Safety, Drainage, Water Truck & Inspection Patrol (D8.10, D9.5, D9.7..D9.10)
   const roadSafetyRig = createRoadSafetyAndDrainage(mats as any, getCanyonGroundHeight);
 
-  // DeepSeek-Synthesized Reflective Quarry Safety & Haulage Signage
+  // DeepSeek-Synthesized Reflective Quarry Safety & Haulage Signage (Excluded to eliminate visual clutter)
   const deepseekSignage = createQuarrySafetySignage(mats, getCanyonGroundHeight);
-  envGroup.add(deepseekSignage);
 
-  // 5. Museum-Grade Infrastructure: 8 High-Mast Towers (NO ground puddles), Trolley Gantries, 110kV Pylons, KRUN-6kV Sled
+  // 5. Museum-Grade Infrastructure: Trolley Gantries, 110kV Pylons, KRUN-6kV Sled
   const infra = createRealisticInfrastructureMasts(mats, getCanyonGroundHeight);
-  envGroup.add(infra.floodlightTowersGroup);
+  enableHierarchyShadows(infra.trolleyNetworkGroup, true, true);
+  enableHierarchyShadows(infra.powerGridPylonsGroup, true, true);
   envGroup.add(infra.trolleyNetworkGroup);
   envGroup.add(infra.powerGridPylonsGroup);
   envGroup.add(infra.excavatorFieldSubstationSled);
   const trolleyNetworkGroup = infra.trolleyNetworkGroup;
 
-  // Heavy-duty quarry trailing cable crossing ramp for BelAZ haul road (Fix #190)
+  // Heavy-duty quarry trailing cable crossing ramp (Excluded to eliminate road clutter)
   const crossingRamp = createExcavatorMechanicalDetails(mats as any).cableCrossingRamp;
-  crossingRamp.position.set(-20.0, getCanyonGroundHeight(-20.0, -2.0), -2.0);
-  crossingRamp.rotation.y = 0.42;
-  envGroup.add(crossingRamp);
 
   // 6. Heavy Rotary Blast-Hole Drilling Machine СБШ-250 (дно чаши карьера, горизонт −15.5м)
   const drillingRig = createRealisticDrillingRigSBSH250(mats, [-4.0, -15.5, -6.0], getCanyonGroundHeight);
   drillingRig.root.rotation.y = 0.35;
   const drillUpgrades = createDrillRigUpgrades(mats as any, getCanyonGroundHeight);
   drillingRig.root.add(drillUpgrades.group);
+  enableHierarchyShadows(drillingRig.root, true, true);
   Object.assign(drillingRig.root.userData, {
     assemblyId: 'drilling_rig',
     targetId: 'drilling_rig',
@@ -826,9 +841,8 @@ export function createCanyonEnvironment(
   });
   envGroup.add(drillingRig.root);
 
-  // DeepSeek-Synthesized BVR Blast Field, Staggered Grid & Cable Sled (#206, #207, #218, #221, #225)
+  // DeepSeek-Synthesized BVR Blast Field (Excluded to eliminate ground stakes & flag clutter)
   const bvrBlastField = createBvrBlastingField(getCanyonGroundHeight, [-4.0, -6.0]);
-  envGroup.add(bvrBlastField);
 
   // DeepSeek-Synthesized KKD-1500 Manganese Hopper Lining & Oversize Boulders (#231, #234, #240)
   const crusherDetails = createCrusherHopperLiningAndBoulders(mats);
@@ -838,12 +852,9 @@ export function createCanyonEnvironment(
   // DeepSeek-Synthesized Conveyor Drive & Tension Drums with Transfer Chute (#246, #250)
   const conveyorDrums = createConveyorHeadAndTailDrums(mats);
 
-  // DeepSeek-Synthesized Excavator Swing Danger Zone Boundary Decal Rings (#199)
+  // DeepSeek-Synthesized Excavator Swing Danger Zone Boundary Decal Rings (Excluded to eliminate ground decal clutter)
   const ekgDangerZone = createExcavatorDangerZone(18, getCanyonGroundHeight, [-15.5, -6.0]);
-  envGroup.add(ekgDangerZone);
-
   const catDangerZone = createExcavatorDangerZone(14, getCanyonGroundHeight, [-13.5, 10.0]);
-  envGroup.add(catDangerZone);
 
   // DeepSeek-Synthesized Quarry Safety Berms, Runoff Ditches & Grade Signs (#316, #317, #318)
   const safetyBermsAndSigns = createHaulRoadSafetyBermsAndSigns(getCanyonGroundHeight);
@@ -859,7 +870,7 @@ export function createCanyonEnvironment(
     mats.belazChassisDark
   );
   concreteWall.position.set(wallX, wallGroundY + 2.9, wallZ);
-  concreteWall.castShadow = true;
+  concreteWall.castShadow = false;
   concreteWall.receiveShadow = true;
   retainingWallGroup.add(concreteWall);
 
@@ -869,7 +880,7 @@ export function createCanyonEnvironment(
       mats.belazChassisDark
     );
     buttress.position.set(wallX + bx, wallGroundY + 2.8, wallZ + 0.6);
-    buttress.castShadow = true;
+    buttress.castShadow = false;
     buttress.receiveShadow = true;
     retainingWallGroup.add(buttress);
   }
@@ -888,7 +899,7 @@ export function createCanyonEnvironment(
   const totalMuckBoulders = 160;
   const muckGeo = new THREE.DodecahedronGeometry(1.0, 0);
   const muckInstanced = new THREE.InstancedMesh(muckGeo, muckRockMat, totalMuckBoulders);
-  muckInstanced.castShadow = true;
+  muckInstanced.castShadow = false;
   muckInstanced.receiveShadow = true;
   muckInstanced.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(totalMuckBoulders * 3), 3);
 
@@ -1048,7 +1059,7 @@ export function createCanyonEnvironment(
     signsGroup.add(delin);
   }
 
-  envGroup.add(signsGroup);
+  // envGroup.add(signsGroup); // Clutter removed: 76 road signs and benchmark posts
 
   // 10. Quarry Dust Plumes disabled to maximize CPU performance
   const dustPlumeInstanced = new THREE.InstancedMesh(

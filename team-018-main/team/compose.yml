@@ -47,3 +47,17 @@ services:
   grafana:
     volumes:
       - ../../team/dashboard.json:/var/lib/grafana/example-dashboards/smart-kenish.json:ro
+
+  team-web:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    volumes:
+      - ../../team/web/dist:/usr/share/nginx/html:ro
+      - ../../team/web/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3

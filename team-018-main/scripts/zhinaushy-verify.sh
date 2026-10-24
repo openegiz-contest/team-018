@@ -135,6 +135,13 @@ TWINS_LIST=(
   "excavator-01"
   "excavator-02"
   "truck-01"
+  "truck-02"
+  "truck-03"
+  "truck-04"
+  "truck-05"
+  "truck-06"
+  "truck-07"
+  "truck-08"
   "drill-rig-01"
   "water-bowser-01"
   "trolley-line-01"
@@ -165,10 +172,10 @@ if [ "$ditto_online" -eq 1 ]; then
   done
 else
   warn "Eclipse Ditto endpoint not responding at $DITTO_URL (dry-run static validation)"
-  if python3 -c "import json; t=json.load(open('$ROOT/team/twins.json')); assert len(t)==17" >/dev/null 2>&1; then
-    pass "Static definition: 17/17 twins validated with valid ABAC policies in team/twins.json (1 Flagship BelAZ-75131)"
+  if python3 -c "import json; t=json.load(open('$ROOT/team/twins.json')); assert len(t)==24" >/dev/null 2>&1; then
+    pass "Static definition: 24/24 twins validated with valid ABAC policies in team/twins.json (8 Haul Trucks BelAZ-75131)"
   else
-    fail "Static definition invalid in team/twins.json (expected exactly 17 twins)"
+    fail "Static definition invalid in team/twins.json (expected exactly 24 twins)"
   fi
 fi
 
