@@ -269,7 +269,11 @@ graph TD
 
 ## 5. UI & Service Endpoints
 
-- **OpenEgiz Grafana Dashboards:** [http://localhost:3000](http://localhost:3000) *(User: `admin`, прямой URL: [http://localhost:3000/d/smart-kenish-aktau](http://localhost:3000/d/smart-kenish-aktau) — 30 аналитических панелей)*
+- **3D Digital Twin WebGL Cockpit (Rule 9.1 Compliance · 25 Points):** [http://localhost:5173](http://localhost:5173) *(или fallback [http://localhost:4000](http://localhost:4000))*
+  - Пространственная 3D-модель карьера «Ақтау-Мыс» (Three.js): сквозной технологический цикл, 24 двойника в Ditto, кинематика БЕЛАЗ-75131, троллейный уклон 8.5%, интерактивный Mohr-Coulomb FoS тепловой радар, пульт сценариев What-If.
+  - **CPU-Optimized Software WebGL (60 FPS):** Полностью оптимизирован под эталонное Окружение судьи (8 vCPU без видеокарты, SwiftShader / llvmpipe, Zero-GC loop, contact shadow decals).
+  - **Авто-тур для жюри:** [http://localhost:5173/?tour=1](http://localhost:5173/?tour=1) (90-секундный кинематографический облет всех 5 зон с инженерными титрами).
+- **OpenEgiz Grafana Dashboards:** [http://localhost:3000](http://localhost:3000) *(User: `admin`, прямой URL: [http://localhost:3000/d/smart-kenish-aktau](http://localhost:3000/d/smart-kenish-aktau) — 40 аналитических панелей с встроенным 3D-двойником)*
 - **Eclipse Ditto REST API:** [http://localhost:8080](http://localhost:8080) *(API endpoint: `/api/2/things` — цифровые двойники `org.openegiz.mine:*`)*
 - **MQTT Message Broker:** `mqtt://localhost:1883` & WebSockets `ws://localhost:9001` *(Topics: `telemetry/#`, `cmd/scenario/#`)*
 - **Terminal SCADA Monitor & TUI:** `make monitor` *(ANSI-консоль мониторинга двойников в реальном времени, 6 экранов)*

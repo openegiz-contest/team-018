@@ -1,36 +1,46 @@
 #!/usr/bin/env python3
 """
-DeepSeek Lead Architect & Refactoring Agent.
-Audits the codebase for 3D junk, dead code, data contracts, and Docker readiness.
+DeepSeek AI Architect CLI for Smart-Kenish 4.0 Project.
+Connects to https://api.deepseek.com using the project's DEEPSEEK_API_KEY.
+Supports both 'deepseek-chat' and 'deepseek-reasoner' models.
 """
 
 import os
 import sys
 import json
+import argparse
 import urllib.request
+import urllib.error
 
-env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
-api_key = None
-if os.path.exists(env_path):
-    with open(env_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.startswith('DEEPSEEK_API_KEY='):
-                api_key = line.split('=', 1)[1].strip().strip('\'"')
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ENV_PATH = os.path.join(PROJECT_ROOT, '.env')
 
-if not api_key:
-    print("Error: DEEPSEEK_API_KEY not found in .env")
-    sys.exit(1)
+def get_api_key():
+    api_key = os.environ.get('DEEPSEEK_API_KEY')
+    if not api_key and os.path.exists(ENV_PATH):
+        with open(ENV_PATH, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('DEEPSEEK_API_KEY='):
+                    api_key = line.split('=', 1)[1].strip().strip('\'"')
+                    break
+    if not api_key:
+        raise ValueError("DEEPSEEK_API_KEY not found in environment or .env file.")
+    return api_key
 
-def query_deepseek(prompt, system_prompt="You are a Principal Software Architect and Code Refactoring Specialist.", model="deepseek-chat"):
+def call_deepseek(prompt: str, system_prompt: str = "You are an elite Lead Mining & Industrial 3D WebGL / Three.js Systems Architect for the Smart-Kenish 4.0 OpenEgiz Autonomous Mine project.", model: str = "deepseek-chat", max_tokens: int = 8192, temperature: float = 0.2):
+    api_key = get_api_key()
+    
     payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.1,
-        "max_tokens": 4096
+        "temperature": temperature,
+        "max_tokens": max_tokens
     }
+
     req = urllib.request.Request(
         "https://api.deepseek.com/chat/completions",
         data=json.dumps(payload).encode('utf-8'),
@@ -39,48 +49,57 @@ def query_deepseek(prompt, system_prompt="You are a Principal Software Architect
             "Content-Type": "application/json"
         }
     )
-    with urllib.request.urlopen(req) as resp:
-        res = json.loads(resp.read().decode('utf-8'))
-        usage = res.get('usage', {})
-        print(f"[{model} Tokens] prompt: {usage.get('prompt_tokens')}, completion: {usage.get('completion_tokens')}, total: {usage.get('total_tokens')}")
-        return res['choices'][0]['message']['content']
 
-def run_audit_1_dead_code_and_3d():
-    print("\n--- [DeepSeek Agent 1: 3D Junk & Dead Code Audit] ---")
-    system_prompt = (
-        "You are a Lead Software Architect. Your task is to perform an exhaustive audit of project files "
-        "to identify all 3D/WebGL/Three.js artifacts, abandoned UI experiments, temporary scripts, "
-        "dangling imports, and unused dependencies to be completely eliminated."
-    )
-    prompt = """
-Examine the following repository structure and file roles:
-1. Root folders:
-   - `services/visualization/`: Contains Three.js scene (mine-scene.js, styles.css, what-if-controls.js, package.json with three, Dockerfile, nginx.conf).
-   - `конструкция/`: Contains 3D CAD meshes (agv_transport_truck.obj, car_concept_pbr.glb, excavator_komatsu.fbx, .hdr environment maps, extract_model_tree_for_deepseek.py).
-   - `team-018-main-original-backup/`: 100MB duplicate backup of team-018-main.
-   - `public/`: Contains unity.html and build symlink.
-   - `scripts/`: Contains 40+ temporary scripts: deepseek_dim_*.py, deepseek_wire_*.py, deepseek_remove_trees.py, deepseek_muckpiles_patch.txt, restore_canyon_logic_*.py, all_extracted_lines*.json, start-tour.sh.
-   - Root `package.json`: Contains 'three' and '@types/three'.
-   - `src/`: Contains CanyonViewport3D.tsx (iframe to 3D and 3D mode selectors), CinematicTourOverlay.tsx (3D camera tour overlay), quarryAudioEngine.ts (sound effects for 3D canyon), presentationTour.ts (3D camera tour waypoints).
-   - `server.ts`: Contains references to `complex3D` and tour scripts.
-   - `team-018-main/scripts/viewer.sh`: Invoked `npm run dev` for 3D CAD React.
-2. Core contest files (MUST PRESERVE & STABILIZE):
-   - `team-018-main/team/`: simulator.py, scenarios.py, monitor.py, tui_renderer.py, setup_twins.py, twins.json, test_kenish_core.py, compose.yml, Dockerfile, requirements.txt, policies/, data/.
-   - `team-018-main/deploy/compose/`: OpenEgiz platform compose.
-   - `team-018-main/Makefile`: Core targets (up, down, team-mine, verify, monitor, scenarios).
-   - `src/domain/canyonLogic.ts`: OpenEgiz mine module map, Ditto envelope generation, strata telemetry, BelAZ cycle math, plant telemetry (tested by canyonLogic.test.ts).
-   - `server.ts`: Express API endpoints (/api/openegiz/twins, /api/openegiz/modules, /api/scenarios/current, /api/scenarios/trigger, /api/terminal/scada, /api/opendata/kazakhstan-mine, /api/terminal/view).
-   - Clean 2D SCADA Dashboard in `src/` (EngineeringDrawer, SubstationTelemetryBadge, What-If controls) with ZERO 3D.
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            message = data['choices'][0]['message']
+            usage = data.get('usage', {})
+            content = message.get('content', '')
+            reasoning = message.get('reasoning_content', '')
+            return {
+                "content": content,
+                "reasoning": reasoning,
+                "usage": usage
+            }
+    except urllib.error.HTTPError as e:
+        err_msg = e.read().decode('utf-8', errors='ignore')
+        print(f"DeepSeek HTTP Error {e.code}: {err_msg}", file=sys.stderr)
+        raise
+    except Exception as e:
+        print(f"DeepSeek Request Error: {e}", file=sys.stderr)
+        raise
 
-Give a prioritized, strict action plan:
-1. List of files and folders to DELETE immediately.
-2. Changes to package.json and dependencies.
-3. Dead code & dangling imports to eliminate in server.ts and src/.
-4. Replacement for CanyonViewport3D / 3D viewer with a clean, high-tech 2D Telemetry & Digital Twin Cockpit.
-"""
-    result = query_deepseek(prompt, system_prompt)
-    print(result)
-    return result
+def main():
+    parser = argparse.ArgumentParser(description="Call DeepSeek AI Architect")
+    parser.add_argument("--prompt", type=str, required=True, help="User prompt or task")
+    parser.add_argument("--system", type=str, default="", help="Optional system prompt")
+    parser.add_argument("--model", type=str, default="deepseek-chat", choices=["deepseek-chat", "deepseek-reasoner"], help="Model name")
+    parser.add_argument("--max-tokens", type=int, default=8192, help="Max tokens to generate")
+    parser.add_argument("--out", type=str, default="", help="File to write result to")
+
+    args = parser.parse_args()
+
+    sys_prompt = args.system if args.system else "You are an elite Lead Mining & Industrial 3D WebGL / Three.js Systems Architect for the Smart-Kenish 4.0 OpenEgiz Autonomous Mine project."
+
+    print(f"[*] Calling DeepSeek API ({args.model})...", file=sys.stderr)
+    res = call_deepseek(args.prompt, sys_prompt, args.model, args.max_tokens)
+    
+    usage = res.get("usage", {})
+    prompt_tokens = usage.get("prompt_tokens", 0)
+    completion_tokens = usage.get("completion_tokens", 0)
+    total_tokens = usage.get("total_tokens", 0)
+    print(f"[+] Done! Tokens used: {total_tokens} (prompt: {prompt_tokens}, completion: {completion_tokens})", file=sys.stderr)
+
+    if res.get("reasoning"):
+        print(f"--- REASONING ---\n{res['reasoning']}\n-----------------", file=sys.stderr)
+
+    if args.out:
+        with open(args.out, 'w', encoding='utf-8') as f:
+            f.write(res["content"])
+        print(f"[+] Output written to {args.out}", file=sys.stderr)
+    else:
+        print(res["content"])
 
 if __name__ == '__main__':
-    run_audit_1_dead_code_and_3d()
+    main()

@@ -1,9 +1,16 @@
+import {
+  computeSafetyHeadway,
+  clampYawRate,
+  maxYawRateForSpeed,
+} from './deepseekFleetKinematics.ts';
+
 export type CameraTargetId =
   | 'overview'
   | 'belaz_fleet'
   | 'excavators'
   | 'processing_plant'
-  | 'trolley_ramp';
+  | 'trolley_ramp'
+  | 'drilling_rig';
 
 export type LightingModeId = 'daylight' | 'golden_shift' | 'cad_studio';
 
@@ -75,6 +82,21 @@ export interface BelazTelemetry {
   interactingWith: string | null;
   phase: BelazPhase;
   phaseLabel: string;
+  // Physical and Electrical Telemetry (Items Ω1-Ω3, #16-45)
+  payloadTons: number;
+  grossVehicleMassTons: number;
+  tractionPowerKw: number;
+  overheadCatenaryCurrentA: number;
+  catenaryVoltageAtPantographV: number;
+  dieselSavedLph: number;
+  tkph: number;
+  inverterTempC: number;
+  brakeResistorTempC: number;
+  cycleTripCount: number;
+  totalOreTransportedTons: number;
+  cumulativeTrolleyEnergyKwh: number;
+  cumulativeDieselSavedLiters: number;
+  cumulativeCo2SavedKg: number;
 }
 
 export interface ExcavatorKinematics {
@@ -303,6 +325,22 @@ export interface PlantTelemetry {
   totalThroughputTph: number;
   hopperReceivingOre: boolean;
   activeDumpingTruckId: string | null;
+  sumpWaterLevelM: number;
+  sumpInfluxRateM3h: number;
+  sumpPumpDischargeM3h: number;
+}
+
+export interface FleetOperationalSummary {
+  totalTripsCompleted: number;
+  totalOreHauledTons: number;
+  totalTrolleyEnergyKwh: number;
+  totalDieselSavedLiters: number;
+  totalCo2SavedKg: number;
+  activeTrolleyTruckCount: number;
+  totalTractionPowerMw: number;
+  fleetProductivityTph: number;
+  annualizedHaulRateMtYear: number;
+  timeCompressionRatio: number;
 }
 
 export interface LiveTelemetrySnapshot {
@@ -311,6 +349,7 @@ export interface LiveTelemetrySnapshot {
   cat6020b: ExcavatorKinematics;
   plant: PlantTelemetry;
   ventilation: VentilationTelemetry;
+  fleetSummary?: FleetOperationalSummary;
 }
 
 export type LiveSceneTelemetry = LiveTelemetrySnapshot;
@@ -329,6 +368,7 @@ export const CAD_ASSEMBLY_ORDER: CameraTargetId[] = [
   'overview',
   'belaz_fleet',
   'excavators',
+  'drilling_rig',
   'processing_plant',
   'trolley_ramp',
 ];
@@ -460,8 +500,8 @@ export const CAD_ASSEMBLIES: Record<CameraTargetId, CadAssemblySpec> = {
       'Упругая просадка и поперечно-продольная раскачка 4 пневмогидростоек БелАЗ в момент удара руды о днище кузова',
       'Высокий А-образный пилон, стальные вантовые канаты и 5 марганцовистых зубьев ковша 110Г13Л',
     ],
-    cameraPos: [8, 9, 6],
-    cameraLookAt: [-19, -12, 2],
+    cameraPos: [14, -2, 2],
+    cameraLookAt: [-15, -13.5, 2],
   },
   processing_plant: {
     id: 'processing_plant',
@@ -481,6 +521,25 @@ export const CAD_ASSEMBLIES: Record<CameraTargetId, CadAssemblySpec> = {
     ],
     cameraPos: [16, 26, -18],
     cameraLookAt: [10, 8, -52],
+  },
+  drilling_rig: {
+    id: 'drilling_rig',
+    title: 'Буровой комплекс СБШ-250 · Буровзрывные работы (БВР)',
+    subtitle: 'Двойник org.openegiz:drilling-rig-sbsh250 · Шарошечное бурение взрывных скважин Ø250 мм, MWD-анализ прочности и сухой циклон',
+    keySpecs: [
+      { label: 'Диаметр скважины', value: 'Ø250 мм (до 16.5 м)' },
+      { label: 'Скорость бурения (ROP)', value: '28.4 м/ч (f=13.2)' },
+      { label: 'Осевое усилие подачи', value: '285 кН · 4 домкрата' },
+      { label: 'Частота вращения става', value: '88 об/мин · MWD' },
+    ],
+    cadPrimitives: [
+      'Ферменная открытая мачта высотой 14.5 м с кареткой вращательно-подающего механизма (ВРМ)',
+      'Трёхшарошечное долото Ø250 мм с твёрдосплавными зубками ВК8В и продувкой воздухом 0.68 МПа',
+      'Система двухступенчатого обеспыливания: приёмный укрывной зонт, центробежный циклон и рукавный фильтр',
+      'Гусеничный ход с гидрозамками и 4 выносных гидравлических домкрата горизонтирования на полускальном уступе',
+    ],
+    cameraPos: [-30, 8.5, 18],
+    cameraLookAt: [-48, 5.5, 0],
   },
 };
 
@@ -513,8 +572,8 @@ export const HAUL_ROUTE_WAYPOINTS: Waypoint3D[] = [
   // 11..15: North-Western & Western Canyon-Wrapping Descent (y = +3.6m -> -12.2m)
   { x: -24, y: 3.6, z: -30, trolleyActive: false, phase: 'RETURN_DESCEND' },     // 11: North-West rim
   { x: -34, y: -0.2, z: -22, trolleyActive: false, phase: 'RETURN_DESCEND' },    // 12: West-North-West shelf
-  { x: -38, y: -4.4, z: -15, trolleyActive: false, phase: 'RETURN_DESCEND' },    // 13: Outer West canyon terrace
-  { x: -35, y: -8.8, z: -11, trolleyActive: false, phase: 'RETURN_DESCEND' },    // 14: West descent ramp
+  { x: -36, y: -4.4, z: -14, trolleyActive: false, phase: 'RETURN_DESCEND' },    // 13: Outer West canyon terrace
+  { x: -33, y: -8.8, z: -10, trolleyActive: false, phase: 'RETURN_DESCEND' },    // 14: West descent ramp
   { x: -30, y: -12.2, z: -9, trolleyActive: false, phase: 'RETURN_DESCEND' },    // 15: Smooth entry to loading bay
 ];
 
@@ -622,16 +681,26 @@ export const ASPHALT_ROAD_SAMPLES: RoadSample[] = (() => {
   return samples;
 })();
 
-export function getClosestRoadSample(x: number, z: number): {
+export function getClosestRoadSample(
+  x: number,
+  z: number,
+  hintY?: number
+): {
   sample: RoadSample;
   distXZ: number;
   signedLateralM: number;
 } {
   let bestIdx = 0;
   let bestDistSq = Infinity;
+  const use3D = typeof hintY === 'number' && Number.isFinite(hintY);
   for (let i = 0; i < ASPHALT_ROAD_SAMPLES.length; i++) {
     const s = ASPHALT_ROAD_SAMPLES[i];
-    const dSq = (x - s.x) * (x - s.x) + (z - s.z) * (z - s.z);
+    const dx = x - s.x;
+    const dz = z - s.z;
+    const dSqXZ = dx * dx + dz * dz;
+    const dy = use3D ? (hintY - s.y) : 0;
+    // Weight vertical separation (dy * dy * 4.0) so multi-tier canyon switchbacks match the correct elevation tier
+    const dSq = dSqXZ + dy * dy * 4.0;
     if (dSq < bestDistSq) {
       bestDistSq = dSq;
       bestIdx = i;
@@ -643,18 +712,22 @@ export function getClosestRoadSample(x: number, z: number): {
   const signedLateralM = rx * best.nx + rz * best.nz;
   return {
     sample: best,
-    distXZ: Math.sqrt(bestDistSq),
+    distXZ: Math.hypot(rx, rz),
     signedLateralM,
   };
 }
 
-export function getAsphaltSurfaceHeightAt(x: number, z: number): {
+export function getAsphaltSurfaceHeightAt(
+  x: number,
+  z: number,
+  hintY?: number
+): {
   surfaceY: number;
   sample: RoadSample;
   signedLateralM: number;
   distXZ: number;
 } {
-  const { sample, distXZ, signedLateralM } = getClosestRoadSample(x, z);
+  const { sample, distXZ, signedLateralM } = getClosestRoadSample(x, z, hintY);
   const clampedLat = clamp(signedLateralM, -5.0, 5.0);
   const camberOffsetY = -clampedLat * Math.sin(sample.bankRollRad);
   const microBump =
@@ -668,6 +741,30 @@ export function getAsphaltSurfaceHeightAt(x: number, z: number): {
     distXZ,
   };
 }
+
+/**
+ * Уровневые технологические площадки карьера — единый источник истины.
+ * Координаты площадок совпадают с координатами объектов в src/three/*,
+ * поэтому модели не могут «улететь» или «утонуть» относительно рельефа.
+ * halfX/halfZ — половина габарита ровной части, blend — зона плавного сопряжения.
+ * halfX = halfZ = 0 даёт круглую площадку радиусом blend.
+ */
+export interface TerrainPadSpec {
+  id: string;
+  x: number;
+  z: number;
+  halfX: number;
+  halfZ: number;
+  y: number;
+  blend: number;
+}
+
+export const TERRAIN_PADS: TerrainPadSpec[] = [
+  // Единая промплощадка ГОК: приёмный бункер, МПСИ-90, Krebs, флотация, корпус
+  { id: 'plant', x: 24, z: -58, halfX: 42, halfZ: 28, y: 6.0, blend: 8 },
+  // Площадка ГПП 110/10 кВ
+  { id: 'substation', x: 64, z: 4, halfX: 13, halfZ: 11, y: 6.5, blend: 6 },
+];
 
 export function getCanyonGroundHeight(x: number, z: number): number {
   const dx = x + 6;
@@ -737,73 +834,20 @@ export function getCanyonGroundHeight(x: number, z: number): number {
     baseHeight = 6.0 + Math.max(0, rimRise) * clamp(rimDist / 10, 0, 1);
   }
 
-  // 2A. Level Blast-Hole Drilling Terrace on Upper Bench (-1.2m) at (-32, -28)
-  const drillDist = Math.hypot(x - (-32.0), z - (-28.0));
-  if (drillDist < 9.5) {
-    const blendFactor = drillDist / 9.5;
-    const smoothBlend = blendFactor * blendFactor * (3 - 2 * blendFactor);
-    baseHeight = -1.2 * (1 - smoothBlend) + baseHeight * smoothBlend;
-  }
-
-  // 2B. Level Foundation Pads for 110kV Power Transmission Pylons
-  const pylon1Dist = Math.hypot(x - 56.0, z - (-18.0));
-  if (pylon1Dist < 5.0) {
-    const blend = pylon1Dist / 5.0;
-    const smooth = blend * blend * (3 - 2 * blend);
-    baseHeight = 18.5 * (1 - smooth) + baseHeight * smooth;
-  }
-  const pylon2Dist = Math.hypot(x - 68.0, z - 12.0);
-  if (pylon2Dist < 5.0) {
-    const blend = pylon2Dist / 5.0;
-    const smooth = blend * blend * (3 - 2 * blend);
-    baseHeight = 19.0 * (1 - smooth) + baseHeight * smooth;
-  }
-
-  // 2C. Level Pads under High-Mast Floodlight Towers (radius 2.5m)
-  const towerCoords: [number, number, number][] = [
-    [-38, -26, 6.0],
-    [38, 28, 6.0],
-    [-42, 24, 6.0],
-    [44, -22, 6.0],
-    [-16, -18, -11.2],
-    [-14, 18, -11.2],
-    [22, -38, 6.0],
-    [52, 16, 6.5],
-  ];
-  for (const [tx, tz, ty] of towerCoords) {
-    const tDist = Math.hypot(x - tx, z - tz);
-    if (tDist < 2.5) {
-      const blend = tDist / 2.5;
-      const smooth = blend * blend * (3 - 2 * blend);
-      baseHeight = ty * (1 - smooth) + baseHeight * smooth;
-      break;
+  // 2. Уровневые технологические площадки (см. TERRAIN_PADS).
+  //    Раньше площадки были размазаны по функции и часть из них стояла не под
+  //    своими объектами (пилоны ЛЭП, буровая терраса), из-за чего техника
+  //    висела в воздухе или уходила в грунт.
+  for (const pad of TERRAIN_PADS) {
+    const padDist = Math.hypot(
+      Math.max(0, Math.abs(x - pad.x) - pad.halfX),
+      Math.max(0, Math.abs(z - pad.z) - pad.halfZ)
+    );
+    if (padDist < pad.blend) {
+      const t = padDist / pad.blend;
+      const smooth = t * t * (3 - 2 * t);
+      baseHeight = pad.y * (1 - smooth) + baseHeight * smooth;
     }
-  }
-
-  // 3. Leveling Plateau for Beneficiation Complex ГОК (+6.0m)
-  const plantCenterX = 10.0;
-  const plantCenterZ = -54.0;
-  const plantDist = Math.hypot(
-    Math.max(0, Math.abs(x - plantCenterX) - 22.0),
-    Math.max(0, Math.abs(z - plantCenterZ) - 18.0)
-  );
-  if (plantDist < 8.0) {
-    const blendFactor = plantDist / 8.0;
-    const smoothBlend = blendFactor * blendFactor * (3 - 2 * blendFactor);
-    baseHeight = 6.0 * (1 - smoothBlend) + baseHeight * smoothBlend;
-  }
-
-  // 4. Leveling Plateau for Substation GPP 110/10kV (+6.5m)
-  const energyCenterX = 64.0;
-  const energyCenterZ = 4.0;
-  const energyDist = Math.hypot(
-    Math.max(0, Math.abs(x - energyCenterX) - 13.0),
-    Math.max(0, Math.abs(z - energyCenterZ) - 11.0)
-  );
-  if (energyDist < 6.0) {
-    const blendFactor = energyDist / 6.0;
-    const smoothBlend = blendFactor * blendFactor * (3 - 2 * blendFactor);
-    baseHeight = 6.5 * (1 - smoothBlend) + baseHeight * smoothBlend;
   }
 
   // 5. Seamless Asphalt Road Surface Integration
@@ -855,14 +899,22 @@ export function computeSingleBelazState(
   timeOffsetSec = 0,
   activeScenario?: WhatIfScenarioId
 ): BelazTelemetry {
-  const elapsedSeconds = baseElapsedSeconds + timeOffsetSec;
+  const safeOffset = Number.isFinite(timeOffsetSec) ? timeOffsetSec : 0;
+  const elapsedSeconds =
+    (Number.isFinite(baseElapsedSeconds) ? Math.max(0, baseElapsedSeconds) : 0) +
+    safeOffset;
   const n = HAUL_ROUTE_WAYPOINTS.length;
   const baseCycleDuration = 76;
-  const nominalU = ((elapsedSeconds * Math.max(0, speedMultiplier)) / baseCycleDuration) % 1;
+  const safeElapsed = elapsedSeconds;
+  const safeSpeed = Number.isFinite(speedMultiplier)
+    ? Math.max(0, speedMultiplier)
+    : 1;
+  const nominalU = ((safeElapsed * safeSpeed) / baseCycleDuration) % 1;
 
   const scaled = nominalU * n;
-  const segIdx = Math.floor(scaled) % n;
-  const localT = scaled - Math.floor(scaled);
+  const rawSeg = Math.floor(scaled);
+  const segIdx = Number.isFinite(rawSeg) ? ((rawSeg % n) + n) % n : 0;
+  const localT = clamp(scaled - Math.floor(scaled), 0, 0.999999);
 
   let stationPaused = false;
   let effectiveT = localT;
@@ -900,8 +952,28 @@ export function computeSingleBelazState(
   const nx = -tz;
   const nz = tx;
   const wallAvoidanceOffset = clamp(0.35 - yawDiff * 1.1, -0.95, 0.95);
-  const finalX = pos.x + nx * wallAvoidanceOffset;
-  const finalZ = pos.z + nz * wallAvoidanceOffset;
+  // Authentic backing-up maneuver at crusher hopper (Fix #85)
+  let reverseOffsetM = 0;
+  if (segIdx === 9 && localT < 0.44) {
+    if (localT < 0.12) {
+      // Approach and stop
+      reverseOffsetM = 0;
+    } else if (localT < 0.28) {
+      // Back up to the dumping curb
+      const backT = (localT - 0.12) / 0.16;
+      reverseOffsetM = -Math.sin(backT * Math.PI * 0.5) * 3.2;
+    } else if (localT < 0.38) {
+      // Stationed at curb dumping
+      reverseOffsetM = -3.2;
+    } else {
+      // Pull forward back to haul path
+      const forwardT = (localT - 0.38) / 0.06;
+      reverseOffsetM = -3.2 * (1 - forwardT);
+    }
+  }
+
+  const finalX = pos.x + nx * wallAvoidanceOffset + tx * reverseOffsetM;
+  const finalZ = pos.z + nz * wallAvoidanceOffset + tz * reverseOffsetM;
   const wallClearanceM = Number((4.5 - Math.abs(wallAvoidanceOffset)).toFixed(2));
 
   const wheelSpecs: {
@@ -923,7 +995,7 @@ export function computeSingleBelazState(
   for (const ws of wheelSpecs) {
     const wx = finalX + ws.lx * cosY + ws.lz * sinY;
     const wz = finalZ - ws.lx * sinY + ws.lz * cosY;
-    const { surfaceY } = getAsphaltSurfaceHeightAt(wx, wz);
+    const { surfaceY } = getAsphaltSurfaceHeightAt(wx, wz, pos.y);
     rawWheelHeights.push(surfaceY);
     rawWheelWorld.push({ wx, wz });
   }
@@ -960,23 +1032,58 @@ export function computeSingleBelazState(
 
   let oreLoadTons = 0;
   if (segIndex === 0) {
-    oreLoadTons = Math.round(clamp(localT / 0.44, 0, 1) * 72);
+    // Discrete shovel passes from ÉKG-15 (15 m³ bucket ~34 tons per pass - Fix #94, #95)
+    if (localT >= 0.36) {
+      oreLoadTons = 68;
+    } else if (localT >= 0.18) {
+      oreLoadTons = 34;
+    } else {
+      oreLoadTons = 0;
+    }
   } else if (segIndex === 1) {
-    oreLoadTons = 72 + Math.round(clamp(localT / 0.44, 0, 1) * 64);
+    // Discrete shovel passes from CAT 6020B (12 m³ bucket ~34 tons per pass up to full 136t)
+    if (localT >= 0.36) {
+      oreLoadTons = 136;
+    } else if (localT >= 0.18) {
+      oreLoadTons = 102;
+    } else {
+      oreLoadTons = 68;
+    }
   } else if (segIndex >= 2 && segIndex <= 8) {
     oreLoadTons = 136;
   } else if (segIndex === 9) {
-    oreLoadTons = Math.round((1 - clamp(localT / 0.48, 0, 1)) * 136);
+    // Ore empties during dumping into crusher hopper
+    oreLoadTons = localT < 0.25 ? 136 : Math.round((1 - clamp((localT - 0.25) / 0.30, 0, 1)) * 136);
   }
   const loadRatio = oreLoadTons / 136;
 
+  // Fix #96 & #97: Realistic hydraulic bed hoist dynamics (pump pressure delay + fast gravity descent)
   let bedTiltRad = 0;
   if (segIndex === 9) {
-    bedTiltRad = Math.sin(clamp((localT / 0.52) * Math.PI, 0, Math.PI)) * 0.82;
-  } else if (segIndex === 10 && localT < 0.25) {
-    bedTiltRad = (1 - localT / 0.25) * 0.24;
+    if (localT < 0.10) {
+      // Pump pressure build-up & safety interlock delay (Fix #96)
+      bedTiltRad = 0;
+    } else if (localT < 0.38) {
+      // Hydraulic telescopic cylinder power stroke (0 -> 0.82 rad)
+      const u = (localT - 0.10) / 0.28;
+      bedTiltRad = Math.sin(u * Math.PI * 0.5) * 0.82;
+    } else if (localT < 0.52) {
+      // Full dump hold at 47° angle with ore stream
+      bedTiltRad = 0.82;
+    } else if (localT < 0.68) {
+      // Fix #97: Gravity fall return is faster than hydraulic lift
+      const u = (localT - 0.52) / 0.16;
+      bedTiltRad = (1.0 - Math.pow(u, 1.6)) * 0.82;
+    } else {
+      bedTiltRad = 0;
+    }
+  } else if (segIndex === 10 && localT < 0.15) {
+    bedTiltRad = (1 - localT / 0.15) * 0.08;
   }
   const cylinderExtension = Number((1 + (bedTiltRad / 0.82) * 1.35).toFixed(3));
+
+  // Fix #98: Transmission interlock prevents vehicle movement when dump bed is raised
+  const bedInterlockActive = bedTiltRad > 0.03;
 
   let pantographRaise = 0;
   if (w0.trolleyActive && w1.trolleyActive) {
@@ -988,14 +1095,30 @@ export function computeSingleBelazState(
   }
 
   const corneringFactor = 1 - Math.min(0.32, Math.abs(steerAngle) * 0.65);
-  const nominalSpeed =
-    stationPaused || bedTiltRad > 0.15
-      ? 0
-      : pantographRaise > 0.5
-      ? 24.5
-      : w0.phase === 'RETURN_DESCEND'
-      ? 29.5
-      : 19.5;
+
+  // Fix #82, #83, #84, #148, #149: Smooth acceleration/deceleration transitions
+  let targetSpeed = 19.5;
+  if (stationPaused || bedInterlockActive) {
+    targetSpeed = 0;
+  } else if (w0.phase === 'LOADING') {
+    // Fix #83: Smooth ramp-up from excavator stop
+    const accelProgress = clamp(localT / 0.35, 0, 1);
+    targetSpeed = accelProgress * 18.0;
+  } else if (pantographRaise > 0.5) {
+    // Fix #148: Loaded uphill on 1200V Trolley Assist reaches 24.5 km/h
+    targetSpeed = 24.5;
+  } else if (segIndex >= 2 && segIndex <= 8 && activeScenario === 'trolley-fault') {
+    // Loaded uphill on pure diesel without catenary
+    targetSpeed = 12.2;
+  } else if (w0.phase === 'DUMPING_CRUSHER') {
+    // Fix #84: Decelerate smoothly approaching crusher hopper
+    targetSpeed = localT < 0.25 ? (1.0 - localT / 0.25) * 12.0 : 0;
+  } else if (w0.phase === 'RETURN_DESCEND') {
+    // Fix #149: Dynamic retarder limits empty descent speed to safe 28.5 km/h
+    targetSpeed = 28.5;
+  }
+
+  const nominalSpeed = targetSpeed;
 
   const speedKmh = Number(
     (nominalSpeed * corneringFactor * (speedMultiplier > 0 ? 1 : 0)).toFixed(1)
@@ -1054,8 +1177,8 @@ export function computeSingleBelazState(
     interactingWith = 'Контактная сеть 1200В DC (тяга · дуговой разряд)';
   }
 
-  const totalPitch = Number((terrainPitchRad + dynamicPitchRad).toFixed(4));
-  const totalRoll = Number((terrainRollRad + dynamicRollRad).toFixed(4));
+  const totalPitch = terrainPitchRad + dynamicPitchRad;
+  const totalRoll = terrainRollRad + dynamicRollRad;
 
   const wheelContacts: WheelContactTelemetry[] = wheelSpecs.map((ws, idx) => {
     const wheelGroundY = rawWheelHeights[idx];
@@ -1070,26 +1193,25 @@ export function computeSingleBelazState(
       ws.lx * Math.sin(dynamicRollRad) * 0.48 -
       microDelta;
     const clampedCompression = clamp(cornerSuspensionTravel, -0.34, 0.24);
-    const strutLengthM = Number((1.15 + clampedCompression).toFixed(3));
+    const strutLengthM = 1.15 + clampedCompression;
 
     return {
       id: ws.id,
       localX: ws.lx,
       localZ: ws.lz,
-      worldX: Number(rawWheelWorld[idx].wx.toFixed(2)),
-      worldY: Number(wheelGroundY.toFixed(2)),
-      worldZ: Number(rawWheelWorld[idx].wz.toFixed(2)),
-      suspensionCompressionM: Number(clampedCompression.toFixed(3)),
+      worldX: rawWheelWorld[idx].wx,
+      worldY: wheelGroundY,
+      worldZ: rawWheelWorld[idx].wz,
+      suspensionCompressionM: clampedCompression,
       strutLengthM,
-      camberRad: Number((-terrainRollRad * 0.25).toFixed(3)),
+      camberRad: -terrainRollRad * 0.25,
     };
   });
 
   const brakeLightsOn =
     stationPaused ||
-    bedTiltRad > 0.1 ||
-    w0.phase === 'RETURN_DESCEND' ||
-    Math.abs(steerAngle) > 0.22;
+    bedTiltRad > 0.05 ||
+    (w0.phase === 'RETURN_DESCEND' && speedKmh < 24.0);
 
   let collisionStatus: CollisionStatus = 'CLEAR';
   if (
@@ -1102,22 +1224,20 @@ export function computeSingleBelazState(
     collisionStatus = 'WALL_GUARD';
   }
 
+  const sparkFlicker =
+    (Math.sin(elapsedSeconds * 95 + truckIndex * 11) + Math.cos(elapsedSeconds * 143)) > -0.15 ? 1 : 0.15;
   const trolleySparkIntensity =
     pantographRaise > 0.85 && speedKmh > 2
-      ? Number(
-          (0.68 + 0.32 * Math.abs(Math.sin(elapsedSeconds * 15))).toFixed(2)
-        )
+      ? (0.55 + 0.45 * Math.abs(Math.sin(elapsedSeconds * 38 + truckIndex * 5))) * sparkFlicker
       : 0;
 
   const voltageV = pantographRaise > 0.5 ? 1200 : 0;
-  const dustIntensity = Number(
-    clamp(
-      (speedKmh / 35) * 0.85 +
-        (bedTiltRad > 0.25 ? 0.85 : 0) +
-        (Math.abs(suspensionDipY) > 0.12 ? 0.65 : 0),
-      0,
-      1
-    ).toFixed(2)
+  const dustIntensity = clamp(
+    (speedKmh / 35) * 0.85 +
+      (bedTiltRad > 0.25 ? 0.85 : 0) +
+      (Math.abs(suspensionDipY) > 0.12 ? 0.65 : 0),
+    0,
+    1
   );
 
   const phaseLabels: Record<BelazPhase, string> = {
@@ -1127,31 +1247,95 @@ export function computeSingleBelazState(
     RETURN_DESCEND: 'Спуск по кольцу каньона',
   };
 
+  // Physical, Mechanical & Electrical Drivetrain Model (Items Ω1-Ω3, #16-45)
+  const grossVehicleMassTons = 107 + oreLoadTons;
+  const grossMassKg = grossVehicleMassTons * 1000;
+  const gradeIncline = Math.max(0, gradePercent / 100);
+  const rollingResistanceCoeff = 0.022;
+  const speedMs = speedKmh / 3.6;
+  const tractionForceN = grossMassKg * 9.81 * (gradeIncline + rollingResistanceCoeff);
+  const mechPowerKw = (tractionForceN * speedMs) / 1000;
+  const electricalEfficiency = 0.88;
+  const isTrolleyPowered = pantographRaise > 0.5 && speedKmh > 1.0;
+  const tractionPowerKw = isTrolleyPowered
+    ? Math.round(mechPowerKw / electricalEfficiency)
+    : Math.round(mechPowerKw);
+
+  const overheadCatenaryCurrentA = isTrolleyPowered
+    ? Math.round((tractionPowerKw * 1000) / 1200)
+    : 0;
+  const lineResistanceOhms = 0.028;
+  const voltageDropV = overheadCatenaryCurrentA * lineResistanceOhms;
+  const catenaryVoltageAtPantographV = isTrolleyPowered
+    ? Math.round(1220 - voltageDropV)
+    : 0;
+
+  const dieselSavedLph = isTrolleyPowered
+    ? Math.round((mechPowerKw * 0.21) / 0.84)
+    : 0;
+
+  const meanTireLoadTons = grossVehicleMassTons / 6;
+  const tkph = Math.round(meanTireLoadTons * speedKmh);
+
+  const inverterTempC = Math.round(
+    48 + (isTrolleyPowered ? (tractionPowerKw / 1800) * 26 : (speedKmh / 35) * 12)
+  );
+  const isRetardingDescent = w0.phase === 'RETURN_DESCEND' && speedKmh > 15;
+  const brakeResistorTempC = Math.round(
+    isRetardingDescent ? 120 + ((29.5 - speedKmh) / 10) * 110 : 42
+  );
+
+  const cycleTime = 76;
+  const tripsCompleted = Math.floor(elapsedSeconds / cycleTime);
+  const cycleTripCount = tripsCompleted;
+  const totalOreTransportedTons = tripsCompleted * 136;
+  const cumulativeTrolleyEnergyKwh = Math.round(
+    tripsCompleted * 38.5 + (isTrolleyPowered ? localT * 38.5 : 0)
+  );
+  const cumulativeDieselSavedLiters = Math.round(
+    tripsCompleted * 9.2 + (isTrolleyPowered ? localT * 9.2 : 0)
+  );
+  const cumulativeCo2SavedKg = Math.round(cumulativeDieselSavedLiters * 2.68);
+
   return {
     id: truckId,
     index: truckIndex,
-    u: Number(u.toFixed(4)),
-    x: Number(finalX.toFixed(2)),
-    y: Number((planeCenterY + suspensionDipY).toFixed(2)),
-    z: Number(finalZ.toFixed(2)),
-    yaw: Number(yaw.toFixed(3)),
+    u,
+    x: finalX,
+    y: planeCenterY + suspensionDipY,
+    z: finalZ,
+    yaw,
     pitch: totalPitch,
     roll: totalRoll,
-    terrainPitchRad: Number(terrainPitchRad.toFixed(4)),
-    terrainRollRad: Number(terrainRollRad.toFixed(4)),
+    terrainPitchRad,
+    terrainRollRad,
     gradePercent,
     bankAngleDeg,
-    dynamicPitchRad: Number(dynamicPitchRad.toFixed(4)),
-    dynamicRollRad: Number(dynamicRollRad.toFixed(4)),
-    steerAngle: Number(steerAngle.toFixed(3)),
-    bedTiltRad: Number(bedTiltRad.toFixed(3)),
+    dynamicPitchRad,
+    dynamicRollRad,
+    steerAngle,
+    bedTiltRad,
     cylinderExtension,
-    pantographRaise: Number(pantographRaise.toFixed(2)),
+    pantographRaise,
     trolleySparkIntensity,
-    suspensionDipY: Number(suspensionDipY.toFixed(3)),
-    suspensionPitchRad: Number(dynamicPitchRad.toFixed(3)),
+    suspensionDipY,
+    suspensionPitchRad: dynamicPitchRad,
     wheelContacts,
     oreLoadTons,
+    payloadTons: oreLoadTons,
+    grossVehicleMassTons,
+    tractionPowerKw,
+    overheadCatenaryCurrentA,
+    catenaryVoltageAtPantographV,
+    dieselSavedLph,
+    tkph,
+    inverterTempC,
+    brakeResistorTempC,
+    cycleTripCount,
+    totalOreTransportedTons,
+    cumulativeTrolleyEnergyKwh,
+    cumulativeDieselSavedLiters,
+    cumulativeCo2SavedKg,
     speedKmh,
     voltageV,
     dustIntensity,
@@ -1159,8 +1343,8 @@ export function computeSingleBelazState(
     wallClearanceM,
     brakeLightsOn,
     headlightsOn: true,
-    beaconAngleRad: Number(((elapsedSeconds * 9.5) % (Math.PI * 2)).toFixed(2)),
-    engineFanAngleRad: Number(((elapsedSeconds * 18.0) % (Math.PI * 2)).toFixed(2)),
+    beaconAngleRad: (elapsedSeconds * 9.5) % (Math.PI * 2),
+    engineFanAngleRad: (elapsedSeconds * 18.0) % (Math.PI * 2),
     collisionStatus,
     interactingWith,
     phase: w0.phase,
@@ -1168,14 +1352,114 @@ export function computeSingleBelazState(
   };
 }
 
+export const FLEET_VEHICLE_NAMES: string[] = [
+  'БЕЛАЗ-75131 #01 (ФЛАГМАН)',
+  'БЕЛАЗ-75131 #02 (СЕВЕРНЫЙ ЗАБОЙ)',
+  'БЕЛАЗ-75131 #03 (ТРОЛЛЕЙНЫЙ ПОДЪЁМ)',
+  'БЕЛАЗ-75131 #04 (ВЕРШИНА ПАНДУСА)',
+  'БЕЛАЗ-75131 #05 (РАЗГРУЗКА ККД-1500)',
+  'БЕЛАЗ-75131 #06 (СПУСК В КАРЬЕР)',
+  'БЕЛАЗ-75131 #07 (ЮЖНЫЙ ЗАБОЙ)',
+  'БЕЛАЗ-75131 #08 (ПОДХОД К ЗАБОЮ)',
+];
+
 export function computeBelazFleetState(
   elapsedSeconds: number,
   speedMultiplier = 1,
-  activeScenario?: WhatIfScenarioId
+  activeScenario?: WhatIfScenarioId,
+  truckCount = 8
 ): BelazTelemetry[] {
-  return [
-    computeSingleBelazState(0, 'БЕЛАЗ-75131 #01 (ФЛАГМАН)', elapsedSeconds, speedMultiplier, 0, activeScenario),
-  ];
+  const count = Math.max(1, Math.min(8, truckCount));
+  const cycleDuration = 76;
+  const fleet: BelazTelemetry[] = [];
+  for (let i = 0; i < count; i++) {
+    const timeOffsetSec = (i / count) * cycleDuration;
+    const name = FLEET_VEHICLE_NAMES[i] ?? `БЕЛАЗ-75131 #${String(i + 1).padStart(2, '0')}`;
+    fleet.push(
+      computeSingleBelazState(i, name, elapsedSeconds, speedMultiplier, timeOffsetSec, activeScenario)
+    );
+  }
+
+  // Autonomous fleet dynamic anti-bunching headway controller (Fixes #126, #127, #131)
+  for (let i = 0; i < fleet.length; i++) {
+    const cur = fleet[i];
+    for (let j = 0; j < fleet.length; j++) {
+      if (i === j) continue;
+      const other = fleet[j];
+      const dHoriz = Math.hypot(cur.x - other.x, cur.z - other.z);
+      // Check if other truck is ahead in track parameter u
+      let uDist = other.u - cur.u;
+      if (uDist < -0.5) uDist += 1;
+      if (uDist > 0.5) uDist -= 1;
+
+      const isQueueingZone = cur.phase === 'LOADING' || cur.phase === 'DUMPING_CRUSHER';
+      const targetHeadway = computeSafetyHeadway(cur.speedKmh, isQueueingZone);
+
+      if (uDist > 0 && uDist < 0.22 && dHoriz < targetHeadway) {
+        cur.aheadDistanceM = Number(dHoriz.toFixed(1));
+        if (dHoriz < 12.0) {
+          cur.collisionStatus = 'BRAKING_TRAFFIC';
+          cur.speedKmh = 0;
+          cur.brakeLightsOn = true;
+          // Soft separation barrier so meshes never physically penetrate
+          const overlap = 12.0 - dHoriz;
+          const sepAngle = Math.atan2(cur.x - other.x, cur.z - other.z);
+          cur.x += Math.sin(sepAngle) * overlap * 0.5;
+          cur.z += Math.cos(sepAngle) * overlap * 0.5;
+        } else {
+          cur.collisionStatus = 'BRAKING_TRAFFIC';
+          // Progressive anti-bunching speed throttling proportional to headway gap
+          const speedFraction = Math.max(0.15, (dHoriz - 12.0) / (targetHeadway - 12.0));
+          cur.speedKmh = Math.min(cur.speedKmh, other.speedKmh * speedFraction + 2.0);
+          cur.brakeLightsOn = true;
+        }
+      }
+    }
+  }
+
+  return fleet;
+}
+
+export function computeFleetOperationalSummary(fleet: BelazTelemetry[]): FleetOperationalSummary {
+  let totalTrips = 0;
+  let totalOreHauled = 0;
+  let totalTrolleyEnergy = 0;
+  let totalDieselSaved = 0;
+  let totalCo2Saved = 0;
+  let activeTrolleyTruckCount = 0;
+  let totalTractionPowerMw = 0;
+
+  for (const t of fleet) {
+    totalTrips += t.cycleTripCount;
+    totalOreHauled += t.totalOreTransportedTons;
+    totalTrolleyEnergy += t.cumulativeTrolleyEnergyKwh;
+    totalDieselSaved += t.cumulativeDieselSavedLiters;
+    totalCo2Saved += t.cumulativeCo2SavedKg;
+    if (t.pantographRaise > 0.5) {
+      activeTrolleyTruckCount++;
+      totalTractionPowerMw += t.tractionPowerKw / 1000;
+    }
+  }
+
+  // 8 trucks * 136 tons per 76s cycle in simulation time:
+  // In real time (28 min cycle), 8 trucks * 136 t = 1088 t / (28/60 h) = 2331 t/h
+  // At 24/7/360 operation (~7000 operating hours/yr) = 16.3 Mt/yr capacity (12.0 Mt/yr target at 73.5% fleet availability KIP)
+  const fleetProductivityTph = 2331;
+  const annualizedHaulRateMtYear = 12.0;
+  const timeCompressionRatio = 22.1;
+
+  return {
+    totalTripsCompleted: totalTrips,
+    totalOreHauledTons: totalOreHauled,
+    totalTrolleyEnergyKwh: totalTrolleyEnergy,
+    totalDieselSavedLiters: totalDieselSaved,
+    totalCo2SavedKg: totalCo2Saved,
+    activeTrolleyTruckCount,
+    totalTractionPowerMw: Math.round(totalTractionPowerMw * 100) / 100,
+    fleetProductivityTph,
+    annualizedHaulRateMtYear,
+    timeCompressionRatio,
+  };
 }
 
 export function computeBelazCycleState(
@@ -1428,31 +1712,45 @@ export function computePlantTelemetry(
   const t = elapsedSeconds * Math.max(0, speedMultiplier);
   const active = speedMultiplier > 0 ? 1 : 0;
   const crusherFault = activeScenario === 'crusher-fault';
+  const isWaterInflux = activeScenario === 'water-influx';
+
   const mpsiPowerMw = active
-    ? Number(((crusherFault ? 5.4 : 13.88) + Math.sin(t * 0.7) * 0.11).toFixed(2))
+    ? ((crusherFault ? 5.4 : 14.0) + Math.sin(t * 0.7) * 0.11)
     : 0;
+  // Realistic SAG mill rotational speed ~9.5 RPM (0.995 rad/s) (Item #278)
   const mpsiRpm = active
-    ? Number((10.8 + Math.cos(t * 0.5) * 0.08).toFixed(2))
+    ? (crusherFault ? 4.2 : 9.5) + Math.cos(t * 0.5) * 0.08
     : 0;
-  const mpsiDrumAngle = Number(((t * 1.15) % (Math.PI * 2)).toFixed(3));
-  const crusherRotorAngle = crusherFault ? 0 : Number(
-    (((t * (dumpingTruck ? 6.5 : 2.8)) % (Math.PI * 2))).toFixed(3)
-  );
-  const conveyorScrollOffset = crusherFault ? 0 : Number(((t * 0.55) % 1).toFixed(3));
+  const mpsiDrumAngle = active ? (t * 0.995) % (Math.PI * 2) : 0;
+
+  // Crusher gyratory nutation halts completely during crusher-fault (Item #270)
+  const crusherRotorAngle = crusherFault
+    ? 0
+    : ((t * (dumpingTruck ? 6.5 : 2.8)) % (Math.PI * 2));
+
+  // Inclined gallery conveyor belt stops immediately during crusher-fault (Item #270)
+  const conveyorScrollOffset = crusherFault ? 0 : ((t * 0.55) % 1);
+
   const krebsPressureKpa = active
     ? Math.round(184 + Math.sin(t * 1.2) * 4)
     : 0;
   const krebsUnderflowPulse = active
-    ? Number((0.75 + 0.25 * Math.sin(t * 5.2)).toFixed(2))
+    ? (0.75 + 0.25 * Math.sin(t * 5.2))
     : 0;
   const flotationFrothTurbulence = active
-    ? Number((0.88 + Math.sin(t * 2.1) * 0.09).toFixed(2))
+    ? (0.88 + Math.sin(t * 2.1) * 0.09)
     : 0.1;
-  const flotationImpellerAngle = Number(((t * 3.6) % (Math.PI * 2)).toFixed(3));
+  const flotationImpellerAngle = (t * 3.6) % (Math.PI * 2);
+
+  // Dynamic quarry sump water level & influx balance (Items #404, #405, #Ω7:91)
+  const sumpInfluxRateM3h = active ? (isWaterInflux ? 1380 : 820) : 0;
+  const sumpPumpDischargeM3h = active ? 850 : 0;
+  const waterRiseM = isWaterInflux ? Math.min(1.35, ((t % 180) / 180) * 1.35) : 0;
+  const sumpWaterLevelM = -16.65 + waterRiseM;
 
   return {
-    mpsiPowerMw,
-    mpsiRpm,
+    mpsiPowerMw: Number(mpsiPowerMw.toFixed(2)),
+    mpsiRpm: Number(mpsiRpm.toFixed(2)),
     mpsiDrumAngle,
     crusherRotorAngle,
     conveyorScrollOffset,
@@ -1464,9 +1762,12 @@ export function computePlantTelemetry(
     flotationFrothTurbulence,
     flotationImpellerAngle,
     flotationRecoveryPct: 91.4,
-    totalThroughputTph: active ? (dumpingTruck ? 2640 : 2480) : 0,
+    totalThroughputTph: active ? (dumpingTruck ? 2640 : 2400) : 0,
     hopperReceivingOre: dumpingTruck !== null,
     activeDumpingTruckId: dumpingTruck ? dumpingTruck.id : null,
+    sumpWaterLevelM,
+    sumpInfluxRateM3h,
+    sumpPumpDischargeM3h,
   };
 }
 
@@ -1487,6 +1788,19 @@ export function computeOpenEgizMineMap(
   const cat = computeExcavatorKinematics('CAT-6020B', elapsedSeconds, speedMultiplier, fleet);
   const plant = computePlantTelemetry(elapsedSeconds, speedMultiplier, fleet);
 
+  let totalFleetElectricDrawKw = 0;
+  let totalFleetDieselLph = 0;
+  let totalFleetDieselSavedLph = 0;
+  for (const t of fleet) {
+    if (t.pantographRaise > 0.5 && t.speedKmh > 1) {
+      totalFleetElectricDrawKw += 1104;
+      totalFleetDieselLph += 24.5;
+      totalFleetDieselSavedLph += 117.5;
+    } else {
+      totalFleetDieselLph += t.speedKmh > 1 ? 142.0 : 18.5;
+    }
+  }
+
   const dieselConsumptionLph =
     truck.pantographRaise > 0.5 ? 24.5 : truck.speedKmh > 1 ? 142.0 : 18.5;
   const electricDrawKw =
@@ -1495,7 +1809,7 @@ export function computeOpenEgizMineMap(
     (
       plant.mpsiPowerMw +
       1.85 + // ЭКГ-15 + ККД-1500 + Flotation
-      electricDrawKw / 1000
+      (totalFleetElectricDrawKw > 0 ? totalFleetElectricDrawKw : electricDrawKw) / 1000
     ).toFixed(2)
   );
 
@@ -1728,24 +2042,26 @@ export function computeOpenEgizMineMap(
     {
       id: 'drilling_blasting',
       number: '03',
-      title: 'Буровзрывные работы (Фрагментация и MWD)',
+      title: 'Буровзрывные работы (Станок СБШ-250 и MWD)',
       category: 'Карта рудника',
-      cameraTarget: 'excavators',
+      cameraTarget: 'drilling_rig',
       summary:
-        'Контроль гранулометрии взорванной горной массы (F80 = 165 мм) по данным бурения MWD (крепость по Протодьяконову f = 12–14) для исключения негабарита на колосниковой решётке ККД-1500.',
-      dittoThings: ['org.openegiz:ekg-15-01', 'org.openegiz:crusher-kkd1500'],
-      mqttTopics: ['telemetry/org.openegiz:ekg-15-01'],
+        'Подготовка взрывных блоков станком СБШ-250. Бурение скважин Ø250 мм с MWD-профилированием крепости породы (f = 13.2) и расчётом сетки 6.5×6.5 м для дробления до F80 = 165 мм.',
+      dittoThings: ['org.openegiz:drilling-rig-sbsh250', 'org.openegiz:ekg-15-01', 'org.openegiz:crusher-kkd1500'],
+      mqttTopics: ['telemetry/org.openegiz:drilling-rig-sbsh250', 'telemetry/org.openegiz:ekg-15-01'],
       influxMeasurement: 'blast_fragmentation_mwd',
       activeAlgorithm:
         'Модель Куз-Рам по энергоёмкости бурения MWD регулирует сетку скважин 6.5×6.5 м, снижая пиковое усилие на вантах ЭКГ-15 и энергопотребление МПСИ-90.',
       kpis: [
-        { label: 'Фрагментация взрыва F80', value: '165 мм (цель < 200 мм)', status: 'optimal' },
+        { label: 'Станок СБШ-250 (БВР)', value: 'Скважина БВР-04/18 (14.8 / 16.5 м)', status: 'optimal' },
+        { label: 'Скорость бурения ROP', value: '28.4 м/ч · 88 об/мин', status: 'optimal' },
+        { label: 'Осевое давление на забой', value: '285 кН (4 домкрата)', status: 'optimal' },
         { label: 'Крепость породы (MWD)', value: 'f = 13.2 (гранит-порфир)', status: 'optimal' },
-        { label: 'Выход негабарита (+800мм)', value: '0.8% (колосники чистые)', status: 'optimal' },
-        { label: 'Коэффициент разрыхления', value: '1.46 · цикл черпания 24 с', status: 'optimal' },
+        { label: 'Фрагментация взрыва F80', value: '165 мм (цель < 200 мм)', status: 'optimal' },
       ],
       submissionVerifySteps: [
-        'В 3D-сцене забоя (ракурс «ЭКГ-15 / CAT») проверьте развал дроблёной руды и работу колосниковой решётки (Grizzly) над бункером ККД-1500.',
+        'Переключите камеру на «Буровой станок СБШ-250» — оцените вращение бурового става, подачу долота Ø250 мм в массив и работу сухого циклона пылеулавливания.',
+        'Сверьте MWD-профиль крепости породы (f = 13.2) с прогнозом гранулометрии F80 = 165 мм для беспрепятственного прохода в бункер ККД-1500.',
       ],
     },
     {

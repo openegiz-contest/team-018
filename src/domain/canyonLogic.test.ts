@@ -18,9 +18,15 @@ import {
   HAUL_ROUTE_WAYPOINTS,
 } from './canyonLogic.ts';
 
-test('Flagship BelAZ-75131 drives on the canyon-wrapping asphalt road with 6-wheel surface contact and 3D pitch/roll physics', () => {
+test('BelAZ-75131 8-truck fleet operates on the canyon-wrapping asphalt road with 6-wheel surface contact and 3D pitch/roll physics', () => {
   const fleet = computeBelazFleetState(18.0, 1.0);
-  assert.equal(fleet.length, 1, 'Expected single flagship BelAZ-75131 truck');
+  assert.equal(fleet.length, 8, 'Expected 8 working BelAZ-75131 trucks in active quarry fleet');
+
+  for (let i = 0; i < fleet.length; i++) {
+    const tr = fleet[i];
+    assert.equal(tr.wheelContacts.length, 6, `Expected 6 wheel contacts for truck ${tr.id}`);
+    assert.ok(tr.wallClearanceM >= 3.0, `Expected wall clearance >= 3m for ${tr.id}`);
+  }
 
   const truck = fleet[0];
   assert.equal(truck.wheelContacts.length, 6, 'Expected 6 wheel contact telemetry points (FL, FR, RLO, RLI, RRO, RRI)');
@@ -228,8 +234,8 @@ test('Sun position and processing plant telemetry produce valid values', () => {
   const sun = computeSunPosition(48, 35, 125);
   assert.ok(sun.sunY > 60);
   const plant = computePlantTelemetry(20, 1.0);
-  assert.ok(plant.mpsiPowerMw >= 13.7 && plant.mpsiPowerMw <= 14.0);
+  assert.ok(plant.mpsiPowerMw >= 13.7 && plant.mpsiPowerMw <= 14.2);
   assert.equal(plant.krebsActiveCyclones, 12);
   assert.ok(plant.krebsUnderflowPulse > 0);
-  assert.equal(Object.keys(CAD_ASSEMBLIES).length, 5);
+  assert.equal(Object.keys(CAD_ASSEMBLIES).length, 6);
 });

@@ -24,8 +24,25 @@ const SHOVEL_LOAD_MW = 2.8;
 const CRUSHER_LOAD_MW = 1.6;
 const SAG_MILL_LOAD_MW = 6.8;
 
-const DIESEL_SAVED_L_PER_H = 380;
-const CO2_SAVED_KG_PER_H = 1020;
+/**
+ * Calculates physical diesel fuel substitution and CO2 reduction
+ * based on electric traction draw on the 1200V catenary.
+ * Specific fuel consumption equivalent: ~195 g/kWh, diesel density 0.84 kg/L -> 0.232 L per kWh.
+ */
+export function calculateDynamicDieselSubstitution(
+  trucksOnTrolley: number,
+  tractionLoadMW: number,
+): { dieselSavedLitersPerHour: number; co2SavedKgPerHour: number } {
+  if (trucksOnTrolley <= 0 || tractionLoadMW <= 0) {
+    return { dieselSavedLitersPerHour: 0, co2SavedKgPerHour: 0 };
+  }
+  const dieselLph = tractionLoadMW * 1000.0 * 0.232;
+  const co2KgPerHour = dieselLph * 2.68;
+  return {
+    dieselSavedLitersPerHour: round(dieselLph, 1),
+    co2SavedKgPerHour: round(co2KgPerHour, 1),
+  };
+}
 
 const FEEDER_SHOVEL = '6kV-ЭКГ-15';
 const FEEDER_CRUSHER = '6kV-ККД-1500';
@@ -53,30 +70,44 @@ function computeBaseLoadMW(simTime: number): number {
   );
 }
 
-function computeTractionLoadMW(belazTrolleyActive: boolean, simTime: number): number {
-  if (!belazTrolleyActive) {
-    return 0.4 + 0.2 * Math.sin(simTime * 0.1);
+function computeTractionLoadMW(trucksOnTrolley: number, simTime: number): number {
+  if (trucksOnTrolley === 0) {
+    return 0.35 + 0.15 * Math.sin(simTime * 0.1);
   }
-  const surgeFactor = 0.9 + 0.1 * Math.sin(simTime * 0.15);
-  return TRACTION_PEAK_LOAD_MW * surgeFactor;
+  // Each 243-ton laden BelAZ-75131 climbing the 80‰ ramp at 24.5 km/h draws 1.84 MW
+  const perTruckLoadMW = 1.84;
+  const surgeFactor = 0.95 + 0.05 * Math.sin(simTime * 0.2);
+  return trucksOnTrolley * perTruckLoadMW * surgeFactor;
 }
 
 export function computeSubstationTelemetry(
   simTime: number,
   activeScenario: string | null,
-  belazTrolleyActive: boolean,
+  belazTrolleyActive: boolean | number | { pantographRaise: number; tractionPowerKw?: number }[],
 ): SubstationTelemetryData {
-  const isContingency = activeScenario === 'sc_1200v_fault';
+  const isContingency = activeScenario === 'sc_1200v_fault' || activeScenario === 'trolley-fault';
   const isIsland = activeScenario === 'sc_island_mode';
 
+  let trucksOnTrolley = 0;
+  if (Array.isArray(belazTrolleyActive)) {
+    trucksOnTrolley = belazTrolleyActive.filter((t) => t.pantographRaise > 0.5).length;
+  } else if (typeof belazTrolleyActive === 'number') {
+    trucksOnTrolley = belazTrolleyActive;
+  } else if (belazTrolleyActive) {
+    trucksOnTrolley = 1;
+  }
+
   const baseLoadMW = computeBaseLoadMW(simTime);
-  const tractionLoadMW = isContingency ? 0 : computeTractionLoadMW(belazTrolleyActive, simTime);
+  const tractionLoadMW = isContingency ? 0 : computeTractionLoadMW(trucksOnTrolley, simTime);
 
   let bessPowerMW = 0;
   let bessStateOfChargePct = 62;
   let emergencyStatus: SubstationTelemetryData['emergencyStatus'] = 'NORMAL';
   let gridVoltage110kV = NOMINAL_GRID_VOLTAGE_KV;
-  let tractionVoltage1200V = NOMINAL_TRACTION_VOLTAGE_V;
+  // Catenary voltage drops by ~18.5V per active truck under load
+  let tractionVoltage1200V = isContingency
+    ? 0
+    : NOMINAL_TRACTION_VOLTAGE_V - trucksOnTrolley * 18.5;
 
   const activeFeeders: string[] = [FEEDER_SHOVEL, FEEDER_CRUSHER, FEEDER_SAG];
 
@@ -97,13 +128,14 @@ export function computeSubstationTelemetry(
   } else {
     activeFeeders.push(FEEDER_TRACTION, FEEDER_BESS);
 
-    if (belazTrolleyActive) {
-      bessPowerMW = BESS_PEAK_SHAVE_MW;
+    if (trucksOnTrolley > 0) {
+      // BESS peak shaving absorbs surge to protect 110kV grid stability
+      bessPowerMW = Math.min(BESS_MAX_POWER_MW, trucksOnTrolley * 1.25);
       emergencyStatus = 'PEAK_SHAVING';
-      gridVoltage110kV = NOMINAL_GRID_VOLTAGE_KV - 0.15;
-      bessStateOfChargePct = 55;
+      gridVoltage110kV = NOMINAL_GRID_VOLTAGE_KV - 0.12 * trucksOnTrolley;
+      bessStateOfChargePct = Math.max(30, 68 - trucksOnTrolley * 4.5);
     } else {
-      bessPowerMW = -0.8;
+      bessPowerMW = -0.8; // Recharging battery
       bessStateOfChargePct = 68;
       gridVoltage110kV = NOMINAL_GRID_VOLTAGE_KV + 0.05;
     }
@@ -111,8 +143,10 @@ export function computeSubstationTelemetry(
 
   const totalActivePowerMW = round(baseLoadMW + tractionLoadMW, 2);
 
-  const dieselFuelSavedLitersPerHour = belazTrolleyActive && !isContingency ? DIESEL_SAVED_L_PER_H : 0;
-  const co2SavedKgPerHour = belazTrolleyActive && !isContingency ? CO2_SAVED_KG_PER_H : 0;
+  const { dieselSavedLitersPerHour, co2SavedKgPerHour } =
+    !isContingency && trucksOnTrolley > 0
+      ? calculateDynamicDieselSubstitution(trucksOnTrolley, tractionLoadMW)
+      : { dieselSavedLitersPerHour: 0, co2SavedKgPerHour: 0 };
 
   return {
     gridVoltage110kV: round(gridVoltage110kV, 2),
@@ -120,8 +154,8 @@ export function computeSubstationTelemetry(
     totalActivePowerMW,
     bessStateOfChargePct: round(clamp(bessStateOfChargePct, 0, 100), 1),
     bessPowerMW: round(bessPowerMW, 2),
-    co2SavedKgPerHour: round(co2SavedKgPerHour, 1),
-    dieselFuelSavedLitersPerHour: round(dieselFuelSavedLitersPerHour, 1),
+    co2SavedKgPerHour,
+    dieselFuelSavedLitersPerHour: round(dieselSavedLitersPerHour, 1),
     activeFeeders,
     emergencyStatus,
   };

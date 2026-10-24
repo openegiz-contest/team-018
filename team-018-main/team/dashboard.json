@@ -19,12 +19,27 @@
   "description": "Smart-Kenish 4.0: Polymetallic digital mine on OpenEgiz with trolley-assist decarbonization, AI grade blending, TKPH predictive tire thermal monitoring, and 2-generation What-If contingency response.",
   "panels": [
     {
+      "id": 99,
+      "type": "text",
+      "title": "🎮 3D Digital Twin Cockpit :: Aktau-Mys Open-Pit Mine (Rule 9.1 Compliance)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 7
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"width:100%;height:260px;background:#0f172a;border-radius:8px;border:1px solid #38bdf8;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;box-sizing:border-box;position:relative;overflow:hidden;\"><div style=\"position:absolute;top:10px;left:16px;display:flex;align-items:center;gap:8px;\"><span style=\"display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:50%;box-shadow:0 0 8px #22c55e;\"></span><span style=\"font-size:12px;font-weight:600;color:#38bdf8;letter-spacing:1px;\">LIVE 3D SPATIAL DIGITAL TWIN (24 TWINS · THREE.JS ENGINE)</span></div><h2 style=\"margin:8px 0;color:#f8fafc;font-size:20px;font-weight:700;\">ГОК «Ақтау-Мыс» 3D WebGL Digital Twin Cockpit</h2><p style=\"margin:0 0 16px 0;color:#94a3b8;font-size:13px;max-width:800px;text-align:center;\">Интерактивный 3D-двойник рудника: троллейвозный подъем 1200В (8.5%), сквозной цикл Drill-to-Mill, радар IBIS-FM устойчивости борта (FoS), EKF-PID шихтовка 0.850% Cu и онлайн-сценарии What-If.</p><div style=\"display:flex;gap:12px;flex-wrap:wrap;justify-content:center;\"><a href=\"http://localhost:5173\" target=\"_blank\" style=\"background:#0284c7;color:#fff;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(2,132,199,0.4);\">🚀 Открыть полный 3D-кокпит (:5173)</a><a href=\"http://localhost:5173/?tour=1\" target=\"_blank\" style=\"background:#16a34a;color:#fff;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(22,163,74,0.4);\">🎬 90-секундный тур для жюри (?tour=1)</a><a href=\"http://localhost:3001/api/openegiz/twins\" target=\"_blank\" style=\"background:#334155;color:#e2e8f0;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;\">📊 24 Ditto Twins JSON (:3001)</a></div></div>"
+      }
+    },
+    {
       "id": 100,
       "type": "row",
       "title": "EXECUTIVE P&L & ESG METRICS (ECONOMIC VIABILITY)",
       "gridPos": {
         "x": 0,
-        "y": 0,
+        "y": 7,
         "w": 24,
         "h": 1
       },
@@ -40,7 +55,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -94,7 +109,7 @@
       },
       "gridPos": {
         "x": 4,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -164,7 +179,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -226,7 +241,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -280,7 +295,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -334,7 +349,7 @@
       },
       "gridPos": {
         "x": 20,
-        "y": 1,
+        "y": 8,
         "w": 4,
         "h": 4
       },
@@ -394,7 +409,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 5,
+        "y": 12,
         "w": 6,
         "h": 4
       },
@@ -448,7 +463,7 @@
       },
       "gridPos": {
         "x": 6,
-        "y": 5,
+        "y": 12,
         "w": 6,
         "h": 4
       },
@@ -502,7 +517,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 5,
+        "y": 12,
         "w": 12,
         "h": 4
       },
@@ -574,7 +589,7 @@
       "title": "SPATIAL MINE TOPOLOGY & FLEET POSITIONS (KENISHTI VIZUALIZATSIYA)",
       "gridPos": {
         "x": 0,
-        "y": 9,
+        "y": 16,
         "w": 24,
         "h": 1
       },
@@ -590,7 +605,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 10,
+        "y": 17,
         "w": 14,
         "h": 7
       },
@@ -652,7 +667,7 @@
       },
       "gridPos": {
         "x": 14,
-        "y": 10,
+        "y": 17,
         "w": 5,
         "h": 7
       },
@@ -710,7 +725,7 @@
       },
       "gridPos": {
         "x": 19,
-        "y": 10,
+        "y": 17,
         "w": 5,
         "h": 7
       },
@@ -760,7 +775,7 @@
       "title": "Smart-Kenish Mine Flow Topology & Energy Decarbonization Architecture",
       "gridPos": {
         "x": 0,
-        "y": 17,
+        "y": 24,
         "w": 24,
         "h": 5
       },
@@ -771,7 +786,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "### \u26f0\ufe0f Aktau Polymetallic Open-Pit Digital Mine (12 Mt/a) :: Unified Process Flow\n\n| Process Zone | Elevation & Asset | Target Parameter | Status & Telemetry |\n| :--- | :--- | :--- | :--- |\n| **North Bench** | Horizon **+60m** \\| Shovel **EX-01** (\u042d\u041a\u0413-15 30t) | **1.35% Cu** (High-Grade Chalcopyrite) | P&L feed blending control |\n| **South Bench** | Horizon **-60m** \\| Shovel **EX-02** (CAT 6020B 22t) | **0.45% Cu** (Low-Grade Ore) | Sump Dewatering (**WP-01/02**) |\n| **Haul Ramp** | Continuous **8.5% Incline** (1.8 km Catenary) | **1200V DC** Overhead Trolley-Assist | Speed **24.5 km/h** (vs 12.2 km/h Diesel) |\n| **Primary Crusher** | **\u041a\u041a\u0414-1500/180** (2400 t/h) + Standby **Metso LT140** | Concentrator Target **0.850% Cu \u00b10.03%** | Tramp Metal Protection & Auto Relief |\n| **Microgrid Substation** | **6 MW** Traction Substation + **2 MWh BESS** | **Peak Shaving & Regen Energy Capture** | Industrial Tariff **$0.062/kWh** |\n\n> \ud83d\udef0\ufe0f **Live Spatial GIS Topology & TUI:** Консольный монитор: `make monitor` | Геометрия: `team/data/mine_spatial_topology.geojson` (7 геодезических слоев, датум WGS84)\n"
+        "content": "### ⛰️ Aktau Polymetallic Open-Pit Digital Mine (12 Mt/a) :: Unified Process Flow\n\n| Process Zone | Elevation & Asset | Target Parameter | Status & Telemetry |\n| :--- | :--- | :--- | :--- |\n| **North Bench** | Horizon **+60m** \\| Shovel **EX-01** (ЭКГ-15 30t) | **1.35% Cu** (High-Grade Chalcopyrite) | P&L feed blending control |\n| **South Bench** | Horizon **-60m** \\| Shovel **EX-02** (CAT 6020B 22t) | **0.45% Cu** (Low-Grade Ore) | Sump Dewatering (**WP-01/02**) |\n| **Haul Ramp** | Continuous **8.5% Incline** (1.8 km Catenary) | **1200V DC** Overhead Trolley-Assist | Speed **24.5 km/h** (vs 12.2 km/h Diesel) |\n| **Primary Crusher** | **ККД-1500/180** (2400 t/h) + Standby **Metso LT140** | Concentrator Target **0.850% Cu ±0.03%** | Tramp Metal Protection & Auto Relief |\n| **Microgrid Substation** | **6 MW** Traction Substation + **2 MWh BESS** | **Peak Shaving & Regen Energy Capture** | Industrial Tariff **$0.062/kWh** |\n\n> 🛰️ **Live Spatial GIS Topology & TUI:** Консольный монитор: `make monitor` | Геометрия: `team/data/mine_spatial_topology.geojson` (7 геодезических слоев, датум WGS84)\n"
       }
     },
     {
@@ -780,7 +795,7 @@
       "title": "FLEET TELEMATICS & PREDICTIVE TKPH TIRE WEAR",
       "gridPos": {
         "x": 0,
-        "y": 22,
+        "y": 29,
         "w": 24,
         "h": 1
       },
@@ -796,7 +811,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 23,
+        "y": 30,
         "w": 12,
         "h": 7
       },
@@ -832,7 +847,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 23,
+        "y": 30,
         "w": 12,
         "h": 7
       },
@@ -885,7 +900,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 30,
+        "y": 37,
         "w": 24,
         "h": 6
       },
@@ -1002,7 +1017,7 @@
             "properties": [
               {
                 "id": "displayName",
-                "value": "Tire Temp (\u00b0C)"
+                "value": "Tire Temp (°C)"
               },
               {
                 "id": "unit",
@@ -1040,7 +1055,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 36,
+        "y": 43,
         "w": 24,
         "h": 6
       },
@@ -1058,27 +1073,27 @@
               "type": "value",
               "options": {
                 "loading": {
-                  "text": "Loading (\u041f\u043e\u0433\u0440\u0443\u0437\u043a\u0430)",
+                  "text": "Loading (Погрузка)",
                   "color": "#FF9900"
                 },
                 "hauling": {
-                  "text": "Hauling Diesel (\u0412\u044b\u0432\u043e\u0437\u043a\u0430)",
+                  "text": "Hauling Diesel (Вывозка)",
                   "color": "#5794F2"
                 },
                 "hauling_trolley": {
-                  "text": "Trolley Climb 1200V (\u042d\u043b\u0435\u043a\u0442\u0440\u043e\u0442\u044f\u0433\u0430)",
+                  "text": "Trolley Climb 1200V (Электротяга)",
                   "color": "#73BF69"
                 },
                 "dumping": {
-                  "text": "Dumping (\u0420\u0430\u0437\u0433\u0440\u0443\u0437\u043a\u0430)",
+                  "text": "Dumping (Разгрузка)",
                   "color": "#B877D9"
                 },
                 "empty_return": {
-                  "text": "Empty Return (\u0421\u043f\u0443\u0441\u043a/\u0420\u0435\u0433\u0435\u043d)",
+                  "text": "Empty Return (Спуск/Реген)",
                   "color": "#37872D"
                 },
                 "queued_at_excavator": {
-                  "text": "Queued (\u041e\u0447\u0435\u0440\u0435\u0434\u044c)",
+                  "text": "Queued (Очередь)",
                   "color": "#FADE2A"
                 },
                 "breakdown_blocking_ramp": {
@@ -1118,7 +1133,7 @@
       "title": "PRIMARY CRUSHER, DEWATERING & BESS MICROGRID",
       "gridPos": {
         "x": 0,
-        "y": 42,
+        "y": 49,
         "w": 24,
         "h": 1
       },
@@ -1134,7 +1149,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 43,
+        "y": 50,
         "w": 8,
         "h": 7
       },
@@ -1170,7 +1185,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 43,
+        "y": 50,
         "w": 8,
         "h": 7
       },
@@ -1223,7 +1238,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 43,
+        "y": 50,
         "w": 8,
         "h": 7
       },
@@ -1255,7 +1270,7 @@
       "title": "REAL-WORLD INCIDENT HAZARDS & AVERTED LOSSES ($)",
       "gridPos": {
         "x": 0,
-        "y": 50,
+        "y": 57,
         "w": 24,
         "h": 1
       },
@@ -1271,7 +1286,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 51,
+        "y": 58,
         "w": 12,
         "h": 5
       },
@@ -1325,7 +1340,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 51,
+        "y": 58,
         "w": 12,
         "h": 5
       },
@@ -1383,7 +1398,7 @@
       "title": "BENEFICIATION CONCENTRATOR, GEOTECHNICS & ADAPTIVE KALMAN CONTROL",
       "gridPos": {
         "x": 0,
-        "y": 56,
+        "y": 63,
         "w": 24,
         "h": 1
       },
@@ -1399,7 +1414,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 57,
+        "y": 64,
         "w": 12,
         "h": 7
       },
@@ -1460,7 +1475,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 57,
+        "y": 64,
         "w": 12,
         "h": 7
       },
@@ -1522,7 +1537,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 64,
+        "y": 71,
         "w": 8,
         "h": 7
       },
@@ -1569,7 +1584,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 64,
+        "y": 71,
         "w": 8,
         "h": 7
       },
@@ -1611,7 +1626,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 64,
+        "y": 71,
         "w": 8,
         "h": 7
       },
@@ -1659,7 +1674,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 71,
+        "y": 78,
         "w": 8,
         "h": 6
       },
@@ -1716,7 +1731,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 71,
+        "y": 78,
         "w": 8,
         "h": 6
       },
@@ -1770,7 +1785,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 71,
+        "y": 78,
         "w": 8,
         "h": 6
       },
@@ -1797,13 +1812,13 @@
     },
     {
       "id": 34,
-      "title": "Overland Conveyor \u041a\u041d\u041a-270 (1.42 km) Mass Flow & Drive Power",
+      "title": "Overland Conveyor КНК-270 (1.42 km) Mass Flow & Drive Power",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 80
+        "y": 87
       },
       "targets": [
         {
@@ -1827,7 +1842,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 80
+        "y": 87
       },
       "targets": [
         {
@@ -1845,13 +1860,13 @@
     },
     {
       "id": 36,
-      "title": "North Bench (+60m Face) & Shovel EX-01 (\u042d\u041a\u0413-15 30t) Payload",
+      "title": "North Bench (+60m Face) & Shovel EX-01 (ЭКГ-15 30t) Payload",
       "type": "timeseries",
       "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 88
+        "y": 95
       },
       "targets": [
         {
@@ -1877,7 +1892,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 88
+        "y": 95
       },
       "targets": [
         {

@@ -64,7 +64,8 @@ curl -f http://localhost:8080/health || exit 1
 
 ## Access Points
 
-* OpenEgiz Grafana Dashboard: http://localhost:3000
+* 3D Digital Twin WebGL Cockpit: http://localhost:5173 (Three.js 3D-двойник ГОК, 24 егіз, What-If HUD, CPU 60 FPS)
+* OpenEgiz Grafana Dashboard: http://localhost:3000 (Встроенный 3D-двойник, 40 аналитических панелей)
 * Eclipse Ditto REST API: http://localhost:8080
 * Mosquitto MQTT Broker: mqtt://localhost:1883 & ws://localhost:9001
 * Terminal SCADA / TUI: `make monitor`

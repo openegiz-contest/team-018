@@ -68,7 +68,8 @@ curl -f http://localhost:8080/health && echo "OpenEgiz Stand is Healthy!"
 
 | Сервис | Порт / URL | Сипаттамасы |
 | :--- | :--- | :--- |
-| **Grafana SCADA Dashboard** | [http://localhost:3000](http://localhost:3000) *(admin/admin)* | 30 талдау панелі, GIS топологиясы, FMS матрицасы, P&L қаржылық көрсеткіштері |
+| **3D Digital Twin WebGL Cockpit** | [http://localhost:5173](http://localhost:5173) | 3D-двойник ГОК (Three.js): 24 егіз, троллей 1200В, What-If HUD, FoS теплокарта (CPU 60 FPS) |
+| **Grafana SCADA Dashboard** | [http://localhost:3000](http://localhost:3000) *(admin/admin)* | 40 талдау панелі, 3D визуал эмбеді, FMS матрицасы, P&L қаржылық көрсеткіштері |
 | **Eclipse Ditto REST API** | [http://localhost:8080](http://localhost:8080) | 24 цифрлық егіз (`/api/2/things`), ABAC қауіпсіздік саясаты |
 | **Mosquitto MQTT Broker** | `mqtt://localhost:1883` & `ws://localhost:9001` | Нақты уақыттағы телеметрия ағыны (`telemetry/#`) |
 | **Terminal SCADA Monitor (TUI)**| `make monitor` *(немесе `python3 team/monitor.py`)* | 24-биттік консольдік SCADA, 6 режим, физикалық теңдеулер инспекторы |

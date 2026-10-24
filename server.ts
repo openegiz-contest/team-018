@@ -165,6 +165,38 @@ function startDittoServer(port = 8080) {
     next();
   });
 
+  // Root portal with quick links to 3D client and SCADA
+  app.get('/', (_req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Smart-Kenish 4.0 — Серверный портал</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 2rem; max-width: 600px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    h1 { margin-top: 0; color: #38bdf8; font-size: 1.6rem; display: flex; align-items: center; gap: 0.5rem; }
+    p { color: #94a3b8; line-height: 1.5; }
+    .btn { display: block; background: #2563eb; color: white; text-decoration: none; padding: 0.85rem 1.25rem; border-radius: 8px; font-weight: 600; text-align: center; margin: 0.75rem 0; transition: background 0.2s; }
+    .btn:hover { background: #1d4ed8; }
+    .btn-secondary { background: #334155; }
+    .btn-secondary:hover { background: #475569; }
+    .status { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22c55e; margin-right: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🏛️ Smart-Kenish 4.0 Server</h1>
+    <p><span class="status"></span>Все службы цифрового двойника карьера активны.</p>
+    <a class="btn" href="http://localhost:5173/">🎮 Открыть 3D Цифровой Двойник (Vite 3D Viewport)</a>
+    <a class="btn btn-secondary" href="http://localhost:3000/">📊 Открыть SCADA-Кокпит диспетчера (:3000)</a>
+    <a class="btn btn-secondary" href="/health">📡 Проверить статус Ditto Gateway (/health)</a>
+    <a class="btn btn-secondary" href="/api/2/things">🤖 Цифровые двойники Ditto (/api/2/things)</a>
+  </div>
+</body>
+</html>`);
+  });
+
   // Health check endpoints
   app.get(['/health', '/status/health'], (_req, res) => {
     res.json({ status: 'UP', platform: 'Eclipse Ditto Gateway (Smart-Kenish Standalone)' });
