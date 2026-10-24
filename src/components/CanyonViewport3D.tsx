@@ -102,10 +102,7 @@ interface CanyonViewport3DProps {
 // Reusable scratch vectors/objects outside the render loop to eliminate GC pauses
 const _desiredCamPos = new THREE.Vector3();
 const _desiredLookAt = new THREE.Vector3();
-const _bubbleDummy = new THREE.Object3D();
-const _dustDummy = new THREE.Object3D();
-const _gasDustDummy = new THREE.Object3D();
-const _mistJetDummy = new THREE.Object3D();
+
 const _convStart = new THREE.Vector3(10.0, 5.35, -50.0);
 const _convEnd = new THREE.Vector3(2.5, 11.85, -66.0);
 const _wasdForward = new THREE.Vector3();
@@ -851,25 +848,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       new THREE.Vector3(56.0, 8.0, -48.0),  // Flotation discharge tailings
     ]);
 
-    // Ventilation Station Coordinates for Mist Jet Particle Animation (matching cadModels.ts VSP-1800 units)
-    const _ventJetRaw = [
-      { x: -10.5, z: -13.2, dirX: -0.22, dirY: 0.42, dirZ: 0.88 },
-      { x: -9.2, z: 15.2, dirX: -0.32, dirY: 0.42, dirZ: -0.85 },
-      { x: 7.5, z: 10.2, dirX: -0.75, dirY: 0.45, dirZ: -0.65 },
-      { x: 19.5, z: -13.5, dirX: -0.82, dirY: 0.38, dirZ: 0.55 },
-    ];
-    const _ventJetOrigins = _ventJetRaw.map((v) => ({
-      ...v,
-      y: getCanyonGroundHeight(v.x, v.z) + 2.25,
-    }));
-
-    // Gas & Dust Particle Emission Zones inside the Canyon (Excavator faces, Deep Pit Floor, Crusher)
-    const _gasDustZones = [
-      { x: -9.6, y: -13.2, z: -6.0, radius: 5.5 }, // ЭКГ-15 blasting/digging face
-      { x: -8.2, y: -13.0, z: 10.0, radius: 5.5 }, // CAT 6020B blasting/digging face
-      { x: -2.0, y: -15.0, z: 2.0, radius: 6.8 },  // Deep pit floor gas accumulation pocket
-      { x: 10.0, y: 7.5, z: -43.5, radius: 4.5 },  // Crusher unloading dust zone
-    ];
+    // Particle zones removed to eliminate per-frame CPU calculations
 
     // Main Animation Loop
     let rafId = 0;
@@ -899,7 +878,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         st.speedMultiplier,
         st.activeScenario
       );
-      const dustMesh = canyonEnvRig.dustPlumeInstanced;
+
 
       for (let i = 0; i < fleetTelemetry.length; i++) {
         const tState = fleetTelemetry[i];
@@ -1066,45 +1045,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
           rig.mechanicalDetails.update(tState.steerAngle, tState.speedKmh, rawDt);
         }
 
-        const sinYaw = Math.sin(tState.yaw);
-        const cosYaw = Math.cos(tState.yaw);
-        const particlesPerTruck = Math.floor(dustMesh.count / fleetTelemetry.length);
-        const startP = i * particlesPerTruck;
-        const endP = startP + particlesPerTruck;
-        for (let p = startP; p < endP; p++) {
-          const localP = p - startP;
-          const cycleP = (simTime * 2.2 + localP * (1 / particlesPerTruck)) % 1;
-          const sideSign = localP % 2 === 0 ? -1.8 : 1.8;
-          // Trailing behind rear tires with meteorological wind drift (Item #19 & Ω7.86: Balkhash prevailing wind)
-          const trailDist = 4.2 + cycleP * 8.5;
-          const windSpeed = 4.2 + Math.sin(simTime * 0.08) * 1.5;
-          const windAngle = 0.72 + Math.cos(simTime * 0.04) * 0.22;
-          const windDriftX = Math.cos(windAngle) * windSpeed * cycleP * 0.75;
-          const windDriftZ = Math.sin(windAngle) * windSpeed * cycleP * 0.75;
-          const wx =
-            tState.x -
-            sinYaw * trailDist +
-            cosYaw * sideSign * (1 + cycleP * 0.35) +
-            windDriftX;
-          const wy = tState.y + 0.15 + cycleP * 0.45;
-          const wz =
-            tState.z -
-            cosYaw * trailDist -
-            sinYaw * sideSign * (1 + cycleP * 0.35) +
-            windDriftZ;
-
-          _dustDummy.position.set(wx, wy, wz);
-          _dustDummy.rotation.set(simTime + p, simTime * 0.7, 0);
-          const dScale =
-            tState.speedKmh > 2
-              ? tState.dustIntensity * (0.12 + Math.sin(cycleP * Math.PI) * 0.38)
-              : 0.0001;
-          _dustDummy.scale.setScalar(Math.max(0.0001, dScale));
-          _dustDummy.updateMatrix();
-          dustMesh.setMatrixAt(p, _dustDummy.matrix);
-        }
       }
-      dustMesh.instanceMatrix.needsUpdate = true;
 
       // 2. Update Excavators ЭКГ-15 and CAT 6020B (actively operating with 8-truck fleet):
       const ekgKin = computeExcavatorKinematics(
@@ -1130,13 +1071,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       ekg15Rig.bucketOreMesh.scale.setScalar(
         0.25 + ekgKin.bucketFillRatio * 0.92
       );
-      ekg15Rig.diggingSparksGroup.visible = ekgKin.diggingSparkIntensity > 0.08;
-      if (ekg15Rig.diggingSparksGroup.visible) {
-        ekg15Rig.diggingSparksGroup.scale.setScalar(
-          0.65 + ekgKin.diggingSparkIntensity * 0.85
-        );
-        ekg15Rig.diggingSparksGroup.rotation.z = Math.sin(simTime * 22) * 0.35;
-      }
+      ekg15Rig.diggingSparksGroup.visible = false;
       for (const piston of ekg15Rig.hydraulicPistonMeshes) {
         piston.scale.y = 0.72 + ekgKin.hydraulicCylinderExt * 0.45;
       }
@@ -1168,15 +1103,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       cat6020bRig.bucketOreMesh.scale.setScalar(
         0.25 + catKin.bucketFillRatio * 0.92
       );
-      cat6020bRig.diggingSparksGroup.visible =
-        catKin.diggingSparkIntensity > 0.08;
-      if (cat6020bRig.diggingSparksGroup.visible) {
-        cat6020bRig.diggingSparksGroup.scale.setScalar(
-          0.65 + catKin.diggingSparkIntensity * 0.85
-        );
-        cat6020bRig.diggingSparksGroup.rotation.z =
-          Math.cos(simTime * 24) * 0.35;
-      }
+      cat6020bRig.diggingSparksGroup.visible = false;
       for (const piston of cat6020bRig.hydraulicPistonMeshes) {
         piston.scale.y = 0.68 + catKin.hydraulicCylinderExt * 0.55;
       }
@@ -1211,24 +1138,9 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         canyonEnvRig.trolleyNetworkGroup.visible = Boolean(st.showTrolleyLines);
       }
 
-      // 1200V Green Energy Flow Vectors Animation (Substation -> Trucks)
+      // 1200V Green Energy Flow Vectors (Particles disabled for CPU performance)
       if (energyPulseMesh) {
-        const isFault = activeScenario === 'trolley-fault';
-        energyPulseMesh.visible = Boolean(st.showTrolleyLines) && !isFault;
-        if (energyPulseMesh.visible) {
-          for (let ep = 0; ep < energyPulseCount; ep++) {
-            const tParam = (simTime * 0.45 + ep / energyPulseCount) % 1;
-            const px = 55 - tParam * 42;
-            const pz = -2 + tParam * 22;
-            const py = getCanyonGroundHeight(px, pz) + 7.32;
-            _energyDummy.position.set(px, py, pz);
-            const pScale = 0.8 + Math.sin(simTime * 12 + ep) * 0.3;
-            _energyDummy.scale.set(pScale, pScale, pScale);
-            _energyDummy.updateMatrix();
-            energyPulseMesh.setMatrixAt(ep, _energyDummy.matrix);
-          }
-          energyPulseMesh.instanceMatrix.needsUpdate = true;
-        }
+        energyPulseMesh.visible = false;
       }
 
       // Catenary Fault Spark Flicker Animation (Scenario 'trolley-fault')
@@ -1260,73 +1172,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         rotor.rotation.z = simTime * (16 + v * 2.5);
       }
 
-      // Animate Quarry Gas & Dust Particles
-      const gasDustMesh = canyonEnvRig.gasAndDustParticlesInstanced;
-      if (gasDustMesh && gasDustMesh.count > 0) {
-        for (let i = 0; i < gasDustMesh.count; i++) {
-          const zone = _gasDustZones[i % _gasDustZones.length];
-          const phase = (simTime * 0.28 + i * 0.037) % 1;
-          const angle = i * 2.39996 + simTime * 0.45;
-          const radialSpread = (0.25 + phase * 0.95) * zone.radius;
-
-          const gx =
-            zone.x +
-            Math.cos(angle) * radialSpread +
-            Math.sin(simTime * 0.9 + i) * 0.8;
-          const gy = zone.y + 0.6 + phase * 11.5;
-          const gz =
-            zone.z +
-            Math.sin(angle) * radialSpread +
-            Math.cos(simTime * 0.8 + i) * 0.8;
-
-          _gasDustDummy.position.set(gx, gy, gz);
-          _gasDustDummy.rotation.set(
-            simTime * 0.6 + i,
-            simTime * 0.5 + i * 0.5,
-            0
-          );
-          const plumeEnvelope = Math.sin(phase * Math.PI);
-          const activeBoost =
-            ekgKin.isWorking || catKin.isWorking ? 1.35 : 0.95;
-          const pScale = Math.max(0.05, plumeEnvelope * 1.35 * activeBoost);
-          _gasDustDummy.scale.set(pScale * 1.25, pScale * 0.85, pScale * 1.25);
-          _gasDustDummy.updateMatrix();
-          gasDustMesh.setMatrixAt(i, _gasDustDummy.matrix);
-        }
-        gasDustMesh.instanceMatrix.needsUpdate = true;
-      }
-
-      // Animate High-Velocity Water-Mist Droplet Particles
-      const mistJetMesh = canyonEnvRig.mistJetParticlesInstanced;
-      if (mistJetMesh && mistJetMesh.count > 0) {
-        for (let m = 0; m < mistJetMesh.count; m++) {
-          const origin = _ventJetOrigins[m % _ventJetOrigins.length];
-          const jetPhase = (simTime * 1.65 + m * 0.041) % 1;
-          const jetDist = 1.2 + jetPhase * 12.8;
-          const coneSpread = jetPhase * 1.85;
-          const swirlAngle = m * 1.7 + simTime * 5.0;
-
-          const mx =
-            origin.x +
-            origin.dirX * jetDist +
-            Math.cos(swirlAngle) * coneSpread;
-          const my =
-            origin.y +
-            origin.dirY * jetDist +
-            Math.sin(swirlAngle) * coneSpread * 0.6;
-          const mz =
-            origin.z +
-            origin.dirZ * jetDist +
-            Math.sin(swirlAngle) * coneSpread;
-
-          _mistJetDummy.position.set(mx, my, mz);
-          const mScale = Math.max(0.04, Math.sin(jetPhase * Math.PI) * 1.15);
-          _mistJetDummy.scale.setScalar(mScale);
-          _mistJetDummy.updateMatrix();
-          mistJetMesh.setMatrixAt(m, _mistJetDummy.matrix);
-        }
-        mistJetMesh.instanceMatrix.needsUpdate = true;
-      }
+      // Quarry Gas & Water-Mist Particles disabled for CPU performance
 
       // 4. Update Separated Processing Plant, Front Unloading Stop, Hydraulic Pathways & Froth Flotation
       const plantState = computePlantTelemetry(
@@ -1465,24 +1311,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         cap.rotation.y = simTime * 0.42 * (f % 2 === 0 ? 1 : -1);
       }
 
-      const bCount = plantRig.frothBubblesInstanced.count;
-      const baseArr = plantRig.bubbleBasePositions;
-      for (let b = 0; b < bCount; b++) {
-        const bx = baseArr[b * 3];
-        const by = baseArr[b * 3 + 1];
-        const bz = baseArr[b * 3 + 2];
-        const wave = Math.sin(simTime * 4.6 + b * 0.7);
-        _bubbleDummy.position.set(
-          bx + Math.cos(simTime * 2.4 + b) * 0.1,
-          by + wave * 0.15,
-          bz + Math.sin(simTime * 2.4 + b) * 0.1
-        );
-        const s = 0.72 + (wave + 1) * 0.34;
-        _bubbleDummy.scale.set(s, s * 0.78, s);
-        _bubbleDummy.updateMatrix();
-        plantRig.frothBubblesInstanced.setMatrixAt(b, _bubbleDummy.matrix);
-      }
-      plantRig.frothBubblesInstanced.instanceMatrix.needsUpdate = true;
+      // Flotation froth bubble matrices statically maintained without per-frame CPU loop
 
       // 4A. Detail-kit animation hooks (cylinder tracking, belt scroll, jaw/flywheel, beacons, telemetry)
       for (const r of belazRigs) r.root.userData.kitUpdate?.(simTime);
@@ -1603,14 +1432,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
           windAngle
         );
       }
-      if (canyonEnvRig.dustHazeRig) {
-        canyonEnvRig.dustHazeRig.update(
-          rawDt,
-          windSpeed,
-          windAngle,
-          false
-        );
-      }
+
 
 
 

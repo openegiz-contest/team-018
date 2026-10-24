@@ -541,29 +541,11 @@ export interface DieselExhaustHandle {
   update: (dt: number, isDieselActive: boolean, speedKmh: number) => void;
 }
 
-interface Puff {
-  mesh: THREE.Mesh;
-  life: number;
-  maxLife: number;
-  velocity: THREE.Vector3;
-  baseScale: number;
-}
-
 export function createDieselExhaustEmitter(
-  mats: SafetyMats
+  _mats: SafetyMats
 ): DieselExhaustHandle {
   const root = new THREE.Group();
   root.name = 'DieselExhaustEmitter';
-
-  const puffMat = pickMat(mats, 'exhaustPuff', () =>
-    new THREE.MeshBasicMaterial({
-      color: 0x2a2a2a,
-      transparent: true,
-      opacity: 0.35,
-      depthWrite: false,
-      blending: THREE.NormalBlending,
-    })
-  );
 
   // Twin vertical stacks (BelAZ-75131 layout)
   const stackMat = new THREE.MeshStandardMaterial({
@@ -587,81 +569,9 @@ export function createDieselExhaustEmitter(
     new THREE.Vector3(0.55, 2.62, -1.6),
   ];
 
-  const puffGeo = new THREE.SphereGeometry(1, 10, 8);
-  const puffs: Puff[] = [];
-  const MAX_PUFFS = 48;
-  let spawnAccum = 0;
-
-  const spawnPuff = (origin: THREE.Vector3, speedKmh: number) => {
-    if (puffs.length >= MAX_PUFFS) return;
-    const mat = (puffMat as THREE.MeshBasicMaterial).clone();
-    mat.opacity = 0.0;
-    const mesh = new THREE.Mesh(puffGeo, mat);
-    mesh.position.copy(origin);
-    const baseScale = 0.08 + Math.random() * 0.05;
-    mesh.scale.setScalar(baseScale);
-    mesh.renderOrder = 5;
-    root.add(mesh);
-
-    const load = Math.min(1, speedKmh / 40);
-    const velocity = new THREE.Vector3(
-      (Math.random() - 0.5) * 0.15,
-      0.55 + Math.random() * 0.35 + load * 0.4,
-      (Math.random() - 0.5) * 0.15 - load * 0.25
-    );
-
-    puffs.push({
-      mesh,
-      life: 0,
-      maxLife: 1.4 + Math.random() * 0.9,
-      velocity,
-      baseScale,
-    });
-  };
-
-  const update = (dt: number, isDieselActive: boolean, speedKmh: number) => {
-    // Spawn rate scales with engine load (speed proxy)
-    if (isDieselActive) {
-      const load = Math.min(1, speedKmh / 40);
-      const rate = 6 + load * 14; // puffs per second
-      spawnAccum += dt * rate;
-      while (spawnAccum >= 1) {
-        spawnAccum -= 1;
-        const origin = emitters[Math.floor(Math.random() * emitters.length)];
-        spawnPuff(origin, speedKmh);
-      }
-    } else {
-      spawnAccum = 0;
-    }
-
-    // Integrate existing puffs
-    for (let i = puffs.length - 1; i >= 0; i--) {
-      const p = puffs[i];
-      p.life += dt;
-      const t = p.life / p.maxLife;
-      if (t >= 1) {
-        root.remove(p.mesh);
-        (p.mesh.material as THREE.Material).dispose();
-        puffs.splice(i, 1);
-        continue;
-      }
-      p.mesh.position.addScaledVector(p.velocity, dt);
-      p.velocity.y *= 1 - dt * 0.6;
-      p.velocity.x *= 1 - dt * 0.8;
-      p.velocity.z *= 1 - dt * 0.8;
-
-      const grow = p.baseScale + t * 0.55;
-      p.mesh.scale.setScalar(grow);
-
-      const mat = p.mesh.material as THREE.MeshBasicMaterial;
-      // Fade in fast, fade out slow
-      const fadeIn = Math.min(1, t * 6);
-      const fadeOut = 1 - Math.pow(t, 1.6);
-      mat.opacity = 0.32 * fadeIn * fadeOut;
-      // Darken toward black as it dissipates
-      const shade = 0.18 + t * 0.12;
-      mat.color.setRGB(shade, shade, shade);
-    }
+  // Smoke particles removed to eliminate CPU load and GC overhead
+  const update = (_dt: number, _isDieselActive: boolean, _speedKmh: number) => {
+    // Zero-overhead no-op: CAD exhaust stacks remain intact without burning CPU cycles
   };
 
   return { root, update };

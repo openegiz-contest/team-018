@@ -711,26 +711,6 @@ export function addProcessingDetailKit(
   funnel.position.set(0, -4.1, 0);
   station.add(funnel);
 
-  const pCount = 90;
-  const pGeo = new THREE.BufferGeometry();
-  const pPos = new Float32Array(pCount * 3);
-  const pSeed = new Float32Array(pCount);
-  for (let i = 0; i < pCount; i++) pSeed[i] = Math.random();
-  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  const particles = new THREE.Points(
-    pGeo,
-    new THREE.PointsMaterial({
-      color: 0xffcc66,
-      size: 0.16,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    })
-  );
-  particles.frustumCulled = false;
-  station.add(particles);
-
   updaters.push((t) => {
     flywheel.rotation.x = t * 6;
     motorFins.rotation.x = t * 6;
@@ -738,14 +718,6 @@ export function addProcessingDetailKit(
     grizzly.position.y = 0.95 + Math.sin(t * 38) * 0.012;
     grizzly.position.z = Math.sin(t * 31) * 0.01;
     ventMat.emissiveIntensity = 1.6 + 1.2 * Math.sin(t * 3);
-    for (let i = 0; i < pCount; i++) {
-      const ph = (t * 0.9 + pSeed[i]) % 1;
-      const ang = pSeed[i] * 60;
-      pPos[i * 3] = Math.cos(ang) * 0.9 * (1 - ph * 0.7);
-      pPos[i * 3 + 1] = -3.4 - ph * 2.6;
-      pPos[i * 3 + 2] = Math.sin(ang) * 0.9 * (1 - ph * 0.7);
-    }
-    (pGeo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
   });
 
   /* ---------- Overland conveyor from hopper to mill feed chute ---------- */

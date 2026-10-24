@@ -1050,16 +1050,13 @@ export function createCanyonEnvironment(
 
   envGroup.add(signsGroup);
 
-  // 10. Dynamic Quarry Dust Plumes behind the Flagship BelAZ-75131 wheels & loading/dumping impacts (Issue #18)
-  const dustCount = 96;
-  const dustGeo = new THREE.DodecahedronGeometry(0.66, 1);
+  // 10. Quarry Dust Plumes disabled to maximize CPU performance
   const dustPlumeInstanced = new THREE.InstancedMesh(
-    dustGeo,
-    mats.dustCloudMat,
-    dustCount
+    new THREE.BufferGeometry(),
+    new THREE.MeshBasicMaterial({ visible: false }),
+    0
   );
-  dustPlumeInstanced.frustumCulled = false;
-  envGroup.add(dustPlumeInstanced);
+  dustPlumeInstanced.visible = false;
 
   // 11-12. Artificial gas clouds and unrealistic ventilation mist jet particles removed
   const gasDustGeo = new THREE.BufferGeometry();

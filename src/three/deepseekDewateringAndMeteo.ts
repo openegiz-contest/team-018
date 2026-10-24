@@ -1237,75 +1237,20 @@ export interface DustHazeRig {
 }
 
 export function createVolumetricDustHaze(
-  groundHeightFn: (x: number, z: number) => number
+  _groundHeightFn: (x: number, z: number) => number
 ): DustHazeRig {
   const group = new THREE.Group();
   group.name = 'VolumetricDustPM10Haze';
 
-  const particleCount = 48;
-  const hazeGeo = new THREE.SphereGeometry(2.4, 6, 6);
-  const hazeMat = new THREE.MeshBasicMaterial({
-    color: 0xc8b296,
-    transparent: true,
-    opacity: 0.18,
-    depthWrite: false,
-  });
-
-  const instanced = new THREE.InstancedMesh(hazeGeo, hazeMat, particleCount);
-  instanced.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  group.add(instanced);
-
-  const dummy = new THREE.Object3D();
-  const particles = Array.from({ length: particleCount }, (_, i) => {
-    const angle = (i / particleCount) * Math.PI * 2;
-    const rad = 12 + (i % 5) * 8;
-    const x = Math.cos(angle) * rad;
-    const z = Math.sin(angle) * rad;
-    const y = groundHeightFn(x, z) + 1.2 + (i % 3) * 0.8;
-    return {
-      pos: new THREE.Vector3(x, y, z),
-      baseY: y,
-      scale: 1.0 + Math.random() * 1.5,
-      driftOffset: Math.random() * 100,
-    };
-  });
-
+  // Dust haze particles removed to completely eliminate per-frame CPU loads
   const update = (
-    dt: number,
-    windSpeed: number,
-    windAngle: number,
-    dustSuppressionActive: boolean
-  ): void => {
-    const targetOpacity = dustSuppressionActive ? 0.05 : 0.22;
-    hazeMat.opacity = lerp(hazeMat.opacity, targetOpacity, 1 - Math.exp(-dt * 1.5));
+    _dt: number,
+    _windSpeed: number,
+    _windAngle: number,
+    _dustSuppressionActive: boolean
+  ): void => {};
 
-    const driftX = Math.cos(windAngle) * windSpeed * 0.12;
-    const driftZ = Math.sin(windAngle) * windSpeed * 0.12;
-
-    for (let i = 0; i < particleCount; i++) {
-      const p = particles[i];
-      p.pos.x += driftX * dt;
-      p.pos.z += driftZ * dt;
-      p.pos.y = groundHeightFn(p.pos.x, p.pos.z) + 1.5 + Math.sin(p.driftOffset) * 0.6;
-      p.driftOffset += dt * 0.5;
-
-      // Wrap if drifted too far
-      if (p.pos.length() > 85) {
-        p.pos.set(Math.random() * 20 - 10, p.baseY, Math.random() * 20 - 10);
-      }
-
-      dummy.position.copy(p.pos);
-      dummy.scale.setScalar(p.scale);
-      dummy.updateMatrix();
-      instanced.setMatrixAt(i, dummy.matrix);
-    }
-    instanced.instanceMatrix.needsUpdate = true;
-  };
-
-  const dispose = (): void => {
-    hazeGeo.dispose();
-    hazeMat.dispose();
-  };
+  const dispose = (): void => {};
 
   return { group, update, dispose };
 }
