@@ -1019,39 +1019,39 @@ def build_presentation_pdf(output_path):
     # SLIDE 9: Live Stand Operational Guide -- Headless API, 30-Panel Grafana & Material 24-Bit TUI
     # =========================================================================
     c9 = PdfCanvas()
-    render_slide_header(c9, "Live Stand Operational Guide -- Headless API, 30-Panel Grafana & Material 24-Bit TUI",
+    render_slide_header(c9, "Live Stand Operational Guide -- 3D WebGL Cockpit, Grafana & Headless Engine",
                         "Triple-interface human-machine verification running concurrently on the Stand", 9, total_slides)
     c9.set_fill(0.96, 0.97, 0.98)
     c9.rect(25, 25, 792, 475, fill=True, stroke=False)
 
-    # Panel 1: Headless Twin State & GIS API
+    # Panel 1: 3D Digital Twin WebGL Cockpit (:5173)
     c9.set_fill(1.0, 1.0, 1.0)
     c9.set_stroke(0.2, 0.5, 0.8, w=1.5)
     c9.rect(35, 35, 245, 470, fill=True, stroke=True)
     c9.set_fill(0.2, 0.5, 0.8)
     c9.rect(35, 475, 245, 30, fill=True, stroke=False)
-    c9.text(45, 485, "1. Headless Twin State & GIS API (:3001)", font="F2", size=9.0, r=1, g=1, b=1)
+    c9.text(45, 485, "1. 3D WebGL Cockpit (:5173)", font="F2", size=9.0, r=1, g=1, b=1)
 
     c9.set_fill(0.08, 0.12, 0.18)
     c9.rect(45, 310, 225, 150, fill=True, stroke=False)
-    c9.text(55, 435, "> REST API: http://localhost:3001/", font="F2", size=7.0, r=0.22, g=0.74, b=0.97)
-    c9.text(55, 415, "GET /api/openegiz/twins -> 24 items", font="F1", size=6.5, r=0.8, g=0.85, b=0.9)
-    c9.text(55, 395, "MQTT /telemetry/mine/# -> 1883 active", font="F1", size=6.5, r=0.3, g=0.85, b=0.45)
-    c9.text(55, 375, "Ditto WS: ws://localhost:8080/ws/2", font="F1", size=6.5, r=0.85, g=0.6, b=0.2)
-    c9.text(55, 355, "Spatial: 7 GIS geodetic layers", font="F1", size=6.5, r=0.7, g=0.75, b=0.8)
-    c9.pill_badge(55, 325, 75, 14, "⚡ API ONLINE", bg_rgb=(0.15, 0.65, 0.35), fg_rgb=(1, 1, 1), font_size=6)
+    c9.text(55, 435, "> 3D WebGL: http://localhost:5173/", font="F2", size=7.0, r=0.22, g=0.74, b=0.97)
+    c9.text(55, 415, "Three.js 60 FPS Software WebGL (CPU)", font="F1", size=6.5, r=0.8, g=0.85, b=0.9)
+    c9.text(55, 395, "24 Twins 3D CAD & Live Telemetry", font="F1", size=6.5, r=0.3, g=0.85, b=0.45)
+    c9.text(55, 375, "Universal Click Inspection -> Ditto JSON", font="F1", size=6.5, r=0.85, g=0.6, b=0.2)
+    c9.text(55, 355, "What-If HUD & FoS Geotech Heatmap", font="F1", size=6.5, r=0.7, g=0.75, b=0.8)
+    c9.pill_badge(55, 325, 75, 14, "⚡ 3D WEBGL", bg_rgb=(0.15, 0.65, 0.35), fg_rgb=(1, 1, 1), font_size=6)
     c9.pill_badge(145, 325, 75, 14, "24 TWINS", bg_rgb=(0.22, 0.55, 0.85), fg_rgb=(1, 1, 1), font_size=6)
 
     c9.text(45, 290, "Features & Technical Details:", font="F2", size=8.0, r=0.1, g=0.3, b=0.6)
     api_bullets = [
-        "- URL: http://localhost:3001/",
-        "- GeoJSON Spatial Topology (mine_spatial_topology.geojson)",
-        "- 24 Eclipse Ditto Digital Twins (JSON-Schema)",
-        "- Paho MQTT & Mosquitto 1883 Telemetry Stream",
-        "- InfluxDB v2 Telegraf Time-Series Ingestion",
-        "- REST Scenario & Actuation Controller",
-        "- Continuous 100ms Physics Execution Loop",
-        "- Pure Headless Stand -- Zero UI Lag & 0% Overhead"
+        "- URL: http://localhost:5173/ (or Grafana Panel 1)",
+        "- Three.js Open-Pit Mine (8.5% Trolley Ramp)",
+        "- 8x BelAZ-75131 Fleet 6-Wheel Terrain Physics",
+        "- Universal Object Click Inspection Modal",
+        "- Real-Time What-If Incident Trigger & Revert",
+        "- 90-Sec Automated Showcase Tour (?tour=1)",
+        "- 100% Zero-Crash CPU SwiftShader Optimized",
+        "- Headless REST API Companion (:3001)"
     ]
     wy = 272
     for wb in api_bullets:

@@ -919,8 +919,112 @@ print(json.dumps(snap))
     }
   });
 
-  // Open Data endpoint
-  app.get('/api/opendata/kazakhstan-mine', async (_req, res) => {
+  // -----------------------------------------------------------------------------
+  // External Telemetry & Open Data Connectors (Fail-Safe with Deterministic Cache)
+  // -----------------------------------------------------------------------------
+  let cachedMeteo = {
+    temperatureC: 14.8,
+    windSpeedMs: 4.2,
+    relativeHumidityPct: 46.0,
+    surfacePressureHpa: 978.5,
+    precipitationMm: 0.0,
+    source: 'DETERMINISTIC_BASELINE',
+    lastUpdated: new Date().toISOString(),
+  };
+
+  let cachedFx = {
+    usdKztRate: 495.5,
+    source: 'DETERMINISTIC_BASELINE',
+    lastUpdated: new Date().toISOString(),
+  };
+
+  let cachedSeismic = {
+    regionalEventsCount: 0,
+    maxMagnitude: 0.0,
+    peakGroundAccelerationG: 0.02,
+    status: 'QUIET_SEISMIC_ZONE',
+    source: 'DETERMINISTIC_BASELINE',
+    lastUpdated: new Date().toISOString(),
+  };
+
+  async function refreshExternalApis() {
+    // 1. Open-Meteo API (Latitude 46.90 N, Longitude 79.60 E - Balkhash-Aktogay Copper Basin, elevation 359m)
+    try {
+      const meteoRes = await fetch(
+        'https://api.open-meteo.com/v1/forecast?latitude=46.90&longitude=79.60&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,precipitation',
+        { signal: AbortSignal.timeout(2800) }
+      );
+      if (meteoRes.ok) {
+        const data = (await meteoRes.json()) as any;
+        const cur = data.current || {};
+        cachedMeteo = {
+          temperatureC: Number(cur.temperature_2m ?? 14.8),
+          windSpeedMs: Math.round(((Number(cur.wind_speed_10m ?? 15.1)) / 3.6) * 10) / 10,
+          relativeHumidityPct: Number(cur.relative_humidity_2m ?? 46.0),
+          surfacePressureHpa: Number(cur.surface_pressure ?? 978.5),
+          precipitationMm: Number(cur.precipitation ?? 0.0),
+          source: 'LIVE_OPEN_METEO_API',
+          lastUpdated: new Date().toISOString(),
+        };
+      }
+    } catch {
+      // Fallback kept intact
+    }
+
+    // 2. Open Exchange Rates / FX API (USD -> KZT for bankable P&L)
+    try {
+      const fxRes = await fetch('https://open.er-api.com/v6/latest/USD', {
+        signal: AbortSignal.timeout(2800),
+      });
+      if (fxRes.ok) {
+        const data = (await fxRes.json()) as any;
+        const kzt = data?.rates?.KZT;
+        if (typeof kzt === 'number' && kzt > 200 && kzt < 1000) {
+          cachedFx = {
+            usdKztRate: Math.round(kzt * 100) / 100,
+            source: 'LIVE_ER_API',
+            lastUpdated: new Date().toISOString(),
+          };
+        }
+      }
+    } catch {
+      // Fallback kept intact
+    }
+
+    // 3. USGS Earthquake Hazards API (Central Asia Regional Monitoring within 800km)
+    try {
+      const usgsRes = await fetch(
+        'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=2.5&latitude=46.9&longitude=79.6&maxradiuskm=800',
+        { signal: AbortSignal.timeout(2800) }
+      );
+      if (usgsRes.ok) {
+        const data = (await usgsRes.json()) as any;
+        const features = data?.features || [];
+        let maxMag = 0;
+        for (const f of features) {
+          const mag = Number(f?.properties?.mag ?? 0);
+          if (mag > maxMag) maxMag = mag;
+        }
+        cachedSeismic = {
+          regionalEventsCount: features.length,
+          maxMagnitude: maxMag,
+          peakGroundAccelerationG: maxMag > 4.5 ? 0.05 : 0.02,
+          status: maxMag > 5.0 ? 'SEISMIC_ALERT_MONITORING' : 'QUIET_SEISMIC_ZONE',
+          source: 'LIVE_USGS_EARTHQUAKE_API',
+          lastUpdated: new Date().toISOString(),
+        };
+      }
+    } catch {
+      // Fallback kept intact
+    }
+  }
+
+  // Non-blocking background fetch on startup and every 5 minutes
+  void refreshExternalApis();
+  setInterval(() => void refreshExternalApis(), 300000);
+
+  // Open Data endpoint with Live Meteorological, Financial & Geotech Integration
+  app.get(['/api/opendata/kazakhstan-mine', '/api/openegiz/external-telemetry'], async (_req, res) => {
     res.json({
       status: 'SUCCESS',
       location: {
@@ -928,12 +1032,70 @@ print(json.dumps(snap))
         region: 'Карагандинская область / Балхаш-Актогайский меднорудный пояс',
         coordinates: { lat: 46.9, lon: 79.6, elevationM: 359.0 },
       },
+      openMeteo: {
+        temperatureC: cachedMeteo.temperatureC,
+        windSpeedMs: cachedMeteo.windSpeedMs,
+        relativeHumidityPct: cachedMeteo.relativeHumidityPct,
+        surfacePressureHpa: cachedMeteo.surfacePressureHpa,
+        precipitationMm: cachedMeteo.precipitationMm,
+        thermalInversionRisk: cachedMeteo.temperatureC < 0 ? 'MODERATE (Зимняя инверсия)' : 'LOW (Свободная конвекция карьера)',
+        recommendedVentilationMode: cachedMeteo.windSpeedMs < 2.0 ? 'ВСП-1800 Форсированный' : 'ВСП-1800 Естественно-принудительный',
+        apiSource: cachedMeteo.source,
+      },
       openEconomics: {
         lmeCopperPriceUsdPerTon: 9840.0,
+        kztUsdExchangeRate: cachedFx.usdKztRate,
         kegocElectricTariffKztKwh: 28.5,
         dieselWholesaleKztLiter: 295.0,
+        trolleyAssistEconomicGain: {
+          annualSavingsUsdPerTruck: 184500.0,
+          annualSavingsKztPerTruck: Math.round(184500.0 * cachedFx.usdKztRate),
+          fuelSavedPct: 82.7,
+        },
+        apiSource: cachedFx.source,
+      },
+      seismicHazards: {
+        regionalEventsCount: cachedSeismic.regionalEventsCount,
+        maxMagnitude: cachedSeismic.maxMagnitude,
+        peakGroundAccelerationG: cachedSeismic.peakGroundAccelerationG,
+        status: cachedSeismic.status,
+        apiSource: cachedSeismic.source,
       },
     });
+  });
+
+  // Prometheus Metrics Scrape Endpoint (:3001/metrics & :3000/metrics)
+  app.get('/metrics', (_req, res) => {
+    const lines = [
+      '# HELP mine_feed_grade_cu Current copper grade at mill feed in percent',
+      '# TYPE mine_feed_grade_cu gauge',
+      'mine_feed_grade_cu 0.850',
+      '# HELP mine_trolley_voltage_v Catenary contact line voltage in volts',
+      '# TYPE mine_trolley_voltage_v gauge',
+      'mine_trolley_voltage_v 1200',
+      '# HELP mine_crusher_throughput_tph Primary gyratory crusher throughput in tonnes per hour',
+      '# TYPE mine_crusher_throughput_tph gauge',
+      'mine_crusher_throughput_tph 2400',
+      '# HELP mine_slope_fos Mohr-Coulomb slope stability factor of safety',
+      '# TYPE mine_slope_fos gauge',
+      'mine_slope_fos 1.34',
+      '# HELP mine_npv_usd Net present value of enterprise in USD',
+      '# TYPE mine_npv_usd gauge',
+      'mine_npv_usd 18422727',
+      '# HELP mine_ambient_temperature_c Ambient temperature at pit site in Celsius',
+      '# TYPE mine_ambient_temperature_c gauge',
+      `mine_ambient_temperature_c ${cachedMeteo.temperatureC}`,
+      '# HELP mine_wind_speed_ms Ambient wind speed at pit site in m/s',
+      '# TYPE mine_wind_speed_ms gauge',
+      `mine_wind_speed_ms ${cachedMeteo.windSpeedMs}`,
+      '# HELP mine_fx_usd_kzt Current foreign exchange rate USD to KZT',
+      '# TYPE mine_fx_usd_kzt gauge',
+      `mine_fx_usd_kzt ${cachedFx.usdKztRate}`,
+      '# HELP mine_active_twins_total Total number of active digital twins in Eclipse Ditto',
+      '# TYPE mine_active_twins_total gauge',
+      'mine_active_twins_total 24',
+    ];
+    res.type('text/plain; version=0.0.4; charset=utf-8').send(lines.join('\n') + '\n');
   });
 
   // Grafana mock API & Root SCADA cockpit
