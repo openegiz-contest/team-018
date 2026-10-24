@@ -45,7 +45,6 @@ import {
   AtmosphericLightingRig,
 } from '../three/atmosphericLighting';
 import { getCinematicLightingPreset } from '../three/canyonLightingAtmosphere';
-import { quarryAudio } from '../audio/quarryAudioEngine';
 
 
 export type LightingMode =
@@ -1202,23 +1201,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
           plantState.hopperReceivingOre || plantState.crusherRotorAngle !== 0
         );
       }
-
-      const flagship = fleetTelemetry[0];
-      if (flagship) {
-        quarryAudio.setSpeedRpm(flagship.speedKmh, flagship.voltageV > 100);
-        if (flagship.bedTiltRad > 0.08 && flagship.bedTiltRad < 0.22) {
-          quarryAudio.triggerDumpHiss();
-        }
-      }
-      quarryAudio.setCrusherActive(plantState.hopperReceivingOre);
-      quarryAudio.updateCameraListener(
-        camera.position.x,
-        camera.position.y,
-        camera.position.z,
-        controls.target.x,
-        controls.target.y,
-        controls.target.z
-      );
 
       // 1. Dynamic Conveyor Belt Texture Scrolling (Item #247: synchronized with ore velocity)
       if (plantRig.conveyorBeltTexture) {

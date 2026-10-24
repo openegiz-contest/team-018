@@ -27,13 +27,10 @@ import {
   Sunset,
   Terminal,
   Truck,
-  Volume2,
-  VolumeX,
   Wind,
   X,
   Zap,
 } from 'lucide-react';
-import { quarryAudio } from './audio/quarryAudioEngine';
 
 interface MineOpenData {
   openMeteo: {
@@ -487,7 +484,6 @@ export function App() {
     useState<CadAssemblyId>('overview');
   const [speedMultiplier, setSpeedMultiplier] = useState<number>(1);
   const [wireframeMode, setWireframeMode] = useState<boolean>(false);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(false);
   const [showTrolleyLines, setShowTrolleyLines] = useState<boolean>(true);
   // Default to false so screen is clean and 98% open for unobstructed viewing!
   const [hudVisible, setHudVisible] = useState<boolean>(false);
@@ -1109,24 +1105,6 @@ export function App() {
             >
               <Gauge className="h-3.5 w-3.5 text-cyan-400" />
               <span>KPI</span>
-            </button>
-            <button
-              onClick={() => {
-                quarryAudio.toggleMute();
-                setSoundEnabled((prev) => !prev);
-              }}
-              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
-                soundEnabled
-                  ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-                  : 'border-slate-600/50 bg-slate-800/40 text-slate-400 hover:bg-slate-700/40'
-              }`}
-              title={soundEnabled ? 'Отключить звук' : 'Включить звук'}>
-              {soundEnabled ? (
-                <Volume2 className="h-3.5 w-3.5 text-emerald-400" />
-              ) : (
-                <VolumeX className="h-3.5 w-3.5 text-slate-400" />
-              )}
-              <span>{soundEnabled ? 'Звук: ВКЛ' : 'Звук: ВЫКЛ'}</span>
             </button>
           </div>
         </header>
