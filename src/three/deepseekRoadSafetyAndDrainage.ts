@@ -22,6 +22,7 @@ export interface RoadSafetyAndDrainageRig {
   group: THREE.Group;
   waterTruckGroup: THREE.Group;
   patrolPickupGroup: THREE.Group;
+  runawayRampGroup: THREE.Group;
   update: (timeSec: number, dt: number) => void;
   dispose: () => void;
 }
@@ -1078,6 +1079,7 @@ export function createRoadSafetyAndDrainage(
     group,
     waterTruckGroup: waterTruck.group,
     patrolPickupGroup: patrolPickup.group,
+    runawayRampGroup: runawayRamp.group,
     update,
     dispose,
   };

@@ -23,6 +23,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   const unloadingPlaza = new THREE.Group();
   unloadingPlaza.name = 'UnloadingStopPlaza';
   unloadingPlaza.position.set(10, 6, -56);
+  unloadingPlaza.userData = {
+    twinId: 'org.openegiz.mine:crusher-01',
+    objectName: 'Конусная дробилка ККД-1500',
+    category: 'Дробление и рудоподготовка',
+    assemblyId: 'processing_plant',
+  };
   root.add(unloadingPlaza);
 
   // Concrete apron connecting road shoulder (z=18) to hopper mouth (z=11)
@@ -241,6 +247,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   // ============================================================
   const conveyorGroup = new THREE.Group();
   conveyorGroup.name = 'OreConveyanceGallery';
+  conveyorGroup.userData = {
+    twinId: 'org.openegiz.mine:conveyor-main-01',
+    objectName: 'Магистральный конвейер КНК-270',
+    category: 'Карьерный транспорт',
+    assemblyId: 'processing_plant',
+  };
   root.add(conveyorGroup);
 
   // Gallery truss connecting bunker bottom (10, 5.0, -50) to MPSI-90 feed trunnion (2.5, 11.5, -66)
@@ -411,8 +423,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
     mats.manganeseToothSteel
   );
   funnelRim.rotation.x = Math.PI / 2;
-  funnelRim.position.y = 0.95;
-  feedChuteGroup.add(funnelRim);
+  feedChuteGroup.userData = {
+    twinId: 'org.openegiz.mine:stockpile-coarse-01',
+    objectName: 'Купольный склад крупнодробленой руды',
+    category: 'Складирование и буферизация',
+    assemblyId: 'processing_plant',
+  };
   root.add(feedChuteGroup);
 
   // Steel trestle structural supports down to ground slab
@@ -480,6 +496,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   // Барабан МПСИ-90 имеет радиус 5.5 м, поэтому центр группы поднят на 11.5 м:
   // низ барабана = 6.0 м (уровень промплощадки), иначе мельница тонула в грунте.
   sagMillGroup.position.set(10, 11.5, -66);
+  sagMillGroup.userData = {
+    twinId: 'org.openegiz.mine:sag-mill-01',
+    objectName: 'Мельница полусамоизмельчения МПСИ-90х30',
+    category: 'Измельчение',
+    assemblyId: 'processing_plant',
+  };
   root.add(sagMillGroup);
 
   // SAG mill drum
@@ -595,6 +617,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   const krebsBatteryGroup = new THREE.Group();
   krebsBatteryGroup.name = 'KrebsHydrocycloneBattery';
   krebsBatteryGroup.position.set(30.5, 6, -66);
+  krebsBatteryGroup.userData = {
+    twinId: 'org.openegiz.mine:krebs-cyclones-01',
+    objectName: 'Батарея гидроциклонов Krebs gMAX26',
+    category: 'Обогащение и классификация',
+    assemblyId: 'processing_plant',
+  };
   root.add(krebsBatteryGroup);
 
   // Elevated structural steel tower
@@ -708,6 +736,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   const flotationBankGroup = new THREE.Group();
   flotationBankGroup.name = 'FlotationBank';
   flotationBankGroup.position.set(38, 6, -48);
+  flotationBankGroup.userData = {
+    twinId: 'org.openegiz.mine:flotation-bank-01',
+    objectName: 'Флотационный комплекс TankCell-160',
+    category: 'Обогащение и флотация',
+    assemblyId: 'processing_plant',
+  };
   root.add(flotationBankGroup);
 
   const impellerMeshes: THREE.Object3D[] = [];
@@ -817,6 +851,12 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   const buildingFrameGroup = new THREE.Group();
   buildingFrameGroup.name = 'BuildingFrame';
   buildingFrameGroup.position.set(20, 6, -70);
+  buildingFrameGroup.userData = {
+    twinId: 'org.openegiz.mine:mine-01',
+    objectName: 'Главный корпус обогатительной фабрики',
+    category: 'Инфраструктура ГОК',
+    assemblyId: 'processing_plant',
+  };
   root.add(buildingFrameGroup);
 
   // Structural columns
@@ -935,6 +975,9 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
     rockBreakerBoom,
     rockBreakerForearm,
     rockBreakerChisel: chisel,
+    unloadingPlaza,
+    conveyorGroup,
+    sagMillGroup,
   };
   return rig;
 }

@@ -84,10 +84,12 @@ interface CanyonViewport3DProps {
   dayNightSpeed?: number;
   activeScenario?: WhatIfScenarioId;
   selectedTruckIndex?: number;
+  selectedTwinId?: string | null;
   performanceMode?: boolean;
   showFosHeatmap?: boolean;
   onSelectAssembly: (id: CadAssemblyId) => void;
   onSelectTruck?: (truckIndex: number) => void;
+  onSelectTwin?: (twinId: string, hitPoint?: { x: number; y: number; z: number }) => void;
   onTelemetryUpdate: (snapshot: LiveTelemetrySnapshot) => void;
   onHoverStratum?: (info: HoveredStratumInfo | null) => void;
   onOpenDrawerWithTab?: (
@@ -139,8 +141,10 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
   performanceMode = true,
   showFosHeatmap = false,
   selectedTruckIndex = 0,
+  selectedTwinId = null,
   onSelectAssembly,
   onSelectTruck,
+  onSelectTwin,
   onTelemetryUpdate,
   onHoverStratum,
   onOpenDrawerWithTab,
@@ -161,6 +165,8 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     showFosHeatmap?: boolean;
     cameraTarget: CadAssemblyId;
     selectedTruckIndex: number;
+    selectedTwinId?: string | null;
+    selectedTwinPosition?: THREE.Vector3;
     cameraTransitionActive: boolean;
     userCameraDecoupled: boolean;
     customCameraPos?: [number, number, number];
@@ -200,6 +206,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     if (selectedTruckIndex !== undefined) {
       stateRef.current.selectedTruckIndex = selectedTruckIndex;
     }
+    stateRef.current.selectedTwinId = selectedTwinId;
     if (timeOfDayHours !== undefined) {
       stateRef.current.timeOfDayHours = timeOfDayHours;
     }
@@ -237,6 +244,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
   const callbacksRef = useRef({
     onSelectAssembly,
     onSelectTruck,
+    onSelectTwin,
     onTelemetryUpdate,
     onHoverStratum,
     onOpenDrawerWithTab,
@@ -245,11 +253,12 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     callbacksRef.current = {
       onSelectAssembly,
       onSelectTruck,
+      onSelectTwin,
       onTelemetryUpdate,
       onHoverStratum,
       onOpenDrawerWithTab,
     };
-  }, [onSelectAssembly, onSelectTruck, onTelemetryUpdate, onHoverStratum, onOpenDrawerWithTab]);
+  }, [onSelectAssembly, onSelectTruck, onSelectTwin, onTelemetryUpdate, onHoverStratum, onOpenDrawerWithTab]);
 
   const sceneRefs = useRef<{
     mats: ReturnType<typeof createCadMaterialLibrary> | null;
@@ -555,16 +564,24 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
 
     const ekg15Rig = createExcavatorEKG15(mats);
     anchorRigOnGround(ekg15Rig.root, -15.5, -6.0);
+    ekg15Rig.root.userData.twinId = 'org.openegiz.mine:excavator-01';
+    ekg15Rig.root.userData.assemblyId = 'excavators';
+    ekg15Rig.root.userData.objectName = 'Мехлопата ЭКГ-15 #01 (Северный забой)';
+    ekg15Rig.root.userData.category = 'Выемочно-погрузочный комплекс';
     scene.add(ekg15Rig.root);
 
     const cat6020bRig = createExcavatorCAT6020B(mats);
     anchorRigOnGround(cat6020bRig.root, -13.5, 10.0);
+    cat6020bRig.root.userData.twinId = 'org.openegiz.mine:excavator-02';
+    cat6020bRig.root.userData.assemblyId = 'excavators';
+    cat6020bRig.root.userData.objectName = 'Экскаватор CAT 6020B #02 (Южный забой)';
+    cat6020bRig.root.userData.category = 'Выемочно-погрузочный комплекс';
     scene.add(cat6020bRig.root);
 
     const plantRig = createProcessingComplex(mats);
     scene.add(plantRig.root);
 
-    // Create 1 High-Detail Flagship BelAZ-75131 Truck (Dynamic Route Simulation)
+    // Create 8 High-Detail Flagship BelAZ-75131 Trucks (Full 8-Truck Fleet)
     const belazRigs: BelazRig[] = [];
     const initialFleet = computeBelazFleetState(
       0,
@@ -574,6 +591,11 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       const rig = createBelaz75131(truckState.index, mats);
       rig.root.position.set(truckState.x, truckState.y, truckState.z);
       rig.root.rotation.y = truckState.yaw;
+      rig.root.userData.twinId = `org.openegiz.mine:truck-0${truckState.index + 1}`;
+      rig.root.userData.truckIndex = truckState.index;
+      rig.root.userData.assemblyId = 'belaz_fleet';
+      rig.root.userData.objectName = `Самосвал БелАЗ-75131 #${String(truckState.index + 1).padStart(2, '0')}`;
+      rig.root.userData.category = 'Карьерный транспорт';
       scene.add(rig.root);
       belazRigs.push(rig);
     }
@@ -607,7 +629,26 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     scene.add(energyPulseMesh);
     const _energyDummy = new THREE.Object3D();
 
-    // Pre-cache Pickable Roots for Click Selection (8 Active Working BelAZ Trucks + Excavators + Drill Rig + Plant)
+    // Holographic 3D Selection Ring Indicator for LMB Clicked Object
+    const selectionRingGeo = new THREE.RingGeometry(3.0, 3.4, 32);
+    selectionRingGeo.rotateX(-Math.PI / 2);
+    const selectionRingMat = new THREE.MeshBasicMaterial({
+      color: 0x00f0ff,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.85,
+      depthTest: true,
+    });
+    const selectionRing = new THREE.Mesh(selectionRingGeo, selectionRingMat);
+    selectionRing.visible = false;
+    scene.add(selectionRing);
+
+    // Universal Pickable Roots for Click Selection:
+    // All 24 Digital Twins & Infrastructure: 8 BelAZ Trucks, 2 Shovels, Drill Rig,
+    // Processing Plant sub-assemblies (KKD crusher, conveyor, stockpile dome, SAG mill, Krebs cyclones, flotation),
+    // Substation GPP-110, Trolley line & masts, Pit Sump & WP-01/02 pumps,
+    // Water bowser truck, Safety patrol pickup, Runaway ramp, Slope stability radar,
+    // Gas alert station, Meteo mast, and Geological strata / canyon benches!
     const pickableRoots: THREE.Object3D[] = [
       ...belazRigs.map((r) => r.root),
       ekg15Rig.root,
@@ -615,6 +656,31 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       canyonEnvRig.drillingRig.root,
       plantRig.root,
       ...(plantRig.crusherExpansion ? [plantRig.crusherExpansion.root] : []),
+      ...(plantRig.unloadingPlaza ? [plantRig.unloadingPlaza] : []),
+      ...(plantRig.conveyorGroup ? [plantRig.conveyorGroup] : []),
+      ...(plantRig.feedChuteGroup ? [plantRig.feedChuteGroup] : []),
+      ...(plantRig.sagMillGroup ? [plantRig.sagMillGroup] : []),
+      ...(plantRig.krebsBatteryGroup ? [plantRig.krebsBatteryGroup] : []),
+      ...(plantRig.flotationBankGroup ? [plantRig.flotationBankGroup] : []),
+      ...(plantRig.buildingFrameGroup ? [plantRig.buildingFrameGroup] : []),
+      ...(canyonEnvRig.substationRig ? [canyonEnvRig.substationRig] : []),
+      ...(canyonEnvRig.trolleyNetworkGroup ? [canyonEnvRig.trolleyNetworkGroup] : []),
+      ...(canyonEnvRig.dewateringRig ? [canyonEnvRig.dewateringRig.group] : []),
+      ...(canyonEnvRig.slopeRadar ? [canyonEnvRig.slopeRadar.root] : []),
+      ...(canyonEnvRig.roadSafetyRig
+        ? [
+            canyonEnvRig.roadSafetyRig.group,
+            canyonEnvRig.roadSafetyRig.waterTruckGroup,
+            canyonEnvRig.roadSafetyRig.patrolPickupGroup,
+            canyonEnvRig.roadSafetyRig.runawayRampGroup,
+          ]
+        : []),
+      ...(canyonEnvRig.gasAlertRig ? [canyonEnvRig.gasAlertRig.group] : []),
+      ...(canyonEnvRig.meteoRig ? [canyonEnvRig.meteoRig.group] : []),
+      ...(canyonEnvRig.waterPondMesh ? [canyonEnvRig.waterPondMesh] : []),
+      ...(canyonEnvRig.sumpGroup ? [canyonEnvRig.sumpGroup] : []),
+      ...canyonEnvRig.strataInteractiveMeshes,
+      canyonEnvRig.root,
     ];
 
     if (typeof window !== 'undefined') {
@@ -716,21 +782,64 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
 
       for (const hit of intersects) {
         let obj: THREE.Object3D | null = hit.object;
+        let matchedTwinId: string | null = null;
+        let matchedTruckIndex: number | null = null;
+        let matchedAssemblyId: CadAssemblyId | null = null;
+
         while (obj) {
+          if (obj.userData?.twinId) {
+            matchedTwinId = obj.userData.twinId;
+          }
           if (obj.userData?.truckIndex !== undefined) {
-            stateRef.current.selectedTruckIndex = obj.userData.truckIndex;
-            callbacksRef.current.onSelectTruck?.(obj.userData.truckIndex);
+            matchedTruckIndex = obj.userData.truckIndex;
+            if (!matchedTwinId) {
+              matchedTwinId = `org.openegiz.mine:truck-0${obj.userData.truckIndex + 1}`;
+            }
+          }
+          if (obj.userData?.stratumId) {
+            const sId = obj.userData.stratumId;
+            if (sId.includes('oxidized') || sId.includes('quartzite')) {
+              matchedTwinId = 'org.openegiz.mine:bench-north';
+            } else {
+              matchedTwinId = 'org.openegiz.mine:bench-south';
+            }
           }
           const pickedId = (obj.userData?.assemblyId ??
             obj.userData?.targetId) as CadAssemblyId | undefined;
-          if (pickedId) {
-            callbacksRef.current.onSelectAssembly(pickedId);
-            if (['excavators', 'belaz_fleet', 'processing_plant', 'drilling_rig'].includes(pickedId)) {
-              callbacksRef.current.onOpenDrawerWithTab?.('cad_specs');
-            }
-            return;
+          if (pickedId && !matchedAssemblyId) {
+            matchedAssemblyId = pickedId;
           }
+
+          if (matchedTwinId) break;
           obj = obj.parent;
+        }
+
+        // If clicking on terrain mesh without specific metadata, resolve bench by Y height
+        if (!matchedTwinId && (hit.object.name === 'CANYON_ENVIRONMENT' || hit.point)) {
+          matchedTwinId = hit.point.y > 0 ? 'org.openegiz.mine:bench-north' : 'org.openegiz.mine:bench-south';
+        }
+
+        if (matchedTwinId) {
+          if (matchedTruckIndex !== null) {
+            stateRef.current.selectedTruckIndex = matchedTruckIndex;
+            callbacksRef.current.onSelectTruck?.(matchedTruckIndex);
+          }
+          if (matchedAssemblyId) {
+            callbacksRef.current.onSelectAssembly?.(matchedAssemblyId);
+          }
+          stateRef.current.selectedTwinId = matchedTwinId;
+          stateRef.current.selectedTwinPosition = new THREE.Vector3(hit.point.x, hit.point.y, hit.point.z);
+
+          // Update 3D selection ring position
+          selectionRing.position.set(hit.point.x, hit.point.y + 0.12, hit.point.z);
+          selectionRing.visible = true;
+
+          callbacksRef.current.onSelectTwin?.(matchedTwinId, {
+            x: hit.point.x,
+            y: hit.point.y,
+            z: hit.point.z,
+          });
+          return;
         }
       }
     };

@@ -11,7 +11,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "server": "tsx server.ts",
-    "test": "node --test src/domain/canyonLogic.test.ts",
+    "test": "node --test src/domain/canyonLogic.test.ts && tsx --test src/domain/twinRegistry.test.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

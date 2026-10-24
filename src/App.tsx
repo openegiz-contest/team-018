@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   Box,
@@ -70,6 +70,8 @@ import {
   LiveTelemetrySnapshot,
 } from './components/CanyonViewport3D';
 import { EngineeringDrawer } from './components/EngineeringDrawer';
+import { resolveTwinDetails } from './domain/twinRegistry';
+import { TwinInspectorModal } from './components/TwinInspectorModal';
 import {
   CINEMATIC_TOUR_STEPS,
   TourStep,
@@ -554,7 +556,12 @@ export function App() {
   const [showFosHeatmap, setShowFosHeatmap] = useState<boolean>(false);
   const [copiedTwinJson, setCopiedTwinJson] = useState<boolean>(false);
   const [selectedTruckIndex, setSelectedTruckIndex] = useState<number>(0);
+  const [selectedTwinId, setSelectedTwinId] = useState<string | null>('org.openegiz.mine:truck-01');
   const [fpsInfo, setFpsInfo] = useState<{ fps: number; frameTimeMs: number }>({ fps: 60, frameTimeMs: 16.6 });
+
+  const handleSelectTwin = useCallback((twinId: string) => {
+    setSelectedTwinId(twinId);
+  }, []);
 
   const handleCopyDittoTwinJson = useCallback((payload: Record<string, unknown>) => {
     try {
@@ -760,6 +767,11 @@ export function App() {
     openData
   );
 
+  const resolvedSelectedTwin = useMemo(() => {
+    if (!selectedTwinId) return null;
+    return resolveTwinDetails(selectedTwinId, telemetry);
+  }, [selectedTwinId, telemetry]);
+
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black select-none">
       {/* 100% Full-Viewport 3D WebGL Canvas */}
@@ -777,8 +789,10 @@ export function App() {
           performanceMode={performanceMode}
           showFosHeatmap={showFosHeatmap}
           selectedTruckIndex={selectedTruckIndex}
+          selectedTwinId={selectedTwinId}
           onSelectAssembly={handleSelectTarget}
           onSelectTruck={setSelectedTruckIndex}
+          onSelectTwin={handleSelectTwin}
           onTelemetryUpdate={handleTelemetryUpdate}
           onHoverStratum={handleHoverStratum}
           onOpenDrawerWithTab={handleOpenDrawerWithTab}
@@ -1400,180 +1414,40 @@ export function App() {
           </div>
         )}
 
-        {/* Digital Twin X-Ray & Deep Inspector Card (Active when selectedAssembly !== 'belaz_fleet') */}
-        {selectedAssembly !== 'belaz_fleet' && (
-          <div
-            data-testid="digital-twin-inspector-card"
-            className="fixed bottom-4 left-4 z-30 w-96 max-w-[calc(100vw-2rem)] rounded-2xl border border-purple-500/40 bg-[#070b14]/95 p-3.5 shadow-2xl backdrop-blur-xl text-slate-100 pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-150"
-          >
-            {/* Header: Twin URN + Status */}
-            <div className="flex items-start justify-between pb-2 mb-2 border-b border-slate-800 gap-2">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-mono-tabular px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold border border-purple-500/40">
-                    Eclipse Ditto URN
-                  </span>
-                  <span className="text-[10px] font-mono-tabular text-slate-400 truncate">
-                    {activeTwinDetails.twinId}
-                  </span>
-                </div>
-                <h3 className="text-xs font-bold text-white truncate mt-0.5">
-                  {activeTwinDetails.title}
-                </h3>
-              </div>
-              <span className={`text-[9px] font-mono-tabular px-2 py-0.5 rounded border font-semibold shrink-0 ${activeTwinDetails.statusColor}`}>
-                {activeTwinDetails.status}
-              </span>
-            </div>
-
-            {/* Quick Metrics */}
-            <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono-tabular mb-2.5">
-              {activeTwinDetails.metrics.map((m, i) => (
-                <div key={i} className="bg-slate-900/80 rounded p-1.5 border border-slate-800">
-                  <span className="text-slate-400 block">{m.label}:</span>
-                  <span className="font-bold text-cyan-300">{m.val}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Action Buttons: Copy JSON & Open in Grafana */}
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
-              <button
-                type="button"
-                data-testid="copy-ditto-json-btn"
-                onClick={() => handleCopyDittoTwinJson(activeTwinDetails.jsonPayload)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono-tabular font-bold border transition-all ${
-                  copiedTwinJson
-                    ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400 shadow-emerald-500/20'
-                    : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
-                }`}
-                title="Скопировать валидный JSON-пакет протокола Eclipse Ditto (W3C WoT)"
-              >
-                {copiedTwinJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-purple-300" />}
-                <span>{copiedTwinJson ? 'Скопировано в буфер!' : 'Скопировать Ditto JSON'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDrawerInitialTab('ditto_twins');
-                  setDrawerOpen(true);
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono-tabular font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 hover:bg-purple-500/30 transition-all"
-                title="Открыть полный каталог всех 24 цифровых двойников рудника"
-              >
-                <span>24 Двойника →</span>
-              </button>
-            </div>
-          </div>
+        {/* Universal Digital Twin Inspector Modal (Active when ANY object in 3D scene is clicked) */}
+        {resolvedSelectedTwin && (
+          <TwinInspectorModal
+            details={resolvedSelectedTwin}
+            onClose={() => setSelectedTwinId(null)}
+            onFocusCamera={(pos, offset) => {
+              if (resolvedSelectedTwin.cadAssemblyId) {
+                handleSelectTarget(resolvedSelectedTwin.cadAssemblyId);
+              }
+            }}
+            onSelectTruckIndex={(idx) => {
+              setSelectedTruckIndex(idx);
+              setSelectedTwinId(`org.openegiz.mine:truck-0${idx + 1}`);
+            }}
+            onOpenDittoCatalog={() => {
+              setDrawerInitialTab('ditto_twins');
+              setDrawerOpen(true);
+            }}
+          />
         )}
-        {/* Interactive Selected BelAZ Truck Telemetry Card (Issues #461, #462, #463, #144, Ω1-Ω3) */}
-        {selectedAssembly === 'belaz_fleet' && selectedTruck && (
-          <div
-            data-testid="selected-truck-telemetry-card"
-            className="fixed bottom-6 left-6 z-30 w-96 max-w-[calc(100vw-3rem)] rounded-2xl border border-amber-500/40 bg-[#070b14]/95 p-3.5 shadow-2xl backdrop-blur-xl text-slate-100 pointer-events-auto animate-in fade-in slide-in-from-bottom-2 duration-150"
-          >
-            <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-xs">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#f59e0b]" />
-                <span className="font-bold text-white uppercase tracking-wider">
-                  {selectedTruck.id}
-                </span>
-              </div>
-              <span className="text-[10px] font-mono-tabular px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 text-amber-300 font-semibold">
-                {selectedTruck.phaseLabel}
-              </span>
-            </div>
 
-            {/* Truck Selector Quick Tabs #01 .. #08 */}
-            <div className="flex items-center gap-1 pb-2 mb-2 overflow-x-auto border-b border-slate-800/60 scrollbar-none">
-              {telemetry.belazFleet.map((t, idx) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  data-testid={`truck-selector-btn-${idx}`}
-                  onClick={() => setSelectedTruckIndex(idx)}
-                  className={`px-2 py-1 rounded text-[10px] font-mono-tabular font-bold transition-all ${
-                    selectedTruckIndex === idx
-                      ? 'bg-amber-500 text-slate-950 shadow-sm'
-                      : 'bg-slate-900/80 text-slate-400 hover:text-white border border-slate-800'
-                  }`}
-                  title={`Выбрать ${t.id}`}
-                >
-                  #{String(idx + 1).padStart(2, '0')}
-                </button>
-              ))}
-            </div>
-
-            {/* Physical Telemetry Grid */}
-            <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono-tabular mb-2">
-              <div className="bg-slate-900/80 rounded p-1.5 border border-slate-800">
-                <span className="text-slate-400 block">Скорость / Масса:</span>
-                <span className="font-bold text-cyan-300">
-                  {selectedTruck.speedKmh.toFixed(1)} км/ч · {selectedTruck.grossVehicleMassTons} т
-                </span>
-              </div>
-              <div className="bg-slate-900/80 rounded p-1.5 border border-slate-800">
-                <span className="text-slate-400 block">Полезная руда:</span>
-                <span className="font-bold text-amber-400">
-                  {selectedTruck.payloadTons} т ({Math.round((selectedTruck.payloadTons / 136) * 100)}%)
-                </span>
-              </div>
-              <div className="bg-slate-900/80 rounded p-1.5 border border-slate-800">
-                <span className="text-slate-400 block">Тяга / Пантограф:</span>
-                <span className="font-bold text-emerald-400">
-                  {selectedTruck.tractionPowerKw} кВт {selectedTruck.pantographRaise > 0.5 ? `· ${selectedTruck.overheadCatenaryCurrentA} А` : '· ДВС'}
-                </span>
-              </div>
-              <div className="bg-slate-900/80 rounded p-1.5 border border-slate-800">
-                <span className="text-slate-400 block">Инвертор / Тормоз:</span>
-                <span className="font-bold text-slate-200">
-                  {selectedTruck.inverterTempC} °C · Резист. {selectedTruck.brakeResistorTempC} °C
-                </span>
-              </div>
-            </div>
-
-            {/* Efficiency & Cycle Stats */}
-            <div className="pt-1.5 border-t border-slate-800/70 text-[10px] text-slate-300 font-mono-tabular flex items-center justify-between">
-              <span>Нагрузка шин: <b className="text-amber-300">{selectedTruck.tkph} TKPH</b></span>
-              <span className="text-emerald-400">Экономия: <b>{selectedTruck.dieselSavedLph} л/ч</b></span>
-            </div>
-            <div className="mt-1 pt-1 border-t border-slate-800/40 text-[9px] text-slate-400 font-mono-tabular flex items-center justify-between">
-              <span>Рейсов: <b>{selectedTruck.cycleTripCount}</b> ({selectedTruck.totalOreTransportedTons} т)</span>
-              <span className="text-sky-300">Σ Дизель: <b>-{selectedTruck.cumulativeDieselSavedLiters} л</b></span>
-            </div>
-
-            {/* Copy Ditto JSON & Open Grafana */}
-            <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between gap-1.5">
-              <button
-                type="button"
-                data-testid="copy-ditto-json-btn-truck"
-                onClick={() => handleCopyDittoTwinJson(activeTwinDetails.jsonPayload)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-mono-tabular font-bold border transition-all ${
-                  copiedTwinJson
-                    ? 'bg-emerald-500/25 text-emerald-300 border-emerald-400'
-                    : 'bg-slate-800/80 text-slate-200 border-slate-700 hover:bg-slate-700 hover:text-white'
-                }`}
-                title="Скопировать валидный JSON-пакет протокола Eclipse Ditto (W3C WoT)"
-              >
-                {copiedTwinJson ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-amber-300" />}
-                <span>{copiedTwinJson ? 'Скопировано!' : 'Ditto JSON'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDrawerInitialTab('ditto_twins');
-                  setDrawerOpen(true);
-                }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-mono-tabular font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition-all"
-                title="Открыть полный каталог всех 24 цифровых двойников рудника"
-              >
-                <span>24 Двойника →</span>
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Full 24-Twin & SCADA Engineering Drawer Modal */}
+        <EngineeringDrawer
+          isOpen={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          telemetry={telemetry}
+          onFocusTruck={(idx) => {
+            setSelectedTruckIndex(idx);
+            setSelectedTwinId(`org.openegiz.mine:truck-0${idx + 1}`);
+            handleSelectTarget('belaz_fleet');
+          }}
+          onSelectCameraTarget={handleSelectTarget}
+          initialTab={drawerInitialTab}
+        />
       </section>
     </div>
   );

@@ -6,6 +6,7 @@
     "jsx": "react-jsx",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true
   },

@@ -49,6 +49,7 @@ import { createConveyorSafetyAndProtection } from './deepseekConveyorSensorsAndS
 import { createConcentratorExpansion } from './deepseekTailingsAndReagentsPlant';
 import { createTractionSubstationAndTrolley } from './deepseekTractionSubstationAndTrolley';
 import { createRoadSafetyAndDrainage } from './deepseekRoadSafetyAndDrainage';
+import { createGroundProbeSSRRadar } from './deepseekRealisticTransportFleet';
 import { type TerrainPBRRig } from './deepseekTerrainPBRAndStrata';
 import { type VolumetricWeatherRig } from './deepseekVolumetricWeatherAndFog';
 import { type TruckVisualUpgradeRig } from './deepseekTruckLightingAndWear';
@@ -142,6 +143,9 @@ export interface ProcessingComplexRig {
   rockBreakerBoom?: THREE.Group;
   rockBreakerForearm?: THREE.Group;
   rockBreakerChisel?: THREE.Mesh;
+  unloadingPlaza?: THREE.Group;
+  conveyorGroup?: THREE.Group;
+  sagMillGroup?: THREE.Group;
 }
 
 export interface CanyonEnvironmentRig {
@@ -164,6 +168,7 @@ export interface CanyonEnvironmentRig {
   dustHazeRig?: DustHazeRig;
   tractionSubstation?: any;
   roadSafetyRig?: any;
+  slopeRadar?: any;
   terrainPBRRig?: TerrainPBRRig;
   volumetricWeatherRig?: VolumetricWeatherRig;
   blastingRig?: BlastingAndLidarRig;
@@ -788,13 +793,23 @@ export function createCanyonEnvironment(
 
   // DeepSeek-Synthesized Heavy Industrial Pit Sump, Dual WP-02 Pumps & Terraced Dewatering System (#404..#413)
   const dewateringRig = createPitSumpDewateringSystem(getCanyonGroundHeight);
+  dewateringRig.group.userData.twinId = 'org.openegiz.mine:pump-station-01';
+  dewateringRig.group.userData.objectName = 'Водоотливная станция горизонта -60м WP-01/02';
+  dewateringRig.group.userData.category = 'Водоотлив и дренаж';
+  envGroup.add(dewateringRig.group);
 
   // DeepSeek-Synthesized Pit CO/NOx Environmental Multi-Gas Station (#414, #415)
   const gasAlertRig = createQuarryGasAlertStation(getCanyonGroundHeight, -8.5, -2.5);
+  gasAlertRig.group.userData.twinId = 'org.openegiz.mine:gas-station-01';
+  gasAlertRig.group.userData.objectName = 'Экологический газоаналитический пост ГАНК-4РБ';
+  gasAlertRig.group.userData.category = 'Экологический мониторинг';
   envGroup.add(gasAlertRig.group);
 
   // DeepSeek-Synthesized Autonomous Quarry Meteorological Mast (#416, #417)
   const meteoRig = createQuarryMeteoStation(getCanyonGroundHeight, 38.0, -15.0);
+  meteoRig.group.userData.twinId = 'org.openegiz.mine:meteo-station-01';
+  meteoRig.group.userData.objectName = 'Метеорологический комплекс Vaisala WXT536';
+  meteoRig.group.userData.category = 'Метеорология';
   envGroup.add(meteoRig.group);
 
   // DeepSeek-Synthesized Volumetric PM10 Dust Haze Aerosol Cloud (#418)
@@ -803,21 +818,43 @@ export function createCanyonEnvironment(
 
   // DeepSeek-Synthesized High-Voltage GPP 110/10kV Substation Complex
   const deepseekSubstation = createSubstationGPP110(mats);
+  deepseekSubstation.userData.twinId = 'org.openegiz.mine:substation-01';
+  deepseekSubstation.userData.objectName = 'Тяговая подстанция ГПП-110/10/1.2 кВ + BESS';
+  deepseekSubstation.userData.category = 'Энергетический комплекс';
   enableHierarchyShadows(deepseekSubstation, true, true);
   envGroup.add(deepseekSubstation);
 
   // DeepSeek 1200V DC Traction Rectifier Substation & Trolley Infrastructure (D7.6..D7.10)
   const tractionSubstation = createTractionSubstationAndTrolley(mats as any, [32.0, 14.5, -42.0]);
-  // (Floating container at y=14.5 removed from processing plant yard)
 
   // DeepSeek Road Safety, Drainage, Water Truck & Inspection Patrol (D8.10, D9.5, D9.7..D9.10)
   const roadSafetyRig = createRoadSafetyAndDrainage(mats as any, getCanyonGroundHeight);
+  roadSafetyRig.waterTruckGroup.userData.twinId = 'org.openegiz.mine:water-bowser-01';
+  roadSafetyRig.waterTruckGroup.userData.objectName = 'Поливооросительный комплекс БелАЗ-76135';
+  roadSafetyRig.waterTruckGroup.userData.category = 'Охрана труда и экология';
+  roadSafetyRig.patrolPickupGroup.userData.twinId = 'org.openegiz.mine:patrol-pickup-01';
+  roadSafetyRig.patrolPickupGroup.userData.objectName = 'Патрульный автомобиль службы безопасности';
+  roadSafetyRig.patrolPickupGroup.userData.category = 'Служба ПБ и ОТ';
+  roadSafetyRig.runawayRampGroup.userData.twinId = 'org.openegiz.mine:runaway-ramp-01';
+  roadSafetyRig.runawayRampGroup.userData.objectName = 'Аварийный улавливающий тупик';
+  roadSafetyRig.runawayRampGroup.userData.category = 'Дорожная безопасность';
+  envGroup.add(roadSafetyRig.group);
+
+  // Slope Stability Radar GroundProbe SSR-XT (Twin #12)
+  const slopeRadar = createGroundProbeSSRRadar(mats as any, [24.0, 4.0, -12.0], Math.PI * 0.75, getCanyonGroundHeight);
+  slopeRadar.root.userData.twinId = 'org.openegiz.mine:slope-radar-01';
+  slopeRadar.root.userData.objectName = 'Радар устойчивости откосов GroundProbe SSR-XT';
+  slopeRadar.root.userData.category = 'Геотехнический мониторинг';
+  envGroup.add(slopeRadar.root);
 
   // DeepSeek-Synthesized Reflective Quarry Safety & Haulage Signage (Excluded to eliminate visual clutter)
   const deepseekSignage = createQuarrySafetySignage(mats, getCanyonGroundHeight);
 
   // 5. Museum-Grade Infrastructure: Trolley Gantries, 110kV Pylons, KRUN-6kV Sled
   const infra = createRealisticInfrastructureMasts(mats, getCanyonGroundHeight);
+  infra.trolleyNetworkGroup.userData.twinId = 'org.openegiz.mine:trolley-line-01';
+  infra.trolleyNetworkGroup.userData.objectName = 'Троллейная контактная сеть 1200В DC';
+  infra.trolleyNetworkGroup.userData.category = 'Энергетический комплекс';
   enableHierarchyShadows(infra.trolleyNetworkGroup, true, true);
   enableHierarchyShadows(infra.powerGridPylonsGroup, true, true);
   envGroup.add(infra.trolleyNetworkGroup);
@@ -837,6 +874,9 @@ export function createCanyonEnvironment(
   Object.assign(drillingRig.root.userData, {
     assemblyId: 'drilling_rig',
     targetId: 'drilling_rig',
+    twinId: 'org.openegiz.mine:drill-rig-01',
+    objectName: 'Буровой комплекс СБШ-250МНА-32',
+    category: 'Буровзрывные работы',
     label: 'Буровой станок СБШ-250 (Бурение взрывных скважин Ø250 мм на дне каньона, 4 домкрата, циклон)',
   });
   envGroup.add(drillingRig.root);
@@ -1098,6 +1138,7 @@ export function createCanyonEnvironment(
     dustHazeRig,
     tractionSubstation,
     roadSafetyRig,
+    slopeRadar,
   };
 }
 
