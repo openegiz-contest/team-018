@@ -683,33 +683,8 @@ export function createCanyonEnvironment(
   asphaltMesh.receiveShadow = true;
   envGroup.add(asphaltMesh);
 
-  // Passive Self-Illuminated Night Road Edge Strips & Clean Reflector Bollards (No random gravel clutter on asphalt!)
-  const delineatorCount = 64;
-  const delineatorGeo = new THREE.BoxGeometry(0.28, 0.65, 0.28);
-  const delineatorInstanced = new THREE.InstancedMesh(
-    delineatorGeo,
-    mats.emeraldFroth,
-    delineatorCount
-  );
-  for (let i = 0; i < delineatorCount; i++) {
-    const sampleIdx = Math.floor(
-      (i / delineatorCount) * ASPHALT_ROAD_SAMPLES.length
-    );
-    const s = ASPHALT_ROAD_SAMPLES[sampleIdx];
-    const sideSign = i % 2 === 0 ? -5.15 : 5.15;
-    _dummy.position.set(
-      s.x + s.nx * sideSign,
-      s.y + 0.42,
-      s.z + s.nz * sideSign
-    );
-    _dummy.rotation.set(0, Math.atan2(s.tx, s.tz), 0);
-    _dummy.scale.set(1, 1, 1);
-    _dummy.updateMatrix();
-    delineatorInstanced.setMatrixAt(i, _dummy.matrix);
-  }
-  delineatorInstanced.instanceMatrix.needsUpdate = true;
-  delineatorInstanced.computeBoundingSphere();
-  envGroup.add(delineatorInstanced);
+  // Clean, realistic quarry haul road without artificial neon markers
+
 
   // 3. Pit-Bottom Dewatering Sump Pond, Pontoon Pump & Upgraded Hydraulic Pipeline to Plant (Module 08)
   const sumpGroup = new THREE.Group();
@@ -800,6 +775,7 @@ export function createCanyonEnvironment(
 
   // DeepSeek-Synthesized Pit CO/NOx Environmental Multi-Gas Station (#414, #415)
   const gasAlertRig = createQuarryGasAlertStation(getCanyonGroundHeight, -8.5, -2.5);
+  gasAlertRig.group.visible = false;
   gasAlertRig.group.userData.twinId = 'org.openegiz.mine:gas-station-01';
   gasAlertRig.group.userData.objectName = 'Экологический газоаналитический пост ГАНК-4РБ';
   gasAlertRig.group.userData.category = 'Экологический мониторинг';
@@ -899,32 +875,7 @@ export function createCanyonEnvironment(
   // DeepSeek-Synthesized Quarry Safety Berms, Runoff Ditches & Grade Signs (#316, #317, #318)
   const safetyBermsAndSigns = createHaulRoadSafetyBermsAndSigns(getCanyonGroundHeight);
 
-  // 7. Retaining walls and blast containment (южная кромка промплощадки ГОК)
-  const retainingWallGroup = new THREE.Group();
-  retainingWallGroup.position.set(0, 0, 0);
-  const wallZ = -31.5;
-  const wallX = -9;
-  const wallGroundY = getCanyonGroundHeight(wallX, wallZ);
-  const concreteWall = new THREE.Mesh(
-    new THREE.BoxGeometry(16.0, 5.8, 1.6),
-    mats.belazChassisDark
-  );
-  concreteWall.position.set(wallX, wallGroundY + 2.9, wallZ);
-  concreteWall.castShadow = false;
-  concreteWall.receiveShadow = true;
-  retainingWallGroup.add(concreteWall);
 
-  for (let bx = -7.0; bx <= 7.01; bx += 3.5) {
-    const buttress = new THREE.Mesh(
-      new THREE.BoxGeometry(0.95, 6.6, 2.4),
-      mats.belazChassisDark
-    );
-    buttress.position.set(wallX + bx, wallGroundY + 2.8, wallZ + 0.6);
-    buttress.castShadow = false;
-    buttress.receiveShadow = true;
-    retainingWallGroup.add(buttress);
-  }
-  envGroup.add(retainingWallGroup);
 
   const ventFanRotorMeshes: THREE.Object3D[] = [];
 

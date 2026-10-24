@@ -994,21 +994,22 @@ export function createRoadSafetyAndDrainage(
   const group = new THREE.Group();
   group.name = 'RoadSafetyAndDrainageRig';
 
-  // 1. [D9.7] Compact emergency runaway truck ramp on canyon bench
+  // 1. [D9.7] Emergency runaway truck ramp (hidden to avoid synthetic slope wedge)
   const runawayRamp = buildRunawayRamp(bank, groundY);
+  runawayRamp.group.visible = false;
   group.add(runawayRamp.group);
 
-  // 2. [D9.8] BelAZ-76135 water tanker truck parked safely on mining bench
+  // 2. [D9.8] BelAZ-76135 water tanker truck (hidden per user request to remove procedural tank and buggy)
   const waterTruck = buildWaterTruck(bank);
   waterTruck.group.position.set(-6.0, groundY(-6.0, 4.0), 4.0);
   waterTruck.group.rotation.y = 0.4;
   waterTruck.sprayPoints.visible = false;
+  waterTruck.group.visible = false;
   group.add(waterTruck.group);
 
-  // 3. [D9.10] Safety patrol pickup vehicle on service terrace
+  // 3. [D9.10] Safety patrol pickup vehicle (hidden to eliminate visual clutter)
   const patrolPickup = buildPatrolPickup(bank);
-  patrolPickup.group.position.set(8.5, groundY(8.5, -30.0), -30.0);
-  patrolPickup.group.rotation.y = 0.25;
+  patrolPickup.group.visible = false;
   group.add(patrolPickup.group);
 
   const update = (timeSec: number): void => {

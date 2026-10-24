@@ -708,6 +708,7 @@ export function createRealisticInfrastructureMasts(
   // 2. Mobile Switchgear Sled ЯКНО-6кВ for Rotary Blast-Hole Drill Rig SBSH-250 (Pit bottom -15.5m)
   const drillSledX = -7.5, drillSledZ = -6.5;
   const drillSled = buildFieldSled(drillSledX, getCanyonGroundHeight(drillSledX, drillSledZ), drillSledZ, materialSet);
+  drillSled.visible = false;
   excavatorFieldSubstationSled.add(drillSled);
 
   // Flexible trailing cable to SBSH-250 drill rig
@@ -725,6 +726,7 @@ export function createRealisticInfrastructureMasts(
     new THREE.TubeGeometry(new THREE.CatmullRomCurve3(drillCablePts), 16, 0.05, 5, false),
     conductorMat
   );
+  drillCableMesh.visible = false;
   excavatorFieldSubstationSled.add(drillCableMesh);
 
   // 3. Overhead High-Voltage Cable Crossing Portal over Haul Road
