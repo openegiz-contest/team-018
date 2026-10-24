@@ -1,8 +1,7 @@
 import * as THREE from 'three';
 
 /* ============================================================================
- * Smart-Kenish 4.0 — OpenEgiz Autonomous Mine
- * Deepseek Dewatering & Meteo Module
+ * Pit Sump Dewatering, Gas Alert & Meteo Station CAD Module
  * Fixes #404..#418
  * ==========================================================================*/
 

@@ -3,7 +3,7 @@ import { getAsphaltSurfaceHeightAt, type RoadSample } from '../domain/canyonLogi
 import {
   createPortalSurgeAndProtectionPackage,
   createFeederDisconnectorRLND,
-} from './deepseekTrolleySurgeAndSwitchgear';
+} from './switchgearAndSurgeProtection';
 
 export interface InfrastructureMastsRig {
   floodlightTowersGroup: THREE.Group;

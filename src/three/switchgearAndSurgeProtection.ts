@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Smart-Kenish 4.0 — Deepseek Trolley Surge & Switchgear Module
+ * Smart-Kenish 4.0 — Trolley Catenary Surge & Switchgear Protection Module
  * Resolves Fixes #376, #377, #378, #379
  *
  * Provides:

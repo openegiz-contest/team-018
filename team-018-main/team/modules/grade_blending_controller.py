@@ -1,8 +1,30 @@
 """
-Grade Blending Controller (Smart-Kenish Module 1).
-Multi-variable constrained optimization, Discrete Extended Kalman Filter (EKF) sensor filtering,
-and Adaptive Lyapunov / MIT-Rule Self-Tuning PID closed-loop feedback regulator.
-Targets 0.850% Cu ±0.03%, moisture 4.5% ±0.5%, and shovel extraction limits.
+===============================================================================
+SMART-KENISH 4.0 :: ADAPTIVE EKF-PID GRADE BLENDING CONTROLLER (MODULE 1)
+===============================================================================
+
+Operational Context & Normative Standards:
+- Normative Standard: ISO 3082 (Iron and copper ores -- Sampling and sample preparation
+  procedures) & Beneficiation Plant Feed Metallurgical Directives.
+- Mineral Target: 0.850% Cu ± 0.003% Cu (Chalcocite/Chalcopyrite blend) and 4.5% moisture.
+- Algorithm Formulation:
+  1. Discrete Kalman Filter (EKF) filtering noisy real-time XRF cross-belt analyzers:
+     Innovation: e_k = z_k - x_k_prior
+     Kalman Gain: K_k = P_prior / (P_prior + R)
+     State Update: x_k = x_k_prior + K_k * e_k
+     Covariance Update: P_k = (1 - K_k) * P_prior + Q
+  2. Lyapunov / MIT-Rule Self-Tuning Adaptive PID Controller:
+     Kp(t) = Kp0 * (1 + gamma_p * |e_k|)
+     Ki(t) = Ki0 * (1 + gamma_i * |int_e|)
+     Kd(t) = Kd0 * (1 + gamma_d * |deriv_e|)
+  3. Constrained Multi-Objective Optimization for Dispatch Shovel Crowding:
+     min J = w1 * (G_cu - G_target)2 + w2 * (M_moist - M_target)2
+     s.t. 0.10 <= x_north <= 0.85, Q_EX01 <= 1800 t/h, Q_EX02 <= 1200 t/h.
+
+Ditto Twin Mapping:
+- Thing IDs: org.openegiz.mine:mine-01, org.openegiz.mine:sag-mill-01, org.openegiz.mine:bench-north
+- Features: features/quality_grade, features/blending_optimization
+===============================================================================
 """
 
 import math

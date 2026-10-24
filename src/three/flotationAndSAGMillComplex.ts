@@ -1,6 +1,6 @@
 /**
  * Smart-Kenish 4.0 OpenEgiz Autonomous Mine
- * Deepseek Mill & Flotation Complex — Industrial Three.js Module
+ * SAG Mill MPSI-90 & Flotation Complex CAD Module
  *
  * Resolves TOP-500 Fixes:
  *   #276, #277 — SAG Mill MPSI-90 industrial architecture

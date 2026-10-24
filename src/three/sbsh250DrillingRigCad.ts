@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createDrillRigUpgrades, DrillRigUpgradesRig } from './deepseekDrillRigUpgrades';
+import { createDrillRigUpgrades, DrillRigUpgradesRig } from './drillRigMechanicalDetails';
 
 export interface DrillingRigRig {
   root: THREE.Group;

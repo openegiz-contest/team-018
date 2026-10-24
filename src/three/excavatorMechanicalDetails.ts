@@ -1,5 +1,5 @@
 /**
- * deepseekExcavatorMechanicalDetails.ts
+ * excavatorMechanicalDetails.ts
  *
  * Industrial-grade Three.js procedural mechanical detail module for the
  * Smart-Kenish 4.0 OpenEgiz Autonomous Mine project.

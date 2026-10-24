@@ -1,6 +1,24 @@
 """
-Trolley Energy Manager & BESS Microgrid Controller (Smart-Kenish Module 2).
-Coordinates power flows between 1200V DC catenary line, electric trucks, and 2 MWh BESS.
+===============================================================================
+SMART-KENISH 4.0 :: 1200V DC CATENARY & 2 MWh BESS ENERGY MANAGER (MODULE 2)
+===============================================================================
+
+Operational Context & Normative Standards:
+- Standard: EN 50149 (Railway applications -- Fixed installations -- Electric traction
+  -- Copper and copper alloy grooved contact wires), Spec: Cu-ETP 150 mm2.
+- Electrical Substation Benchmark: 6 MWh Traction Substation GPP-110/10/1.2kV
+  integrated with 2 MWh LiFePO4 Battery Energy Storage System (BESS).
+- International Benchmark: Boliden Aitik Mine (Sweden / ABB / Komatsu 1200V Trolley).
+- Diesel Substitution Physics:
+  * Full diesel uphill haulage on 8.5% grade: 285.0 L/h diesel consumption.
+  * 1200V DC pantograph assist: ICE drops to idle (5.0 L/h), net savings 280.0 L/h.
+  * Speed doubles from 12.2 km/h (diesel) to 24.5 km/h (electric traction).
+  * Carbon emission reduction factor: 2.68 kg CO2 per liter diesel (IPCC Guidelines).
+
+Ditto Twin Mapping:
+- Thing IDs: org.openegiz.mine:trolley-line-01, org.openegiz.mine:substation-01
+- Features: features/catenary, features/bess_storage, features/electrical_grid
+===============================================================================
 """
 
 

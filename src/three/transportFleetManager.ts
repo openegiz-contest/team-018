@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createRealisticBelaz75131 } from './deepseekRealisticBelazTruck';
+import { createRealisticBelaz75131 } from './belaz75131CadModel';
 import { addBelazDetailKit } from './detailKits';
 import type { BelazRig } from './cadModels';
 

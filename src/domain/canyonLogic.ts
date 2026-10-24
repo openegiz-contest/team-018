@@ -1,8 +1,25 @@
+/**
+ * ============================================================================
+ * SMART-KENISH 4.0: AUTONOMOUS OPEN-PIT COPPER MINE (GOK AKTAU-MYS, 12 Mt/a)
+ * CORE DOMAIN PHYSICS, TERRAIN CONFORMANCE & ECLIPSE DITTO PROTOCOL MAPPER
+ * ============================================================================
+ *
+ * Technical Specifications & Regulatory Standards:
+ * - Vehicle Kinematics: SAE J2188 / ISO 13543 (Rigid Haul Truck Mass Distribution)
+ * - Wet Braking & Deceleration: ISO 3450:2011 (Earth-moving machinery -- Brake systems)
+ * - Tire Thermal Mechanics: Bridgestone OTR 33.00R51 Ton-Kilometer-Per-Hour (TKPH)
+ * - Comminution Mass Balance: Bond (1952) Third Theory of Comminution (MPSI-90 SAG Mill)
+ * - Geotechnical Stability: Mohr-Coulomb Limit Equilibrium Factor of Safety (FoS)
+ * - Digital Twin Architecture: Eclipse Ditto Protocol 2.0 (Things, Features, Attributes)
+ * - Execution Performance: Zero-GC hot path optimized for 60 FPS under CPU SwiftShader
+ * ============================================================================
+ */
+
 import {
   computeSafetyHeadway,
   clampYawRate,
   maxYawRateForSpeed,
-} from './deepseekFleetKinematics.ts';
+} from './haulFleetKinematics.ts';
 
 export type CameraTargetId =
   | 'overview'

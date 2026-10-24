@@ -1,6 +1,6 @@
 /**
  * Smart-Kenish 4.0 — OpenEgiz Autonomous Mine
- * src/three/deepseekExcavatorSafetyAndDetails.ts
+ * src/three/excavatorSafetyAndDetails.ts
  *
  * Resolves TOP-500 Fixes:
  *   #164 — EKG-15 boarding ladder & catwalks

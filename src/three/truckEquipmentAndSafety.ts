@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 /**
- * Smart-Kenish 4.0 — DeepSeek Truck Equipment & Safety Module
+ * Smart-Kenish 4.0 — BelAZ-75131 Industrial Equipment & Active Safety Module
  * Resolves: #63 (Wheel Chocks), #64 (Fire Suppression), #72 (Amber Markers),
  *           #104 (Diesel Exhaust Emitter), #130 (CAS Radar Indicator)
  *

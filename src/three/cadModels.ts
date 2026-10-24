@@ -1,9 +1,9 @@
-import { createRealisticBelaz75131 } from './deepseekRealisticBelazTruck';
-import { createRealisticProcessingComplex } from './deepseekRealisticCrusherPlant';
-import { createRealisticInfrastructureMasts } from './deepseekRealisticMastsAndPoles';
-import { createRealisticDrillingRigSBSH250, DrillingRigRig } from './deepseekRealisticDrillingRig';
+import { createRealisticBelaz75131 } from './belaz75131CadModel';
+import { createRealisticProcessingComplex } from './kkd1500CrusherPlantCad';
+import { createRealisticInfrastructureMasts } from './quarryLightingAndPowerMasts';
+import { createRealisticDrillingRigSBSH250, DrillingRigRig } from './sbsh250DrillingRigCad';
 import * as THREE from 'three';
-import { createUpgradedEKG15, createUpgradedCAT6020B } from './deepseekExcavatorsRedesign';
+import { createUpgradedEKG15, createUpgradedCAT6020B } from './excavatorsCadModels';
 import { CadMaterialLibrary } from './materials';
 import {
   ASPHALT_ROAD_SAMPLES,
@@ -15,10 +15,10 @@ import {
   HAUL_ROUTE_WAYPOINTS,
 } from '../domain/canyonLogic';
 import { addBelazDetailKit } from './detailKits';
-import { addBelazCockpitAndEngineDetails } from './deepseekGeneratedCockpit';
-import { createSubstationGPP110 } from './deepseekGeneratedSubstation';
-import { createQuarrySafetySignage } from './deepseekRoadSignage';
-import { createCrusherPlantExpansion, CrusherExpansionRig } from './deepseekGeneratedCrusherExpansion';
+import { addBelazCockpitAndEngineDetails } from './operatorCockpitCad';
+import { createSubstationGPP110 } from './tractionSubstation110kVCad';
+import { createQuarrySafetySignage } from './quarryRoadSignage';
+import { createCrusherPlantExpansion, CrusherExpansionRig } from './crusherExpansionComplex';
 import {
   createPitSumpDewateringSystem,
   createQuarryGasAlertStation,
@@ -28,36 +28,36 @@ import {
   GasStationRig,
   MeteoStationRig,
   DustHazeRig,
-} from './deepseekDewateringAndMeteo';
+} from './dewateringAndMeteoStation';
 import {
   createBvrBlastingField,
   createCrusherHopperLiningAndBoulders,
   createConveyorHeadAndTailDrums,
-} from './deepseekBlastingGridAndCrusherDetails';
+} from './blastingGridAndCrusherDetails';
 import {
   createExcavatorDangerZone,
   createExcavatorLoadingSignal,
   createEkgBoardingWalkwaysAndChute,
   createCatHydraulicCoolerFans,
   createCabAutomationSensors,
-} from './deepseekExcavatorSafetyAndDetails';
-import { createHaulRoadSafetyBermsAndSigns } from './deepseekMillAndFlotationComplex';
-import { createBelazMechanicalDetails } from './deepseekBelazCabAndEngineDetails';
-import { createExcavatorMechanicalDetails } from './deepseekExcavatorMechanicalDetails';
-import { createDrillRigUpgrades } from './deepseekDrillRigUpgrades';
-import { createConveyorSafetyAndProtection } from './deepseekConveyorSensorsAndSeparator';
-import { createConcentratorExpansion } from './deepseekTailingsAndReagentsPlant';
-import { createTractionSubstationAndTrolley } from './deepseekTractionSubstationAndTrolley';
-import { createRoadSafetyAndDrainage } from './deepseekRoadSafetyAndDrainage';
-import { createGroundProbeSSRRadar } from './deepseekRealisticTransportFleet';
-import { type TerrainPBRRig } from './deepseekTerrainPBRAndStrata';
-import { type VolumetricWeatherRig } from './deepseekVolumetricWeatherAndFog';
-import { type TruckVisualUpgradeRig } from './deepseekTruckLightingAndWear';
-import { type ExcavatorVisualFxRig } from './deepseekExcavatorVisualFx';
-import { type BlastingAndLidarRig } from './deepseekBlastingSimulationAndLidar';
-import { type CrusherAndMillVisualRig } from './deepseekCrusherAndMillVisuals';
-import { type TrolleySparksAndCoronaRig } from './deepseekTrolleySparksAndCorona';
-import { type HolographicHUDOverlayRig } from './deepseekHolographicHUDAndOverlays';
+} from './excavatorSafetyAndDetails';
+import { createHaulRoadSafetyBermsAndSigns } from './flotationAndSAGMillComplex';
+import { createBelazMechanicalDetails } from './belazCabAndEngineDetails';
+import { createExcavatorMechanicalDetails } from './excavatorMechanicalDetails';
+import { createDrillRigUpgrades } from './drillRigMechanicalDetails';
+import { createConveyorSafetyAndProtection } from './conveyorSensorsAndSeparator';
+import { createConcentratorExpansion } from './tailingsAndReagentsPlant';
+import { createTractionSubstationAndTrolley } from './trolleyCatenaryLine1200V';
+import { createRoadSafetyAndDrainage } from './roadSafetyAndDrainage';
+import { createGroundProbeSSRRadar } from './transportFleetManager';
+import { type TerrainPBRRig } from './terrainPBRAndStrata';
+import { type VolumetricWeatherRig } from './volumetricWeatherAndFog';
+import { type TruckVisualUpgradeRig } from './truckLightingAndWear';
+import { type ExcavatorVisualFxRig } from './excavatorVisualFx';
+import { type BlastingAndLidarRig } from './blastingSimulationAndLidar';
+import { type CrusherAndMillVisualRig } from './crusherAndMillVisuals';
+import { type TrolleySparksAndCoronaRig } from './pantographSparksAndCorona';
+import { type HolographicHUDOverlayRig } from './telemetryHUDAndOverlays';
 
 export interface BelazWheelAssemblyRig {
   id: 'FL' | 'FR' | 'RLO' | 'RLI' | 'RRO' | 'RRI';
@@ -345,11 +345,11 @@ export function createProcessingComplex(
     label: 'ГОК: Выносная площадка разгрузки, Бутобой, МПСИ-90 (14 МВт), Krebs gMAX26 и Флотация',
   };
 
-  // DeepSeek Conveyor Safety & Tramp Iron Separator (D5.7..D5.10)
+  // Conveyor Safety & Tramp Iron Separator (D5.7..D5.10)
   const conveyorSafety = createConveyorSafetyAndProtection(mats as any);
   rig.root.add(conveyorSafety.group);
 
-  // DeepSeek Tailings Pumps, Reagents, Filter Presses & Silo (D6.6..D6.10)
+  // Tailings Pumps, Reagents, Filter Presses & Silo Complex (D6.6..D6.10)
   const plantExpansion = createConcentratorExpansion(mats as any, [16.0, 11.5, -66.0]);
   rig.root.add(plantExpansion.group);
 
@@ -766,14 +766,14 @@ export function createCanyonEnvironment(
   saddleInstanced.instanceMatrix.needsUpdate = true;
   envGroup.add(saddleInstanced);
 
-  // DeepSeek-Synthesized Heavy Industrial Pit Sump, Dual WP-02 Pumps & Terraced Dewatering System (#404..#413)
+  // Heavy Industrial Pit Sump, Dual WP-02 Pumps & Terraced Dewatering System (#404..#413)
   const dewateringRig = createPitSumpDewateringSystem(getCanyonGroundHeight);
   dewateringRig.group.userData.twinId = 'org.openegiz.mine:pump-station-01';
   dewateringRig.group.userData.objectName = 'Водоотливная станция горизонта -60м WP-01/02';
   dewateringRig.group.userData.category = 'Водоотлив и дренаж';
   envGroup.add(dewateringRig.group);
 
-  // DeepSeek-Synthesized Pit CO/NOx Environmental Multi-Gas Station (#414, #415)
+  // Pit CO/NOx Environmental Multi-Gas Monitoring Station (#414, #415)
   const gasAlertRig = createQuarryGasAlertStation(getCanyonGroundHeight, -8.5, -2.5);
   gasAlertRig.group.visible = false;
   gasAlertRig.group.userData.twinId = 'org.openegiz.mine:gas-station-01';
@@ -781,29 +781,29 @@ export function createCanyonEnvironment(
   gasAlertRig.group.userData.category = 'Экологический мониторинг';
   envGroup.add(gasAlertRig.group);
 
-  // DeepSeek-Synthesized Autonomous Quarry Meteorological Mast (#416, #417)
+  // Autonomous Quarry Meteorological Mast (#416, #417)
   const meteoRig = createQuarryMeteoStation(getCanyonGroundHeight, 38.0, -15.0);
   meteoRig.group.userData.twinId = 'org.openegiz.mine:meteo-station-01';
   meteoRig.group.userData.objectName = 'Метеорологический комплекс Vaisala WXT536';
   meteoRig.group.userData.category = 'Метеорология';
   envGroup.add(meteoRig.group);
 
-  // DeepSeek-Synthesized Volumetric PM10 Dust Haze Aerosol Cloud (#418)
+  // Volumetric PM10 Dust Haze Aerosol Cloud Simulation (#418)
   const dustHazeRig = createVolumetricDustHaze(getCanyonGroundHeight);
   envGroup.add(dustHazeRig.group);
 
-  // DeepSeek-Synthesized High-Voltage GPP 110/10kV Substation Complex
-  const deepseekSubstation = createSubstationGPP110(mats);
-  deepseekSubstation.userData.twinId = 'org.openegiz.mine:substation-01';
-  deepseekSubstation.userData.objectName = 'Тяговая подстанция ГПП-110/10/1.2 кВ + BESS';
-  deepseekSubstation.userData.category = 'Энергетический комплекс';
-  enableHierarchyShadows(deepseekSubstation, true, true);
-  envGroup.add(deepseekSubstation);
+  // High-Voltage GPP 110/10kV Substation Complex with BESS Battery Energy Storage
+  const substationGPP110 = createSubstationGPP110(mats);
+  substationGPP110.userData.twinId = 'org.openegiz.mine:substation-01';
+  substationGPP110.userData.objectName = 'Тяговая подстанция ГПП-110/10/1.2 кВ + BESS';
+  substationGPP110.userData.category = 'Энергетический комплекс';
+  enableHierarchyShadows(substationGPP110, true, true);
+  envGroup.add(substationGPP110);
 
-  // DeepSeek 1200V DC Traction Rectifier Substation & Trolley Infrastructure (D7.6..D7.10)
+  // 1200V DC Traction Rectifier Substation & Trolley Infrastructure (D7.6..D7.10)
   const tractionSubstation = createTractionSubstationAndTrolley(mats as any, [32.0, 14.5, -42.0]);
 
-  // DeepSeek Road Safety, Drainage, Water Truck & Inspection Patrol (D8.10, D9.5, D9.7..D9.10)
+  // Road Safety, Drainage, Water Truck & Inspection Patrol (D8.10, D9.5, D9.7..D9.10)
   const roadSafetyRig = createRoadSafetyAndDrainage(mats as any, getCanyonGroundHeight);
   roadSafetyRig.waterTruckGroup.userData.twinId = 'org.openegiz.mine:water-bowser-01';
   roadSafetyRig.waterTruckGroup.userData.objectName = 'Поливооросительный комплекс БелАЗ-76135';
@@ -823,8 +823,8 @@ export function createCanyonEnvironment(
   slopeRadar.root.userData.category = 'Геотехнический мониторинг';
   envGroup.add(slopeRadar.root);
 
-  // DeepSeek-Synthesized Reflective Quarry Safety & Haulage Signage (Excluded to eliminate visual clutter)
-  const deepseekSignage = createQuarrySafetySignage(mats, getCanyonGroundHeight);
+  // Reflective Quarry Safety & Haulage Signage (Excluded to eliminate visual clutter)
+  const quarrySignageRig = createQuarrySafetySignage(mats, getCanyonGroundHeight);
 
   // 5. Museum-Grade Infrastructure: Trolley Gantries, 110kV Pylons, KRUN-6kV Sled
   const infra = createRealisticInfrastructureMasts(mats, getCanyonGroundHeight);
@@ -857,22 +857,22 @@ export function createCanyonEnvironment(
   });
   envGroup.add(drillingRig.root);
 
-  // DeepSeek-Synthesized BVR Blast Field (Excluded to eliminate ground stakes & flag clutter)
+  // BVR Blast Field (Excluded to eliminate ground stakes & flag clutter)
   const bvrBlastField = createBvrBlastingField(getCanyonGroundHeight, [-4.0, -6.0]);
 
-  // DeepSeek-Synthesized KKD-1500 Manganese Hopper Lining & Oversize Boulders (#231, #234, #240)
+  // KKD-1500 Manganese Hopper Lining & Oversize Boulders (#231, #234, #240)
   const crusherDetails = createCrusherHopperLiningAndBoulders(mats);
   crusherDetails.position.set(10.0, 6.0, -56.0);
   envGroup.add(crusherDetails);
 
-  // DeepSeek-Synthesized Conveyor Drive & Tension Drums with Transfer Chute (#246, #250)
+  // Conveyor Drive & Tension Drums with Transfer Chute (#246, #250)
   const conveyorDrums = createConveyorHeadAndTailDrums(mats);
 
-  // DeepSeek-Synthesized Excavator Swing Danger Zone Boundary Decal Rings (Excluded to eliminate ground decal clutter)
+  // Excavator Swing Danger Zone Boundary Decal Rings (Excluded to eliminate ground decal clutter)
   const ekgDangerZone = createExcavatorDangerZone(18, getCanyonGroundHeight, [-15.5, -6.0]);
   const catDangerZone = createExcavatorDangerZone(14, getCanyonGroundHeight, [-13.5, 10.0]);
 
-  // DeepSeek-Synthesized Quarry Safety Berms, Runoff Ditches & Grade Signs (#316, #317, #318)
+  // Quarry Safety Berms, Runoff Ditches & Grade Signs (#316, #317, #318)
   const safetyBermsAndSigns = createHaulRoadSafetyBermsAndSigns(getCanyonGroundHeight);
 
 
@@ -1079,7 +1079,7 @@ export function createCanyonEnvironment(
     mistJetParticlesInstanced,
     trolleyNetworkGroup,
     drillingRig,
-    substationRig: deepseekSubstation,
+    substationRig: substationGPP110,
     waterPondMesh,
     sumpPumpHouse: pumpHouse,
     sumpGroup,

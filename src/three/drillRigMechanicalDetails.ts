@@ -1,5 +1,5 @@
 /**
- * deepseekDrillRigUpgrades.ts
+ * drillRigMechanicalDetails.ts
  *
  * Industrial-grade Three.js upgrade module for the SBSH-250 (СБШ-250)
  * blast-hole drilling rig.

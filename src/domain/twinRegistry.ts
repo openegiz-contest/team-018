@@ -1,3 +1,17 @@
+/**
+ * ============================================================================
+ * UNIVERSAL 24-TWIN REGISTRY & TELEMETRY RESOLVER
+ * SMART-KENISH 4.0: OPEN-PIT DIGITAL TWIN ECOSYSTEM (OPENEGIZ / ECLIPSE DITTO)
+ * ============================================================================
+ *
+ * Provides authoritative cross-domain entity resolution:
+ * 1. Resolves 3D CAD mesh clicks and raycasting hits to Eclipse Ditto Thing IDs.
+ * 2. Formats live physical telemetry, technical CAD engineering specifications,
+ *    and exact Eclipse Ditto JSON payloads according to OpenEgiz schemas.
+ * 3. Maintains parent-child hierarchical ontology graph (_parents attribute).
+ * ============================================================================
+ */
+
 import rawDittoTwins from './dittoTwinsData.json';
 import {
   type LiveTelemetrySnapshot,

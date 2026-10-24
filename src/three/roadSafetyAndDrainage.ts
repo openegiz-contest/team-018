@@ -1,5 +1,5 @@
 /**
- * src/three/deepseekRoadSafetyAndDrainage.ts
+ * src/three/roadSafetyAndDrainage.ts
  *
  * Industrial-grade procedural Three.js module implementing:
  *   [D8.10] Trapezoidal drainage ditches + bench sedimentation sumps + corrugated culverts

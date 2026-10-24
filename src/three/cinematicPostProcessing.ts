@@ -1,5 +1,5 @@
 /**
- * src/three/deepseekCinematicPostProcessing.ts
+ * src/three/cinematicPostProcessing.ts
  *
  * Hierarchical TOP-100 Visual Domain V2 — Cinematic Post-Processing Rig
  * for the Smart-Kenish 4.0 OpenEgiz Autonomous Mine.
@@ -485,7 +485,7 @@ export function setupCinematicPostProcessing(
     // Graceful fallback: dispose partial composer and use standard render.
     // eslint-disable-next-line no-console
     console.warn(
-      '[deepseekCinematicPostProcessing] EffectComposer unavailable, falling back to standard render.',
+      '[cinematicPostProcessing] EffectComposer unavailable, falling back to standard render.',
       err,
     );
     try {

@@ -43,8 +43,8 @@ import {
 import {
   createAtmosphericLightingSystem,
   AtmosphericLightingRig,
-} from '../three/deepseekAtmosphericLighting';
-import { getCinematicLightingPreset } from '../three/deepseekLightingAtmosphere';
+} from '../three/atmosphericLighting';
+import { getCinematicLightingPreset } from '../three/canyonLightingAtmosphere';
 import { quarryAudio } from '../audio/quarryAudioEngine';
 
 
@@ -320,7 +320,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     // Procedural Celestial Sky Dome (Sun, Moon, Volumetric Clouds, Twinkling Stars, Diurnal Cycle)
     const celestialSky = createCelestialSkySystem(scene);
 
-    // DeepSeek Atmospheric Lighting with 8 Pit-Rim Floodlight Towers & Volumetric Cones (Fixes #426, #427, #428, #429)
+    // High-Efficiency Atmospheric Lighting with 8 Pit-Rim Floodlight Towers & Volumetric Cones (Fixes #426, #427, #428, #429)
     const atmosphericLighting = createAtmosphericLightingSystem(scene, isHeadless);
 
     // Subtle PBR metallic reflection environment with natural ambient fill
@@ -1113,7 +1113,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
           -catKin.dumpCascadeProgress * 1.7;
       }
 
-      // DeepSeek-Synthesized Excavator Safety, Signals & Cooler Updates (Fixes #181, #183, #184, #197)
+      // Excavator Safety, Acoustic Signals & Hydraulic Cooler Telemetry Updates (Fixes #181, #183, #184, #197)
       (ekg15Rig as any).loadingSignal?.update?.(!ekgKin.isWorking, simTime);
       (ekg15Rig as any).cabSensors?.update?.(simTime);
       (ekg15Rig as any).mechanics?.updateEkg?.(
@@ -1398,7 +1398,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         });
       }
 
-      // DeepSeek-Synthesized Industrial Dewatering, Gas Alert & Meteo Updates (Fixes #404..#418)
+      // Industrial Dewatering, Gas Alert & Meteo Updates (Fixes #404..#418)
       const windSpeed = 4.2 + Math.sin(simTime * 0.08) * 1.5;
       const windAngle = 0.65 + Math.sin(simTime * 0.03) * 0.35;
 

@@ -1,5 +1,5 @@
 /**
- * src/three/deepseekAtmosphericLighting.ts
+ * src/three/atmosphericLighting.ts
  *
  * Industrial-grade atmospheric lighting rig for the Smart-Kenish 4.0
  * OpenEgiz Autonomous Mine.

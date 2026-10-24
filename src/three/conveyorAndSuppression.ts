@@ -1,6 +1,6 @@
 /**
  * Smart-Kenish 4.0 — OpenEgiz Autonomous Mine
- * src/three/deepseekConveyorAndSuppression.ts
+ * src/three/conveyorAndSuppression.ts
  *
  * Resolves Fixes:
  *   #20  — Troughed conveyor belt profile (35° 3-roll)

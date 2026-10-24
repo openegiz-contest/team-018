@@ -1,6 +1,9 @@
 /**
  * Smart-Kenish 4.0 — OpenEgiz Autonomous Mine
- * DeepSeek Fleet Kinematics & Dispatch Module
+ * Haul Fleet Kinematics & Dispatch Optimization Module
+ *
+ * Implements ISO 3450 braking profiles, Catmull-Rom spline path discretization,
+ * Ackermann steering kinematics, and anti-bunching headway regulation for BelAZ-75131 fleet.
  *
  * Resolves TOP-500 Fixes: #80, #81, #82, #83, #84, #85, #86, #126, #127, #131
  *
@@ -629,10 +632,10 @@ export function computeSafetyHeadway(speedKmh: number, isQueueing: boolean): num
 }
 
 /**
- * Fleet dispatch coordinator. Maintains per-truck runtime state and applies
- * anti-bunching headway regulation each frame.
+ * Autonomous Fleet dispatch coordinator. Maintains per-truck runtime state and applies
+ * anti-bunching headway regulation each frame using adaptive distance headway control.
  */
-export class DeepSeekFleetDispatchCoordinator implements FleetDispatchCoordinator {
+export class AutonomousFleetDispatchCoordinator implements FleetDispatchCoordinator {
   private readonly trucks: TruckRuntime[] = [];
   private readonly trajectory: CatmullRomTrajectory;
   private readonly sample: TrajectorySample = {
@@ -819,5 +822,9 @@ export function createFleetDispatchCoordinator(
   waypoints: Waypoint[]
 ): FleetDispatchCoordinator {
   const traj = new CatmullRomTrajectory(waypoints);
-  return new DeepSeekFleetDispatchCoordinator(traj);
+  return new AutonomousFleetDispatchCoordinator(traj);
 }
+
+// Backward-compatible alias
+export { AutonomousFleetDispatchCoordinator as DeepSeekFleetDispatchCoordinator };
+

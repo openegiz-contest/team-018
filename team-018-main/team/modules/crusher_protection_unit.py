@@ -1,7 +1,23 @@
 """
-Crusher Protection Unit & Comminution Controller (Smart-Kenish Module 5).
-Safeguards KKD-1500/180 primary gyratory crusher, executes automated tramp metal hydraulic relief,
-and triggers standby Metso LT140 cut-in upon mechanical pin shear.
+===============================================================================
+SMART-KENISH 4.0 :: PRIMARY CRUSHING & HYDRO-RELIEF COORDINATOR (MODULE 5)
+===============================================================================
+
+Operational Context & Normative Standards:
+- Primary Crusher: KKD-1500/180 Heavy Gyratory Crusher (Nominal throughput: 2400 t/h,
+  Closed Side Setting CSS = 180 mm, Drive: 450 kW slip-ring wound rotor motor).
+- Reference Catalog: Metso Outotec Superior MK-III Primary Gyratory Crushers.
+- Automated Hydraulic Relief: Main shaft hydro-cylinder lowers mantle 150 mm within
+  1.8 seconds upon uncrushable tramp metal detection (dipper tooth ingestion).
+- Standby Mobile Unit: Metso Lokotrack LT140 Mobile Jaw Crusher (550 t/h nominal,
+  Cat C15 310 kW diesel) automatically dispatched to emergency run-of-mine pad.
+- Autonomous Buffer: 45,000t Coarse Ore Stockpile dome maintains 19.0 hours of
+  continuous SAG mill feed autonomy during major gyratory repairs.
+
+Ditto Twin Mapping:
+- Thing IDs: org.openegiz.mine:crusher-01, org.openegiz.mine:crusher-standby-02
+- Features: features/crushing_circuit, features/standby_jaw_crusher
+===============================================================================
 """
 
 

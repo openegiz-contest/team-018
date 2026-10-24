@@ -1,17 +1,17 @@
 import * as THREE from 'three';
 import type { ProcessingComplexRig } from './cadModels';
-import { createCrusherPlantExpansion } from './deepseekGeneratedCrusherExpansion';
+import { createCrusherPlantExpansion } from './crusherExpansionComplex';
 import {
   createTroughedConveyorBeltGeometry,
   createConveyorIdlerStations,
   createConveyorBeltScale,
   createCrusherDustSuppressionManifold,
-} from './deepseekConveyorAndSuppression';
+} from './conveyorAndSuppression';
 import {
   createIndustrialSagMillMPSI90,
   createHydrocycloneAndFlotationCluster,
   createRadialThickenerBasin,
-} from './deepseekMillAndFlotationComplex';
+} from './flotationAndSAGMillComplex';
 
 export function createRealisticProcessingComplex(mats: any): ProcessingComplexRig {
   const root = new THREE.Group();
@@ -213,7 +213,7 @@ export function createRealisticProcessingComplex(mats: any): ProcessingComplexRi
   chisel.receiveShadow = true;
   rockBreakerForearm.add(chisel);
 
-  // DeepSeek High-Fidelity Vibrating Grizzly Screen & Crusher Maintenance Hoist Module
+  // Heavy Industrial Vibrating Grizzly Screen & Crusher Maintenance Overhead Crane Hoist
   const crusherExpansion = createCrusherPlantExpansion(mats);
   crusherExpansion.root.position.set(0, 0, 0);
   dumpPocket.add(crusherExpansion.root);

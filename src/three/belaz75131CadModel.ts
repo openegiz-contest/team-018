@@ -4,7 +4,7 @@ import {
   createTruckSafetyEquipment,
   createTruckCASRadar,
   createDieselExhaustEmitter,
-} from './deepseekTruckEquipmentAndSafety';
+} from './truckEquipmentAndSafety';
 
 const FLEET_ACCENT_COLORS = [
   0xf59e0b, // #01: Amber Gold

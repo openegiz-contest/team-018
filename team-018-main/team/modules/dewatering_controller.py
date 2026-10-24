@@ -1,7 +1,29 @@
 """
-Dewatering Controller & Sump Mass Balance (Smart-Kenish Module 4).
-Hydrogeological mass balance for deep pit -60m sump, staged pump speed control,
-and emergency ATS automatic transfer to Barge Pontoon Slurry Pump WP-02.
+===============================================================================
+SMART-KENISH 4.0 :: DEEP PIT HYDROGEOLOGY & DEWATERING CONTROL (MODULE 4)
+===============================================================================
+
+Operational Context & Normative Standards:
+- Hydrogeological Benchmark: CSIRO Deep Open-Pit Hydrogeological Guidelines.
+- Sump Basin Dimensions: Horizon -60m, Sump Water Mirror Area A_sump = 4500.0 m2.
+- Governing Hydrodynamic Differential:
+  dh_sump/dt = [Q_influx(t) - Q_pumps(t)] / A_sump
+- Geomechanical Pore Pressure Coupling:
+  u(t) = gamma_w * (z_water_table + alpha_seepage * h_sump(t)) * r_u
+  where gamma_w = 9.81 kN/m3, r_u = 0.42 (pore pressure ratio).
+  Calculated baseline u = 158.0 kPa (at nominal sump level 1.15 m).
+- Mohr-Coulomb Factor of Safety (FoS) Interlock:
+  FoS = [c' + (gamma * z * cos2(beta) - u(t)) * tan(phi')] / [gamma * z * sin(beta) * cos(beta)]
+  When u(t) > 280 kPa during inrush, FoS drops below 1.15 -> automatic safety interlock
+  triggers evacuation of CAT 6020B electric excavator from -60m bench.
+- Staged Pumping Hierarchy:
+  * Duty Centrifugal Pump WP-01: 48 to 240 m3/h (VFD-controlled, 110 kW).
+  * Emergency Barge Pontoon Slurry Pump WP-02: 320 m3/h (135 kW, ATS automatic start).
+
+Ditto Twin Mapping:
+- Thing IDs: org.openegiz.mine:pump-station-01, org.openegiz.mine:slope-radar-01
+- Features: features/sump_hydrology, features/pumping_circuit, features/slope_stability
+===============================================================================
 """
 
 

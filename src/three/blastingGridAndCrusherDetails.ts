@@ -1,6 +1,6 @@
 /**
  * Smart-Kenish 4.0 — OpenEgiz Autonomous Mine
- * Module: src/three/deepseekBlastingGridAndCrusherDetails.ts
+ * Module: src/three/blastingGridAndCrusherDetails.ts
  *
  * Resolves TOP-500 Fixes:
  *   #206 #207 #218 #221 #225 — BVR blasting field around SBSH-250
