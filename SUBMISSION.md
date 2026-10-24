@@ -4,7 +4,7 @@
 
 | Participant | GitHub | Role |
 |---|---|---|
-| Team-018 Lead Architect & Developer | @openegiz-team-018 | Lead Digital Twin Architect & Chief Compliance Controller |
+| Амиржан Мирас (Satbayev University, ИС-2) | @mirasSU2008 | Lead Digital Twin Architect & Chief Compliance Controller |
 
 ---
 
