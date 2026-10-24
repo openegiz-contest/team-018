@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "dev:pbr": "vite --port 5173",
-    "dev:cyber": "vite --config vite.cyber.config.ts",
     "start": "vite",
     "build": "vite build",
     "preview": "vite preview",

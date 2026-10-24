@@ -51,8 +51,7 @@ import { quarryAudio } from '../audio/quarryAudioEngine';
 export type LightingMode =
   | 'realistic_day'
   | 'golden_sunset'
-  | 'industrial_night'
-  | 'cyber_holographic';
+  | 'industrial_night';
 
 export interface LiveTelemetrySnapshot {
   belazFleet: BelazTelemetry[];
@@ -397,7 +396,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       }
     }
 
-    // Realistic & Cyber-Physical Lighting Setup:
+    // Realistic Industrial PBR Lighting Setup:
     // 1. Balanced sky-ground hemisphere fill (boosted to illuminate fine close-up details)
     const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x85796c, 0.52);
     scene.add(hemiLight);
@@ -450,72 +449,7 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     scene.add(belazHeadlight);
     scene.add(belazHeadlight.target);
 
-    // Stepped Glowing Contour Rings & Animated Spline Path for Cyber-Physical Twin (Hidden by default to eliminate visual noise)
-    const cyberEffectsGroup = new THREE.Group();
-    cyberEffectsGroup.name = 'CYBER_EFFECTS_GROUP';
-    cyberEffectsGroup.visible = false;
-    scene.add(cyberEffectsGroup);
-    scene.add(cyberEffectsGroup);
-
-    const contourLevels = [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12];
-    const contourLineMeshes: THREE.LineLoop[] = [];
-
-    for (const lvl of contourLevels) {
-      const pts: THREE.Vector3[] = [];
-      const steps = 96;
-      const rx = 34 + (lvl + 15) * 1.8;
-      const rz = 26 + (lvl + 15) * 1.4;
-      for (let s = 0; s < steps; s++) {
-        const theta = (s / steps) * Math.PI * 2;
-        const wobble = Math.sin(theta * 4 + lvl * 0.4) * 1.2 + Math.cos(theta * 7) * 0.8;
-        const cx = Math.cos(theta) * (rx + wobble) - 2;
-        const cz = Math.sin(theta) * (rz + wobble) - 6;
-        pts.push(new THREE.Vector3(cx, lvl + 0.15, cz));
-      }
-      const contourGeo = new THREE.BufferGeometry().setFromPoints(pts);
-      const contourLine = new THREE.LineLoop(contourGeo, mats.contourCyanLine);
-      cyberEffectsGroup.add(contourLine);
-      contourLineMeshes.push(contourLine);
-    }
-
-    // Glowing Animated Route Spline following HAUL_ROUTE_WAYPOINTS
-    const routeCurvePts = HAUL_ROUTE_WAYPOINTS.map(
-      (wp) => new THREE.Vector3(wp.x, wp.y + 0.42, wp.z)
-    );
-    const routeSplineCurve = new THREE.CatmullRomCurve3(routeCurvePts, true, 'centripetal');
-    const routeSplineGeo = new THREE.BufferGeometry().setFromPoints(
-      routeSplineCurve.getPoints(320)
-    );
-    const routeLaserLine = new THREE.Line(routeSplineGeo, mats.laserPathMat);
-    routeLaserLine.computeLineDistances();
-    cyberEffectsGroup.add(routeLaserLine);
-
-    // Expanding Status Pulse Rings emanating from IoT Nodes
-    const pulseRingStations = [
-      { id: 'crusher', pos: new THREE.Vector3(10, 6.25, -39), color: 0xffaa00 },
-      { id: 'ekg', pos: new THREE.Vector3(-26, -13.75, -6), color: 0x00f0ff },
-      { id: 'cat', pos: new THREE.Vector3(-24, -13.55, 10), color: 0x00ffa2 },
-      { id: 'substation', pos: new THREE.Vector3(40, 1.85, -4), color: 0x00f0ff },
-    ];
-
-    const pulseRingMeshes = pulseRingStations.map((stn) => {
-      const ringGeo = new THREE.RingGeometry(0.8, 1.2, 32);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: stn.color,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-      ringMesh.rotation.x = -Math.PI / 2;
-      ringMesh.position.copy(stn.pos);
-      cyberEffectsGroup.add(ringMesh);
-      return { mesh: ringMesh, mat: ringMat, basePos: stn.pos };
-    });
-
-    // Dynamic Lighting Mode Switcher with DeepSeek Physically-Based Celestial Profiles
+    // Dynamic Lighting Mode Switcher with Physically-Based Celestial Profiles (День / Закат / Ночь)
     const applyLighting = (mode: LightingMode) => {
       stateRef.current.lightingMode = mode;
       const preset = getCinematicLightingPreset(mode);
@@ -525,23 +459,13 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         bloomPass.strength = preset.bloomStrength;
         bloomPass.radius = preset.bloomRadius;
       }
-      if (mode === 'cyber_holographic') {
-        stateRef.current.timeOfDayHours = 23.5;
-        mats.setCyberMode(true);
-        cyberEffectsGroup.visible = false;
-      } else if (mode === 'golden_sunset') {
+      if (mode === 'golden_sunset') {
         stateRef.current.timeOfDayHours = 17.5;
-        mats.setCyberMode(false);
-        cyberEffectsGroup.visible = false;
       } else if (mode === 'industrial_night') {
         stateRef.current.timeOfDayHours = 0.5;
-        mats.setCyberMode(false);
-        cyberEffectsGroup.visible = false;
       } else {
         // realistic_day
         stateRef.current.timeOfDayHours = 12.0;
-        mats.setCyberMode(false);
-        cyberEffectsGroup.visible = false;
       }
     };
     sceneRefs.current.applyLighting = applyLighting;
@@ -616,18 +540,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
     faultSparkLight.position.set(16, 12.8, 10);
     scene.add(faultSparkLight);
 
-    // Green Energy Flow Vectors along 1200V Trolley wire (Substation -> Trucks)
-    const energyPulseCount = 8;
-    const energyPulseGeo = new THREE.SphereGeometry(0.2, 6, 6);
-    const energyPulseMat = new THREE.MeshBasicMaterial({
-      color: 0x00ffcc,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const energyPulseMesh = new THREE.InstancedMesh(energyPulseGeo, energyPulseMat, energyPulseCount);
-    energyPulseMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    scene.add(energyPulseMesh);
-    const _energyDummy = new THREE.Object3D();
 
     // Holographic 3D Selection Ring Indicator for LMB Clicked Object
     const selectionRingGeo = new THREE.RingGeometry(3.0, 3.4, 32);
@@ -1225,10 +1137,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         canyonEnvRig.trolleyNetworkGroup.visible = Boolean(st.showTrolleyLines);
       }
 
-      // 1200V Green Energy Flow Vectors (Particles disabled for CPU performance)
-      if (energyPulseMesh) {
-        energyPulseMesh.visible = false;
-      }
 
       // Catenary Fault Spark Flicker Animation (Scenario 'trolley-fault')
       if (faultSparkMesh && faultSparkLight) {
@@ -1586,9 +1494,8 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         st.lightingMode === 'realistic_day' ? getCinematicLightingPreset('realistic_day').toneMappingExposure : celestial.toneMappingExposure;
       renderer.toneMappingExposure = dayPresetExposure;
       if (bloomPass) {
-        const isCyber = st.lightingMode === 'cyber_holographic';
-        bloomPass.strength = isCyber ? 1.4 : THREE.MathUtils.lerp(0.35, 1.15, celestial.nightFactor);
-        bloomPass.threshold = isCyber ? 0.25 : THREE.MathUtils.lerp(0.65, 0.35, celestial.nightFactor);
+        bloomPass.strength = THREE.MathUtils.lerp(0.35, 1.15, celestial.nightFactor);
+        bloomPass.threshold = THREE.MathUtils.lerp(0.65, 0.35, celestial.nightFactor);
       }
 
       // Automatic power modulation for industrial spot lights & truck headlights based on solar elevation
@@ -1690,22 +1597,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
         controls.target.add(_wasdMoveDir);
       }
 
-      // Animate Cybernetic Visual Effects (Contour lines wave, Route dash offset, Pulse rings)
-      if (cyberEffectsGroup.visible) {
-        (mats.laserPathMat as unknown as { dashOffset: number }).dashOffset = -simTime * 4.0;
-        for (let c = 0; c < contourLineMeshes.length; c++) {
-          const line = contourLineMeshes[c];
-          const mat = line.material as THREE.LineBasicMaterial;
-          mat.opacity = 0.55 + Math.sin(simTime * 2.5 + c * 0.6) * 0.35;
-        }
-        for (let p = 0; p < pulseRingMeshes.length; p++) {
-          const pr = pulseRingMeshes[p];
-          const phase = (simTime * 0.85 + p * 0.25) % 1.0;
-          const scale = 1.0 + phase * 6.5;
-          pr.mesh.scale.set(scale, scale, 1.0);
-          pr.mat.opacity = Math.max(0.02, (1.0 - phase) * 0.85);
-        }
-      }
 
       controls.update();
 
@@ -1766,8 +1657,6 @@ export const CanyonViewport3D: React.FC<CanyonViewport3DProps> = ({
       renderer.domElement.removeEventListener('pointerleave', onPointerLeave);
       faultSparkGeo.dispose();
       faultSparkMat.dispose();
-      energyPulseGeo.dispose();
-      energyPulseMat.dispose();
       celestialSky.dispose();
       atmosphericLighting.dispose();
       controls.dispose();

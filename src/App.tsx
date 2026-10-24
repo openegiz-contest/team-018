@@ -542,15 +542,8 @@ export function App() {
     useState<HoveredStratumInfo | null>(null);
   const [pinnedStratum, setPinnedStratum] =
     useState<GeologicalStratumSpec | null>(null);
-  const isCyberServer =
-    (typeof window !== 'undefined' && window.location.port === '5174') ||
-    (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'cyber') ||
-    (import.meta as any).env?.VITE_APP_MODE === 'cyber';
-
-  const [lightingMode, setLightingMode] = useState<LightingMode>(
-    isCyberServer ? 'cyber_holographic' : 'realistic_day'
-  );
-  const [autoDayNight, setAutoDayNight] = useState<boolean>(!isCyberServer);
+  const [lightingMode, setLightingMode] = useState<LightingMode>('realistic_day');
+  const [autoDayNight, setAutoDayNight] = useState<boolean>(true);
   const [openData, setOpenData] = useState<MineOpenData | null>(null);
   const [performanceMode, setPerformanceMode] = useState<boolean>(true);
   const [showFosHeatmap, setShowFosHeatmap] = useState<boolean>(false);
@@ -596,10 +589,8 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    document.title = isCyberServer
-      ? '⚡ Кибер-физический двойник ГОК (Holographic HUD · Port :5174)'
-      : '🏭 Горно-Обогатительный Комбинат (Heavy Industrial PBR · Port :5173)';
-  }, [isCyberServer]);
+    document.title = '🏭 Горно-Обогатительный Комбинат «АҚТАУ-МЫС» (Heavy Industrial PBR · 60 FPS)';
+  }, []);
 
   useEffect(() => {
     (window as any).__setSelectedAssembly = setSelectedAssembly;
@@ -874,37 +865,21 @@ export function App() {
       >
         {/* TOP BAR: Clean Minimalist Floating Glass Pill Header (Только самое важное) */}
         <header className="flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
-          {/* Left: Brand Identity, Active Server Badge & Open Data Ticker */}
+          {/* Left: Brand Identity & Open Data Ticker */}
           <div className="flex items-center gap-2.5 bg-[#090d16]/85 backdrop-blur-md border border-slate-800/90 rounded-xl px-3 py-1.5 shadow-xl">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                isCyberServer
-                  ? 'bg-cyan-400 shadow-[0_0_10px_#00f0ff]'
-                  : 'bg-emerald-400 shadow-[0_0_10px_#10b981]'
-              } animate-pulse`}
-            />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981] animate-pulse" />
             <div>
               <div className="flex items-center gap-1.5">
-                <span
-                  className={`text-xs font-bold uppercase tracking-wider ${
-                    isCyberServer ? 'text-cyan-300 font-mono' : 'text-slate-100'
-                  }`}
-                >
-                  {isCyberServer ? '⚡ КИБЕР-ФИЗИЧЕСКИЙ ДВОЙНИК ГОК' : 'ГОК «АҚТАУ-МЫС»'}
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-100">
+                  ГОК «АҚТАУ-МЫС»
                 </span>
-                <span
-                  className={`text-[10px] font-mono-tabular font-semibold px-1.5 py-0.5 rounded border ${
-                    isCyberServer
-                      ? 'text-cyan-300 bg-cyan-500/15 border-cyan-500/40 shadow-[0_0_8px_rgba(0,240,255,0.3)]'
-                      : 'text-amber-300 bg-amber-500/15 border-amber-500/40'
-                  }`}
-                >
-                  {isCyberServer ? 'СЕРВЕР 2 · :5174 (КИБЕР-ТВИН)' : 'СЕРВЕР 1 · :5173 (PBR ГОК)'}
+                <span className="text-[10px] font-mono-tabular font-semibold px-1.5 py-0.5 rounded border text-amber-300 bg-amber-500/15 border-amber-500/40">
+                  PBR ГОК
                 </span>
               </div>
               <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono-tabular text-slate-400 mt-0.5">
-                <span className={isCyberServer ? 'text-cyan-400 font-semibold' : 'text-amber-300 font-semibold'}>
-                  {isCyberServer ? 'Holographic Telemetry & Neon Scanlines' : 'Heavy Industrial PBR · 60 FPS'}
+                <span className="text-amber-300 font-semibold">
+                  Heavy Industrial PBR · 60 FPS
                 </span>
                 {openData && (
                   <>
@@ -916,33 +891,6 @@ export function App() {
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Quick Cross-Server Switcher Button */}
-          <div className="flex items-center gap-1.5">
-            {isCyberServer ? (
-              <a
-                href="http://localhost:5173/"
-                data-testid="switch-to-pbr-server-btn"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/50 hover:bg-amber-500/30 hover:border-amber-400 text-xs font-bold transition-all shadow-lg hover:shadow-amber-500/20"
-                title="Переключиться на Сервер 1: Промышленный PBR ГОК (порт 5173)"
-              >
-                <span>🏭</span>
-                <span className="hidden sm:inline">Открыть Промышленный PBR</span>
-                <span className="font-mono text-[10px] bg-amber-500/30 px-1 py-0.5 rounded">:5173 →</span>
-              </a>
-            ) : (
-              <a
-                href="http://localhost:5174/"
-                data-testid="switch-to-cyber-server-btn"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 hover:bg-cyan-500/30 hover:border-cyan-400 text-xs font-bold transition-all shadow-lg hover:shadow-cyan-500/20"
-                title="Переключиться на Сервер 2: Кибер-физический двойник (порт 5174)"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                <span className="hidden sm:inline">Открыть Кибер-двойник</span>
-                <span className="font-mono text-[10px] bg-cyan-500/30 px-1 py-0.5 rounded">:5174 →</span>
-              </a>
-            )}
           </div>
 
           {/* Live Performance Mode & 60 FPS Badge (CPU Optimization for Judge Environment) */}
@@ -1088,20 +1036,6 @@ export function App() {
               data-testid="lighting-mode-group"
               className="flex items-center gap-0.5 bg-slate-900/80 border border-slate-800 rounded-lg p-0.5"
             >
-              <button
-                type="button"
-                data-testid="lighting-cyber-btn"
-                onClick={() => setLightingMode('cyber_holographic')}
-                title="Киберфизический голографический цифровой двойник (Cyber Neon + Bloom)"
-                className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-medium transition-all ${
-                  lightingMode === 'cyber_holographic'
-                    ? 'bg-cyan-500/25 text-cyan-300 border border-cyan-400 shadow-[0_0_12px_rgba(0,240,255,0.45)]'
-                    : 'text-slate-400 hover:text-cyan-300'
-                }`}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
-                <span className="hidden lg:inline text-[11px] font-semibold text-cyan-300">Кибер-Твин</span>
-              </button>
               <button
                 type="button"
                 data-testid="lighting-day-btn"

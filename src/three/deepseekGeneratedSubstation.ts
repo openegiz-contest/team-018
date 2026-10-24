@@ -682,8 +682,8 @@ function buildCableBridgeToTrolley(
   const steel = mats.wheelHubSteel;
   const cableMat = mats.belazChassisDark;
 
-  const p1 = new THREE.Vector3(16.5, GROUND_Y, 2.5);
-  const p2 = new THREE.Vector3(26.0, GROUND_Y, -4.0);
+  const p1 = new THREE.Vector3(-6.0, GROUND_Y, 2.5);
+  const p2 = new THREE.Vector3(-16.0, GROUND_Y, 2.5);
 
   const gantryH = 4.4;
   const dist = p1.distanceTo(p2);

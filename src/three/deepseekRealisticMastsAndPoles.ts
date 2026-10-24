@@ -650,16 +650,6 @@ export function createRealisticInfrastructureMasts(
   );
   const t2Apex = new THREE.Vector3(t2x, t2BaseY + 24.5, t2z);
 
-  // External Grid Horizon Source (incoming feed from regional power system over the canyon rim)
-  const hX = 96, hZ = -66, hY = getCanyonGroundHeight(96, -66) + 16.0;
-  const hLeft = armLevels.map((lvl, idx) =>
-    new THREE.Vector3(hX - armLengths[idx] * 0.9, hY + 22 * lvl, hZ)
-  );
-  const hRight = armLevels.map((lvl, idx) =>
-    new THREE.Vector3(hX + armLengths[idx] * 0.9, hY + 22 * lvl, hZ)
-  );
-  const hApex = new THREE.Vector3(hX, hY + 25.0, hZ);
-
   // Substation GPP-110 Incoming Portal Tower Attachment Points (World coordinates: 54 + local x, -2 + local z)
   // Substation Portal 1 at (56, 6.5, 0)
   const pSub1 = [
@@ -676,13 +666,6 @@ export function createRealisticInfrastructureMasts(
     new THREE.Vector3(56 + 1.8, 6.5 + 22 * 0.98, 12),
   ];
   const pSub2Apex = new THREE.Vector3(56, 6.5 + 24.0, 12);
-
-  // SPAN 1: External Horizon -> Pylon Tower 1 (6 phases + 1 ground wire)
-  for (let a = 0; a < 3; a++) {
-    addCatenaryConductor(powerGridPylonsGroup, hLeft[a], t1Left[a], 2.2, 0.035, conductorMat);
-    addCatenaryConductor(powerGridPylonsGroup, hRight[a], t1Right[a], 2.2, 0.035, conductorMat);
-  }
-  addCatenaryConductor(powerGridPylonsGroup, hApex, t1Apex, 1.2, 0.024, groundWireMat);
 
   // SPAN 2: Pylon Tower 1 -> Pylon Tower 2 (6 phases + 1 ground wire)
   for (let a = 0; a < 3; a++) {
@@ -753,15 +736,21 @@ export function createRealisticInfrastructureMasts(
 
   const steelMat = pick(materialSet, 'steel', makeFallback(0x6b7075, 0.55, 0.65));
   const warningYellow = pick(materialSet, 'warning', makeFallback(0xf59e0b, 0.5, 0.1));
-  const archH = 9.2, archW = 12.5;
+  const archH = 9.2, archW = 11.5;
+  const leftX = -archW * 0.5;
+  const rightX = archW * 0.5;
+  const leftY = getCanyonGroundHeight(ovX + leftX, ovZ) - ovGroundY;
+  const rightY = getCanyonGroundHeight(ovX + rightX, ovZ) - ovGroundY;
 
-  // Concrete footing blocks on road shoulders
-  addBox(overpassGroup, 1.4, 0.5, 1.4, -archW * 0.5, 0.25, 0, steelMat);
-  addBox(overpassGroup, 1.4, 0.5, 1.4, archW * 0.5, 0.25, 0, steelMat);
+  // Concrete footing blocks on road shoulders flush with terrain
+  addBox(overpassGroup, 1.4, 0.5, 1.4, leftX, leftY + 0.25, 0, steelMat);
+  addBox(overpassGroup, 1.4, 0.5, 1.4, rightX, rightY + 0.25, 0, steelMat);
 
-  // Tubular steel columns
-  addCylinder(overpassGroup, 0.22, 0.25, archH, -archW * 0.5, archH * 0.5, 0, steelMat, 10);
-  addCylinder(overpassGroup, 0.22, 0.25, archH, archW * 0.5, archH * 0.5, 0, steelMat, 10);
+  // Tubular steel columns adapting to hillside elevation difference
+  const leftH = Math.max(2.0, archH - leftY);
+  const rightH = Math.max(2.0, archH - rightY);
+  addCylinder(overpassGroup, 0.22, 0.25, leftH, leftX, leftY + leftH * 0.5, 0, steelMat, 10);
+  addCylinder(overpassGroup, 0.22, 0.25, rightH, rightX, rightY + rightH * 0.5, 0, steelMat, 10);
 
   // Horizontal cable gantry truss across the road (8.5m clearance)
   addBox(overpassGroup, archW + 0.6, 0.45, 0.6, 0, archH, 0, steelMat);

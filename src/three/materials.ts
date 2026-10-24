@@ -37,7 +37,7 @@ export interface CadMaterialLibrary {
   contactShadowMat: THREE.MeshBasicMaterial;
   hazardStripeMat: THREE.MeshStandardMaterial;
   headlightGlassMat: THREE.MeshPhysicalMaterial;
-  // Cyber-Physical Holographic Digital Twin Materials (Multi-Channel Neon Telemetry)
+  // Industrial Equipment Status Indicator Materials
   neonCyanActive: THREE.MeshStandardMaterial;
   neonAmberLoading: THREE.MeshStandardMaterial;
   neonEmeraldQueued: THREE.MeshStandardMaterial;
@@ -621,7 +621,7 @@ export function createCadMaterialLibrary(renderer: THREE.WebGLRenderer): CadMate
     depthWrite: false,
   });
 
-  // 5. Cyber-Physical Multi-Channel Neon Telemetry Materials
+  // 5. Industrial Equipment Status Indicator Materials
   const neonCyanActive = new THREE.MeshStandardMaterial({
     color: 0x00f0ff,
     emissive: 0x00f0ff,
@@ -802,32 +802,8 @@ export function createCadMaterialLibrary(renderer: THREE.WebGLRenderer): CadMate
         }
       }
     },
-    setCyberMode: (enabled: boolean) => {
-      if (enabled) {
-        canyonBenchRock.color.setHex(0x161e31);
-        canyonBenchRock.roughness = 0.85;
-        canyonBenchRock.metalness = 0.25;
-        embankmentGravelMat.color.setHex(0x111625);
-        haulRoadSurface.color.setHex(0x0c111e);
-        belazYellow.emissive.setHex(0x00f0ff);
-        belazYellow.emissiveIntensity = 0.45;
-        ekgTealPaint.emissive.setHex(0x00d4ff);
-        ekgTealPaint.emissiveIntensity = 0.55;
-        catYellowPaint.emissive.setHex(0xffaa00);
-        catYellowPaint.emissiveIntensity = 0.55;
-      } else {
-        canyonBenchRock.color.setHex(0xffffff);
-        canyonBenchRock.roughness = 0.88;
-        canyonBenchRock.metalness = 0.08;
-        embankmentGravelMat.color.setHex(0xd6d3d1);
-        haulRoadSurface.color.setHex(0xffffff);
-        belazYellow.emissive.setHex(0x000000);
-        belazYellow.emissiveIntensity = 0.0;
-        ekgTealPaint.emissive.setHex(0x000000);
-        ekgTealPaint.emissiveIntensity = 0.0;
-        catYellowPaint.emissive.setHex(0x000000);
-        catYellowPaint.emissiveIntensity = 0.0;
-      }
+    setCyberMode: () => {
+      // No-op: alternate cyber universe removed in favor of authentic PBR
     },
     dispose: () => {
       allMaterials.forEach((m) => m.dispose());

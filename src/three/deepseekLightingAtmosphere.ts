@@ -80,23 +80,6 @@ export function getCinematicLightingPreset(mode: string): CinematicLightingConfi
         bloomRadius: 0.45,
       };
 
-    case 'cyber_holographic':
-      // Neon cyan/amber sci-fi digital-twin aesthetic with enhanced bloom.
-      return {
-        sunColor: 0x66f0ff,
-        sunIntensity: 1.8,
-        skyColor: 0x00e5ff,
-        groundColor: 0xff9a1f,
-        hemiIntensity: 1.1,
-        fogColor: 0x0a1a2a,
-        fogNear: 30,
-        fogFar: 220,
-        toneMappingExposure: 1.25,
-        bloomThreshold: 0.55,
-        bloomStrength: 1.1,
-        bloomRadius: 0.75,
-      };
-
     default:
       // Safe fallback: neutral daylight.
       return getCinematicLightingPreset('realistic_day');

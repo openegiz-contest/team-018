@@ -535,74 +535,63 @@ function buildRunawayRamp(
   const group = new THREE.Group();
   group.name = 'RunawayRamp';
 
-  const rampCenterX = ROAD_HALF + RAMP_WIDTH / 2 + 1.5;
-  const rampCenterZ = RAMP_START_Z + RAMP_LENGTH / 2;
+  const rampCenterX = 24.0;
+  const rampCenterZ = 12.0;
+  const rampWidth = 6.0;
+  const rampLength = 14.0;
   const baseY = ground(rampCenterX, rampCenterZ);
 
   // Arrester bed (deep loose gravel/sand)
-  const bedGeom = new THREE.BoxGeometry(RAMP_WIDTH, 1.2, RAMP_LENGTH);
+  const bedGeom = new THREE.BoxGeometry(rampWidth, 0.8, rampLength);
   const bed = new THREE.Mesh(bedGeom, mats.gravel);
-  bed.position.set(rampCenterX, baseY + 0.6, rampCenterZ);
+  bed.position.set(rampCenterX, baseY + 0.4, rampCenterZ);
   bed.receiveShadow = true;
   group.add(bed);
 
   // Sand top layer
-  const sandGeom = new THREE.BoxGeometry(RAMP_WIDTH - 0.4, 0.25, RAMP_LENGTH - 0.4);
+  const sandGeom = new THREE.BoxGeometry(rampWidth - 0.4, 0.2, rampLength - 0.4);
   const sandTop = new THREE.Mesh(sandGeom, mats.sand);
-  sandTop.position.set(rampCenterX, baseY + 1.32, rampCenterZ);
+  sandTop.position.set(rampCenterX, baseY + 0.9, rampCenterZ);
   sandTop.receiveShadow = true;
   group.add(sandTop);
 
   // Entry guide berms (angled concrete walls)
-  const bermGeom = new THREE.BoxGeometry(0.6, 1.6, RAMP_LENGTH * 0.6);
+  const bermGeom = new THREE.BoxGeometry(0.5, 1.2, rampLength * 0.7);
   for (const side of [-1, 1] as const) {
     const berm = new THREE.Mesh(bermGeom, mats.concrete);
     berm.position.set(
-      rampCenterX + side * (RAMP_WIDTH / 2 + 0.3),
-      baseY + 0.8,
-      rampCenterZ - RAMP_LENGTH * 0.2
+      rampCenterX + side * (rampWidth / 2 + 0.25),
+      baseY + 0.6,
+      rampCenterZ - rampLength * 0.15
     );
-    berm.rotation.y = side * 0.12;
+    berm.rotation.y = side * 0.1;
     berm.castShadow = true;
     group.add(berm);
   }
 
   // Warning chevron sign at entry
+  const signZ = rampCenterZ - rampLength / 2 - 1.5;
   const signPostGeom = new THREE.CylinderGeometry(0.06, 0.06, 2.4, 8);
   const signPost = new THREE.Mesh(signPostGeom, mats.steelDark);
-  signPost.position.set(rampCenterX - RAMP_WIDTH / 2 - 1.2, baseY + 1.2, RAMP_START_Z - 2);
+  signPost.position.set(rampCenterX - rampWidth / 2 - 1.0, baseY + 1.2, signZ);
   group.add(signPost);
 
   const signGeom = new THREE.PlaneGeometry(2.4, 1.2);
   const sign = new THREE.Mesh(signGeom, mats.decalRamp);
-  sign.position.set(rampCenterX - RAMP_WIDTH / 2 - 1.2, baseY + 2.4, RAMP_START_Z - 2);
+  sign.position.set(rampCenterX - rampWidth / 2 - 1.0, baseY + 2.4, signZ);
   sign.rotation.y = -Math.PI / 2;
   group.add(sign);
 
-  // Chevron arrows on the sign face
-  const chevronGeom = new THREE.BufferGeometry();
-  const chevronVerts = new Float32Array([
-    -0.3, 0.2, 0.01, 0.0, -0.2, 0.01, 0.3, 0.2, 0.01,
-    -0.3, -0.2, 0.01, 0.0, 0.2, 0.01, 0.3, -0.2, 0.01,
-  ]);
-  chevronGeom.setAttribute('position', new THREE.BufferAttribute(chevronVerts, 3));
-  chevronGeom.computeVertexNormals();
-  const chevronMat = new THREE.MeshBasicMaterial({ color: 0x111111, side: THREE.DoubleSide });
-  const chevron = new THREE.Mesh(chevronGeom, chevronMat);
-  chevron.position.set(rampCenterX - RAMP_WIDTH / 2 - 1.2, baseY + 2.4, RAMP_START_Z - 1.99);
-  chevron.rotation.y = -Math.PI / 2;
-  group.add(chevron);
-
   // Impact sand barrels at the end
-  const barrelGeom = new THREE.CylinderGeometry(0.45, 0.45, 1.1, 14);
+  const barrelGeom = new THREE.CylinderGeometry(0.45, 0.45, 1.0, 14);
   const barrelBandGeom = new THREE.CylinderGeometry(0.46, 0.46, 0.12, 14);
-  const barrelRows = 3;
-  const barrelCols = 5;
+  const barrelRows = 2;
+  const barrelCols = 3;
   for (let r = 0; r < barrelRows; r++) {
     for (let c = 0; c < barrelCols; c++) {
-      const bx = rampCenterX - RAMP_WIDTH / 2 + 1.2 + c * ((RAMP_WIDTH - 2.4) / (barrelCols - 1));
-      const bz = RAMP_START_Z + RAMP_LENGTH - 1.5 - r * 1.3;
-      const by = baseY + 1.32 + 0.55;
+      const bx = rampCenterX - rampWidth / 2 + 1.2 + c * ((rampWidth - 2.4) / (barrelCols - 1));
+      const bz = rampCenterZ + rampLength / 2 - 1.5 - r * 1.3;
+      const by = baseY + 0.9 + 0.5;
       const barrel = new THREE.Mesh(barrelGeom, mats.orange);
       barrel.position.set(bx, by, bz);
       barrel.castShadow = true;
@@ -620,8 +609,6 @@ function buildRunawayRamp(
     bermGeom.dispose();
     signPostGeom.dispose();
     signGeom.dispose();
-    chevronGeom.dispose();
-    chevronMat.dispose();
     barrelGeom.dispose();
     barrelBandGeom.dispose();
   };
@@ -1007,57 +994,24 @@ export function createRoadSafetyAndDrainage(
   const group = new THREE.Group();
   group.name = 'RoadSafetyAndDrainageRig';
 
-  // 1. [D8.10] Drainage ditches & sedimentation sumps
-  const drainage = buildDrainageDitches(bank, groundY);
-  group.add(drainage.group);
-
-  // 2. [D9.5] Delineator posts along road shoulder
-  const delineators = buildDelineators(bank, groundY);
-  group.add(delineators.group);
-
-  // 3. [D9.7] Runaway truck emergency ramp
+  // 1. [D9.7] Compact emergency runaway truck ramp on canyon bench
   const runawayRamp = buildRunawayRamp(bank, groundY);
   group.add(runawayRamp.group);
 
-  // 4. [D9.9] Thermoplastic road markings & queue bays
-  const markings = buildRoadMarkings(bank, groundY);
-  group.add(markings.group);
-
-  // 5. [D9.8] BelAZ-76135 water tanker truck
+  // 2. [D9.8] BelAZ-76135 water tanker truck parked safely on mining bench
   const waterTruck = buildWaterTruck(bank);
-  waterTruck.group.position.set(-8.0, groundY(-8.0, 15.0), 15.0);
+  waterTruck.group.position.set(-6.0, groundY(-6.0, 4.0), 4.0);
+  waterTruck.group.rotation.y = 0.4;
+  waterTruck.sprayPoints.visible = false;
   group.add(waterTruck.group);
 
-  // 6. [D9.10] Safety patrol pickup vehicle
+  // 3. [D9.10] Safety patrol pickup vehicle on service terrace
   const patrolPickup = buildPatrolPickup(bank);
   patrolPickup.group.position.set(8.5, groundY(8.5, -30.0), -30.0);
   patrolPickup.group.rotation.y = 0.25;
   group.add(patrolPickup.group);
 
-  const update = (timeSec: number, dt: number): void => {
-    // Water spray simulation
-    const posAttr = waterTruck.sprayPoints.geometry.getAttribute('position') as THREE.BufferAttribute;
-    const posArray = posAttr.array as Float32Array;
-    const count = SPRAY_PARTICLE_COUNT;
-
-    for (let i = 0; i < count; i++) {
-      waterTruck.sprayLife[i] += dt * 1.4;
-      if (waterTruck.sprayLife[i] >= 1.0) {
-        waterTruck.sprayLife[i] = 0;
-        posArray[i * 3 + 0] = (Math.random() - 0.5) * 2.8;
-        posArray[i * 3 + 1] = 1.0;
-        posArray[i * 3 + 2] = -4.2;
-        waterTruck.sprayVelocities[i * 3 + 0] = (Math.random() - 0.5) * 4.5;
-        waterTruck.sprayVelocities[i * 3 + 1] = Math.random() * 1.5 + 0.5;
-        waterTruck.sprayVelocities[i * 3 + 2] = -Math.random() * 6.0 - 3.0;
-      } else {
-        posArray[i * 3 + 0] += waterTruck.sprayVelocities[i * 3 + 0] * dt;
-        posArray[i * 3 + 1] += waterTruck.sprayVelocities[i * 3 + 1] * dt - 4.0 * dt * dt;
-        posArray[i * 3 + 2] += waterTruck.sprayVelocities[i * 3 + 2] * dt;
-      }
-    }
-    posAttr.needsUpdate = true;
-
+  const update = (timeSec: number): void => {
     // Amber strobe flash
     const strobeOn = Math.sin(timeSec * 16) > 0.0;
     patrolPickup.strobeMesh.visible = strobeOn;
@@ -1067,10 +1021,7 @@ export function createRoadSafetyAndDrainage(
   };
 
   const dispose = (): void => {
-    drainage.dispose();
-    delineators.dispose();
     runawayRamp.dispose();
-    markings.dispose();
     waterTruck.dispose();
     patrolPickup.dispose();
   };

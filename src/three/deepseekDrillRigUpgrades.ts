@@ -736,7 +736,7 @@ function buildLevelingJack(
   group.add(gland);
 
   // ---- Chrome piston rod ----
-  const rodLen = 1.1;
+  const rodLen = 0.25;
   const rod = makeCylinder(0.09, 0.09, rodLen, 16, mats.chrome);
   rod.position.y = 0.35 - rodLen / 2;
   group.add(rod);
@@ -752,13 +752,13 @@ function buildLevelingJack(
 
   // Footpad shoe (Ø600mm = 0.6m radius 0.3m)
   const shoe = makeCylinder(0.3, 0.3, 0.12, 32, mats.footpad);
-  shoe.position.y = 0.35 - rodLen - 0.2;
+  shoe.position.y = 0.35 - rodLen - 0.06;
   footpad.add(shoe);
 
   // Shoe rim reinforcement
   const rim = makeTorus(0.3, 0.035, 8, 32, mats.darkSteel);
   rim.rotation.x = Math.PI / 2;
-  rim.position.y = 0.35 - rodLen - 0.2;
+  rim.position.y = 0.35 - rodLen - 0.06;
   footpad.add(rim);
 
   // Shoe underside grip ribs
@@ -767,7 +767,7 @@ function buildLevelingJack(
     const rib = makeBox(0.04, 0.04, 0.5, mats.darkSteel);
     rib.position.set(
       Math.cos(a) * 0.15,
-      0.35 - rodLen - 0.27,
+      0.35 - rodLen - 0.12,
       Math.sin(a) * 0.15
     );
     rib.rotation.y = -a;
