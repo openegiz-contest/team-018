@@ -1738,7 +1738,8 @@ export function computePlantTelemetry(
   const mpsiRpm = active
     ? (crusherFault ? 4.2 : 9.5) + Math.cos(t * 0.5) * 0.08
     : 0;
-  const mpsiDrumAngle = active ? (t * 0.995) % (Math.PI * 2) : 0;
+  // Angular velocity ω = RPM * 2π / 60: 9.5 RPM -> 0.995 rad/s; during fault 4.2 RPM -> 0.440 rad/s
+  const mpsiDrumAngle = active ? (t * (crusherFault ? 0.44 : 0.995)) % (Math.PI * 2) : 0;
 
   // Crusher gyratory nutation halts completely during crusher-fault (Item #270)
   const crusherRotorAngle = crusherFault
