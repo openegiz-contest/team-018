@@ -6,7 +6,6 @@ import net from 'net';
 import { fileURLToPath } from 'url';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
-import { GoogleGenAI, ThinkingLevel } from '@google/genai';
 import {
   buildDittoProtocolEnvelope,
   computeOpenEgizMineMap,

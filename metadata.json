@@ -2,5 +2,5 @@
   "name": "Карьер-CAD: 3D Комплекс Добычи и Обогащения",
   "description": "Детализированная 3D CAD-сцена работы открытого каньона: флагманский самосвал БелАЗ-75131 с пантографом 1200В, экскаваторы ЭКГ-15 и CAT 6020B, мельница МПСИ-90 (14 МВт), гидроциклоны Krebs и чаны пенной флотации.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }
